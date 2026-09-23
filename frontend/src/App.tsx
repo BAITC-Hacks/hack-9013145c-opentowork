@@ -7,7 +7,7 @@ import Backtest from "./twin/Backtest";
 import Bids from "./twin/Bids";
 import Explain from "./twin/Explain";
 import Predictions from "./twin/Predictions";
-import { canOpen, fmtDay, fmtDayTime, LIVE_ORIGIN, ORIGINS, stationRated, useForecast, useRoute, useStations } from "./twin/data";
+import { canOpen, fmtDay, fmtDayTime, isLive, liveOrigin, ORIGINS, stationRated, useForecast, useRoute, useStations } from "./twin/data";
 import type { Route, StationTab } from "./twin/data";
 import { Home, KindPick, StationPick } from "./twin/Flow";
 import { PageLoader } from "./twin/Loading";
@@ -431,7 +431,12 @@ export default function App() {
 
   if (!authed) return <div className="app"><Login onDone={() => setAuthed(true)} /></div>;
 
-  const rerun = () => setNonce((n) => n + 1);
+  // Живой прогноз при обновлении переезжает на текущий час; смена originIso сама
+  // перезапускает загрузку, а nonce нужен, когда час ещё не сменился.
+  const rerun = () => {
+    if (isLive(originIso)) setOriginIso(liveOrigin());
+    setNonce((n) => n + 1);
+  };
   // На экране объяснения station не выбран (он только для вкладок станции) — имя берём из справочника.
   const crumbStation =
     station ?? ("stationId" in route ? stations.find((s) => s.id === route.stationId) ?? null : null);
@@ -480,7 +485,7 @@ export default function App() {
       {route.page === "station" && station && (
         <div className="station-heading">
         <div className="station-title"><span className="eyebrow">{station.kind === "wind" ? "Ветровая электростанция" : "Солнечная электростанция"}</span><h1>{station.name}</h1><p>{station.region} <span>·</span> Почасовой прогноз на {horizon} часов</p></div>
-        <div className="station-heading-right"><div className="forecast-date">{originIso === LIVE_ORIGIN ? <>Живой прогноз от {fmtDayTime(originIso)} <span>UTC · погода Open-Meteo</span></> : <>Прогноз от {fmtDay(originIso)} 2026 <span>00:00 · UTC</span></>}</div>
+        <div className="station-heading-right"><div className="forecast-date">{isLive(originIso) ? <>Живой прогноз от {fmtDayTime(originIso)} <span>UTC · погода Open-Meteo</span></> : <>Прогноз от {fmtDay(originIso)} 2026 <span>00:00 · UTC</span></>}</div>
         <nav className="station-tabs" aria-label="Разделы станции">
           {TAB_LABEL.filter(([t]) => t === "map" || station.data === "history").map(([t, label]) => (
             <button
@@ -510,7 +515,7 @@ export default function App() {
         <Predictions
           stations={stations}
           onOpen={(s) => {
-            setOriginIso(LIVE_ORIGIN);
+            setOriginIso(liveOrigin());
             go({ page: "station", kind: s.kind, stationId: s.id, tab: "map" });
           }}
           onExplain={(s, origin) => go({ page: "explain", kind: s.kind, stationId: s.id, origin })}

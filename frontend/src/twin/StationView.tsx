@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import type { ForecastPoint, ForecastRun, Station } from "../api";
 import { ForecastChart, Sparkline } from "./charts";
-import { CAPACITY_SOURCE_LABEL, fmtDayTime, LIVE_ORIGIN, mw, originLabel, stationCapacity, stationRated, STATION_ORIGINS, unitRated, useStationWind } from "./data";
+import { CAPACITY_SOURCE_LABEL, fmtDayTime, isLive, liveOrigin, mw, originLabel, stationCapacity, stationRated, stationOrigins, unitRated, useStationWind } from "./data";
 import type { Origin } from "./data";
 import { parseTs, powerCurve, RATED_ASSUMPTION_MW, SITE, solarPower, sunPosition } from "./demo";
 import UnitPanel from "./UnitPanel";
@@ -54,7 +54,7 @@ function Barograph({ points, storms }: { points: ForecastPoint[]; storms: boolea
       )}
       {storms &&
         points.map((p, i) =>
-          p.wind_speed >= 18 ? (
+          (p.wind_speed ?? 0) >= 18 ? (
             <rect key={`s${i}`} x={x(i) - 50 / n} width={100 / n} y={0} height={100} className="baro-storm" />
           ) : null,
         )}
@@ -170,8 +170,8 @@ export default function StationView({
     const k = 1 + change / 100;
     return run.predictions.map((p) => {
       if (wind) {
-        const base = powerCurve(p.wind_speed);
-        const next = powerCurve(p.wind_speed * k);
+        const base = powerCurve(p.wind_speed ?? 0);
+        const next = powerCurve((p.wind_speed ?? 0) * k);
         return base > 0.005 ? Math.min(1, (p.p50 * next) / base) : next * 0.9;
       }
       // Прогноз уже учитывает радиацию; сценарий меняет только облачность.
@@ -185,12 +185,12 @@ export default function StationView({
   const energy24 = sum(day.map((p) => p.p50)) * rated;
   const scenario24 = scenario ? sum(scenario.slice(0, 24)) * rated : energy24;
   const load = day.length ? sum(day.map((p) => p.p50)) / day.length : 0;
-  const avgWind = day.length ? sum(day.map((p) => p.wind_speed)) / day.length : 0;
+  const avgWind = day.length ? sum(day.map((p) => p.wind_speed ?? 0)) / day.length : 0;
   const avgCloud = day.length ? sum(day.map((p) => p.cloud_cover ?? 0)) / day.length : 0;
   // Наибольший разброс за последние сутки горизонта: у СЭС последний час
   // может прийтись на ночь, где разброс нулевой и ничего не говорит.
   const spreadMw = Math.max(0, ...points.map((p) => p.p90 - p.p10)) * rated;
-  const storm = wind ? points.find((p) => p.wind_speed >= 18) : undefined;
+  const storm = wind ? points.find((p) => (p.wind_speed ?? 0) >= 18) : undefined;
   const perUnit = units.map((u) => ({
     unit: u,
     now: (point?.per_turbine?.[u.id] ?? point?.p50 ?? 0) * unitRated(station, u, RATED_ASSUMPTION_MW),
@@ -201,10 +201,10 @@ export default function StationView({
     perUnit.map(({ unit, now }) => [
       unit.id,
       noYield
-        ? { main: point ? `${point.wind_speed.toFixed(1)} м/с` : "—", sub: unit.name }
+        ? { main: point?.wind_speed != null ? `${point.wind_speed.toFixed(1)} м/с` : "—", sub: unit.name }
         : {
             main: `${mw(now)} МВт`,
-            sub: wind && point ? `${point.wind_speed.toFixed(1)} м/с` : unit.name,
+            sub: wind && point?.wind_speed != null ? `${point.wind_speed.toFixed(1)} м/с` : unit.name,
           },
     ]),
   );
@@ -217,7 +217,7 @@ export default function StationView({
         show={loading}
         label={run ? "Пересчитываем прогноз…" : "Загружаем прогноз станции…"}
         sub={
-          originIso === LIVE_ORIGIN || station.data !== "history"
+          isLive(originIso) || station.data !== "history"
             ? "Запрашиваем погоду Open-Meteo и считаем мощность по часам"
             : "Берём сохранённый прогон агента за выбранную дату"
         }
@@ -226,8 +226,8 @@ export default function StationView({
         <div className="scene-section-title"><span className={`source-indicator ${wind ? "wind" : "solar"}`} /><b>Цифровой двойник</b><span>3D-обзор территории</span></div>
         <div className="forecast-controls">
           <label htmlFor="forecast-date">Дата прогноза</label>
-          <select id="forecast-date" value={originIso} onChange={(e) => onOrigin(e.target.value)}>
-            {STATION_ORIGINS.map((o) => <option key={o} value={o}>{originLabel(o)}</option>)}
+          <select id="forecast-date" value={originIso} onChange={(e) => onOrigin(isLive(e.target.value) ? liveOrigin() : e.target.value)}>
+            {stationOrigins(originIso).map((o) => <option key={o} value={o}>{originLabel(o)}</option>)}
           </select>
           <div className="seg" aria-label="Горизонт прогноза">
             {[24, 48].map((h) => <button key={h} className={horizon === h ? "on" : ""} aria-pressed={horizon === h} onClick={() => onHorizon(h)}>{h} ч</button>)}
@@ -287,14 +287,14 @@ export default function StationView({
           <div
             className="compass"
             role="img"
-            aria-label={wind && point ? `Ветер ${rumb(point.wind_dir)}` : `Солнце: азимут ${Math.round(sun.azimuth)}°`}
+            aria-label={wind && point?.wind_dir != null ? `Ветер ${rumb(point.wind_dir)}` : `Солнце: азимут ${Math.round(sun.azimuth)}°`}
           >
             {["С", "В", "Ю", "З"].map((c, i) => (
               <span key={c} className={`cardinal c${i}`}>
                 {c}
               </span>
             ))}
-            {wind && point && (
+            {wind && point?.wind_dir != null && (
               <div className="needle" style={{ transform: `rotate(${point.wind_dir + 180}deg)` }} />
             )}
             {sun.elevation > 0 && (
@@ -304,7 +304,7 @@ export default function StationView({
             )}
           </div>
           <div className="compass-cap">
-            {wind && point
+            {wind && point?.wind_dir != null
               ? `${rumb(point.wind_dir)} · ${Math.round(point.wind_dir)}°`
               : sun.elevation > 0
                 ? `солнце ${Math.round(sun.elevation)}°`
@@ -339,7 +339,7 @@ export default function StationView({
             {/* Без прогноза выработки лента показывает ветер: 0…20 м/с на всю высоту. */}
             <Barograph
               points={noYield ? points.map((p) => {
-                const v = Math.min(1, p.wind_speed / 20);
+                const v = Math.min(1, (p.wind_speed ?? 0) / 20);
                 return { ...p, p10: v, p50: v, p90: v };
               }) : points}
               storms={wind}
@@ -397,7 +397,7 @@ export default function StationView({
             <div className="card kpi two">
               <div>
                 <div className="kpi-label">Ветер <em>{point ? fmtDayTime(point.forecast_for) : "—"}</em></div>
-                <div className="kpi-mid">{point ? point.wind_speed.toFixed(1) : "—"}<small>м/с</small></div>
+                <div className="kpi-mid">{point?.wind_speed != null ? point.wind_speed.toFixed(1) : "—"}<small>м/с</small></div>
               </div>
               <div>
                 <div className="kpi-label">Средний <em>за сутки</em></div>
@@ -416,7 +416,7 @@ export default function StationView({
               <div className="card alert">
                 <div className="alert-title">Штормовой ветер</div>
                 <div>
-                  {fmtDayTime(storm.forecast_for)}: ветер до {storm.wind_speed.toFixed(0)} м/с. При 25 м/с
+                  {fmtDayTime(storm.forecast_for)}: ветер до {(storm.wind_speed ?? 0).toFixed(0)} м/с. При 25 м/с
                   турбины остановятся ради безопасности.
                 </div>
                 <button className="link" onClick={() => setCursor(points.indexOf(storm))}>
@@ -490,7 +490,7 @@ export default function StationView({
               <div className="card alert">
                 <div className="alert-title">Штормовой ветер</div>
                 <div>
-                  {fmtDayTime(storm.forecast_for)}: ветер до {storm.wind_speed.toFixed(0)} м/с. При 25 м/с
+                  {fmtDayTime(storm.forecast_for)}: ветер до {(storm.wind_speed ?? 0).toFixed(0)} м/с. При 25 м/с
                   турбины остановятся ради безопасности.
                 </div>
                 <button className="link" onClick={() => setCursor(points.indexOf(storm))}>

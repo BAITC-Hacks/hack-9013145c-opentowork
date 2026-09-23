@@ -26,6 +26,7 @@ function status(station: Station, p: ForecastPoint | undefined, power: number) {
     if ((p.cloud_cover ?? 0) > 0.7) return { text: "Сплошная облачность", tone: "warn" };
     return { text: "Работает", tone: "ok" };
   }
+  if (p.wind_speed == null) return { text: "Нет погоды — оценка по климатологии", tone: "warn" };
   if (p.wind_speed >= 25) return { text: "Остановлена: шторм", tone: "warn" };
   if (p.wind_speed < 3) return { text: "Штиль — ветра мало", tone: "idle" };
   if (power >= 0.97) return { text: "На полной мощности", tone: "ok" };
@@ -52,8 +53,8 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
   const done24 = last24.reduce((a, s) => a + s.power, 0) * rated;
   const doneMonth = history.reduce((a, s) => a + s.power, 0) * rated;
   const workedHours = last24.filter((s) => s.power > 0.01).length;
-  const wake = station.kind === "wind" && p && unit.id === "T2" ? wakeFactor(p.wind_dir) : 1;
-  const hubWind = p ? p.wind_speed * wake ** (1 / 3) : 0;
+  const wake = station.kind === "wind" && p && unit.id === "T2" && p.wind_dir != null ? wakeFactor(p.wind_dir) : 1;
+  const hubWind = p ? (p.wind_speed ?? 0) * wake ** (1 / 3) : 0;
   const rpm = share > 0.01 ? 5 + 11 * share : 0;
   const sun = p
     ? sunPosition(parseTs(p.forecast_for) - SITE.utcOffset * HOUR, station.lat ?? SITE.lat, station.lon ?? SITE.lon)
@@ -104,7 +105,7 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
           </>
         )}
         <dt>Температура воздуха</dt>
-        <dd>{p ? `${p.temperature.toFixed(0)} °C` : "—"}</dd>
+        <dd>{p?.temperature != null ? `${p.temperature.toFixed(0)} °C` : "—"}</dd>
         {wake < 0.995 && (
           <>
             <dt>Тень от T1</dt>

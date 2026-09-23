@@ -345,8 +345,8 @@ function SelectedForecast({
           {run.predictions[0] && (
             <div className="pred-point">
               <span>{fmtDayTime(run.predictions[0].forecast_for)} UTC</span>
-              <span>ветер <b>{run.predictions[0].wind_speed.toFixed(1)} м/с</b> {rumb(run.predictions[0].wind_dir)}</span>
-              <span className="dim">макс. за 48 ч {Math.max(...run.predictions.map((p) => p.wind_speed)).toFixed(1)} м/с</span>
+              <span>ветер <b>{run.predictions[0].wind_speed != null ? `${run.predictions[0].wind_speed.toFixed(1)} м/с` : "нет данных"}</b> {run.predictions[0].wind_dir != null && rumb(run.predictions[0].wind_dir)}</span>
+              <span className="dim">макс. за 48 ч {Math.max(...run.predictions.map((p) => p.wind_speed ?? 0)).toFixed(1)} м/с</span>
             </div>
           )}
         </>
@@ -364,7 +364,7 @@ function SelectedForecast({
             <div className="pred-point">
               <span>{fmtDayTime(point.forecast_for)} UTC</span>
               <span>
-                ветер <b>{point.wind_speed.toFixed(1)} м/с</b> {rumb(point.wind_dir)}
+                ветер <b>{point.wind_speed != null ? `${point.wind_speed.toFixed(1)} м/с` : "нет данных"}</b> {point.wind_dir != null && rumb(point.wind_dir)}
               </span>
               <span>
                 мощность <b>{rated ? `${mw(point.p50 * rated)} МВт` : pct(point.p50)}</b>
@@ -372,7 +372,7 @@ function SelectedForecast({
               <span className="dim">
                 P10–P90: {rated ? `${mw(point.p10 * rated)}–${mw(point.p90 * rated)} МВт` : `${pct(point.p10)}–${pct(point.p90)}`}
               </span>
-              <span className="dim">{point.temperature.toFixed(0)} °C</span>
+              <span className="dim">{point.temperature != null ? `${point.temperature.toFixed(0)} °C` : "—"}</span>
             </div>
           )}
           {(explanation || run.explanation) && <p className="pred-explain">{run.explanation || explanation}</p>}

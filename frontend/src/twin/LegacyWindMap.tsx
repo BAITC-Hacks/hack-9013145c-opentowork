@@ -231,9 +231,9 @@ export default function WindMap(props: Props) {
   function speedAt(px: number, py: number, withWake: boolean): number {
     const p = propsRef.current.point;
     if (!p) return 0;
-    let v = p.wind_speed * (0.88 + 0.26 * elevationAt(px, py));
+    let v = (p.wind_speed ?? 0) * (0.88 + 0.26 * elevationAt(px, py));
     if (withWake && propsRef.current.kind === "wind") {
-      const theta = (((p.wind_dir + 180) % 360) * Math.PI) / 180;
+      const theta = ((((p.wind_dir ?? 270) + 180) % 360) * Math.PI) / 180;
       const dx = Math.sin(theta);
       const dy = -Math.cos(theta);
       const r0 = ROTOR_M * ppm();
@@ -338,7 +338,7 @@ export default function WindMap(props: Props) {
     ctx.fillRect(0, 0, s.w, s.h);
     ctx.globalCompositeOperation = "source-over";
     if (!P.layers.direction || !P.point) return;
-    const theta = (((P.point.wind_dir + 180) % 360) * Math.PI) / 180;
+    const theta = ((((P.point.wind_dir ?? 270) + 180) % 360) * Math.PI) / 180;
     const dx = Math.sin(theta);
     const dy = -Math.cos(theta);
     ctx.lineWidth = 1.1;
@@ -393,7 +393,7 @@ export default function WindMap(props: Props) {
       return;
     }
 
-    const yawDeg = P.point ? P.point.wind_dir : 270;
+    const yawDeg = P.point?.wind_dir ?? 270;
     const face = Math.max(0.45, Math.abs(Math.cos((yawDeg * Math.PI) / 180)));
     const sorted = [...P.units]
       .map((t) => ({ t, w: worldOf(t, P.units) }))

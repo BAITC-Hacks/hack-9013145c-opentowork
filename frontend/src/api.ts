@@ -144,9 +144,10 @@ export interface ForecastPoint {
   p90: number;
   baseline?: number | null; // persistence или power curve
   actual?: number | null; // только для исторического периода
-  wind_speed: number; // м/с, из погодного прогноза, выпущенного до origin
-  wind_dir: number; // градусы, откуда дует
-  temperature: number;
+  // null — погоды на этот час нет, мощность закрыта климатологией (degraded).
+  wind_speed: number | null; // м/с, из погодного прогноза, выпущенного до origin
+  wind_dir: number | null; // градусы, откуда дует
+  temperature: number | null;
   cloud_cover?: number; // 0..1, для СЭС
   per_turbine?: Record<string, number>; // по id агрегата: турбины или блока
 }

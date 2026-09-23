@@ -176,7 +176,7 @@ function explain(points: ForecastPoint[]): string {
   const last = points[points.length - 1];
   return (
     `Наибольшее снижение выработки ожидается между ${hh(a)} и ${hh(b)}: ` +
-    `прогнозная скорость ветра падает с ${a.wind_speed.toFixed(1)} до ${b.wind_speed.toFixed(1)} м/с. ` +
+    `прогнозная скорость ветра падает с ${(a.wind_speed ?? 0).toFixed(1)} до ${(b.wind_speed ?? 0).toFixed(1)} м/с. ` +
     `К горизонту +${last.horizon_h} ч интервал P10–P90 расширяется до ` +
     `${Math.round((last.p90 - last.p10) * 100)} п.п. номинала.`
   );
@@ -210,7 +210,7 @@ export function demoBacktest(): BacktestSummary {
     const errs: Record<string, number[]> = Object.fromEntries(models.map((m) => [m, []]));
     pts.forEach((p, i) => {
       const act = p.actual ?? 0;
-      const pc = powerCurve(p.wind_speed);
+      const pc = powerCurve(p.wind_speed ?? 0);
       errs["Persistence"].push(Math.abs((p.baseline ?? 0) - act));
       errs["Power Curve"].push(Math.abs(pc - act));
       errs["LightGBM"].push(Math.abs(p.p50 - act));

@@ -205,16 +205,24 @@ export const ORIGINS: string[] = Array.from({ length: 28 }, (_, i) =>
   new Date(Date.UTC(2026, 0, 31 + i)).toISOString().slice(0, 19),
 );
 
-/** Живой прогноз: начало текущего часа UTC. Считается на реальной погоде, факта ещё нет. */
-export const LIVE_ORIGIN: string = new Date(Math.floor(Date.now() / 3_600_000) * 3_600_000)
-  .toISOString()
-  .slice(0, 19);
+/** Живой прогноз: начало текущего часа UTC. Считается на реальной погоде, факта ещё нет.
+ *  Функция, а не константа: вкладка может жить часами, и «сейчас» должно сдвигаться. */
+export function liveOrigin(): string {
+  return new Date(Math.floor(Date.now() / 3_600_000) * 3_600_000).toISOString().slice(0, 19);
+}
+
+/** Всё, что не день тестового периода, — живой прогноз. */
+export function isLive(iso: string): boolean {
+  return !ORIGINS.includes(iso);
+}
 
 /** Выбор даты на экране станции: «сейчас» и дни тестового периода. */
-export const STATION_ORIGINS: string[] = [LIVE_ORIGIN, ...ORIGINS];
+export function stationOrigins(current: string): string[] {
+  return [isLive(current) ? current : liveOrigin(), ...ORIGINS];
+}
 
 export function originLabel(iso: string): string {
-  return iso === LIVE_ORIGIN ? "Сейчас · живой прогноз" : `${fmtDay(iso)} ${iso.slice(0, 4)}`;
+  return isLive(iso) ? "Сейчас · живой прогноз" : `${fmtDay(iso)} ${iso.slice(0, 4)}`;
 }
 
 const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
