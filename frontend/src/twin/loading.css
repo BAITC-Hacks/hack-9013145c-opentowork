@@ -7,8 +7,11 @@
   border-radius: inherit;
   opacity: 0; animation: loading-in 0.2s ease 0.15s forwards;
 }
+/* Высокий блок (весь дашборд): центр оверлея ушёл бы за экран — плашку держим
+   у верха видимой части и ведём за прокруткой. */
+.loading-overlay.tall { align-items: flex-start; padding-top: 180px; }
+.loading-overlay.tall .loading-box { position: sticky; top: 38vh; }
 .loading-box {
-  position: sticky; top: 40vh;
   display: flex; align-items: center; gap: 14px;
   padding: 16px 22px; border-radius: 12px;
   background: var(--surface, #fff); border: 1px solid var(--border, #e5e9ef);

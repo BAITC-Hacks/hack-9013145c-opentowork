@@ -199,6 +199,7 @@ export default function StationView({
   return (
     <div className={`dash loading-host ${wind ? "wind-dashboard" : "solar-dashboard"}`} aria-busy={loading}>
       <LoadingOverlay
+        tall
         show={loading}
         label={run ? "Пересчитываем прогноз…" : "Загружаем прогноз станции…"}
         sub={

@@ -4,10 +4,10 @@ import "./loading.css";
  * Оверлей поверх блока, пока идёт запрос. Появляется с задержкой (CSS), чтобы
  * быстрые ответы не мигали; старые цифры под ним приглушены — их не спутать с новыми.
  */
-export function LoadingOverlay({ show, label, sub }: { show: boolean; label: string; sub?: string }) {
+export function LoadingOverlay({ show, label, sub, tall = false }: { show: boolean; label: string; sub?: string; tall?: boolean }) {
   if (!show) return null;
   return (
-    <div className="loading-overlay" role="status" aria-live="polite">
+    <div className={`loading-overlay${tall ? " tall" : ""}`} role="status" aria-live="polite">
       <div className="loading-box">
         <span className="loading-spinner" aria-hidden="true" />
         <span className="loading-text">
