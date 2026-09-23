@@ -9,8 +9,8 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from app.cache.ratelimit import check_rate_limit
 from app.config import settings
 from app.deps import RedisDep, SessionDep, UserDep, authorize_owner
-from app.errors import Conflict, NotFound, ServiceUnavailable
-from app.models import Job
+from app.errors import Conflict, NotFound, ServiceUnavailable, ValidationFailed
+from app.models import DomainEntity, Job
 from app.observability import JOBS, log
 from app.queue.redis_queue import JobQueue
 
@@ -43,8 +43,19 @@ async def create_analysis(
     await check_rate_limit(redis, f"analysis:{user.id}", settings.RATE_LIMIT_USER)
 
     payload = dict(body.payload)
-    if body.entity_id:
-        payload["entity_id"] = body.entity_id
+    # entity_id приходит и полем, и внутри payload; воркер пишет Analysis по
+    # значению из payload, поэтому проверяем именно то, что до него дойдёт.
+    entity_id = body.entity_id or payload.get("entity_id")
+    if entity_id:
+        try:
+            entity_uuid = uuid.UUID(str(entity_id))
+        except ValueError as exc:
+            raise ValidationFailed("entity_id: ожидается UUID") from exc
+        entity = await session.get(DomainEntity, entity_uuid)
+        if entity is None:
+            raise NotFound("Entity not found")
+        authorize_owner(user, entity.owner_id)
+        payload["entity_id"] = str(entity_uuid)
     # Владелец нужен воркеру, чтобы изоляция кэша по пользователю действовала
     # и в асинхронном пути, а не только в синхронном.
     payload["user_id"] = str(user.id)

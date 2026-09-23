@@ -120,6 +120,30 @@ async def test_user_cannot_read_foreign_job(client):
     assert foreign.status_code == 403
 
 
+async def test_analysis_cannot_target_foreign_entity(client):
+    token_a, _ = await _register(client)
+    token_b, _ = await _register(client)
+    created = await client.post(
+        "/api/v1/entities", json={"name": "объект A"}, headers=_auth(token_a)
+    )
+    entity_id = created.json()["id"]
+
+    # Оба способа передать сущность: полем и внутри payload — воркер читает payload.
+    for body in (
+        {"type": "authz_probe", "entity_id": entity_id, "payload": {}},
+        {"type": "authz_probe", "payload": {"entity_id": entity_id}},
+    ):
+        foreign = await client.post("/api/v1/analysis", json=body, headers=_auth(token_b))
+        assert foreign.status_code == 403, foreign.text
+
+    own = await client.post(
+        "/api/v1/analysis",
+        json={"type": "authz_probe", "payload": {"entity_id": entity_id}},
+        headers=_auth(token_a),
+    )
+    assert own.status_code == 202, own.text
+
+
 async def test_idempotency_key_is_scoped_to_user(client):
     """Один и тот же ключ у разных пользователей — разные задачи, а не чужая."""
     token_a, _ = await _register(client)
