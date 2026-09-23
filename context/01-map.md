@@ -1,5 +1,10 @@
 # Карта проекта
 
+Солнечные крыши трёх городов: `scripts/fetch_solar_data.py --city all` загружает
+`app/solar/data/{astana_left_bank,almaty_center,shymkent_center}.json` из OSM и PVGIS.
+`tests/test_solar_geodata.py` проверяет геометрию загрузчика; `tests/test_solar.py` — расчёт,
+выбор города и кэш. Снимки содержат расчётный район, не полный город.
+
 ## Новые ветровые турбины
 
 `app/wind/turbines.py` + `turbines.json` — отдельный каталог оборудования;
@@ -186,6 +191,7 @@
 | `scene/turbines.ts` | Процедурные модели турбин и солнечных панелей |
 | `scene/terrain.ts` | Рельеф, текстуры поверхности, дороги, площадки, камни и трава |
 | `StationView.tsx`, `twin.css` | Переключатели слоёв, управление и оформление сцены |
+| `Bids.tsx` | Вкладка «Заявка РФЦ»: черновик заявки на сутки из `/bids`, корректировки, скачивание PDF/DOCX/CSV/JSON (стили — в `predictions.css`) |
 | `Predictions.tsx`, `predictions.css` | Раздел «Прогнозы»: сводка парка, таблица станций, подробный прогноз с P10–P90 и шагами агента |
 | `design.css` | Светлая тема рабочего пространства, адаптивная навигация и карточки, оформление ВЭС/СЭС |
 | `flow-refresh.css` | Главная с прямыми входами в ветер, солнце и городские крыши; карточки выбора |
@@ -233,3 +239,16 @@
 | `scripts/fetch_wind_farms.py` | Пересобрать JSON (Overpass + реестр + ручные сопоставления `CURATED`); вручную, не при старте. Новые данные в БД — новой миграцией или `catalog.sync` |
 | `frontend/src/twin/KzMap.tsx`, `kzmap.css` | Карта Казахстана на экране выбора ВЭС: точки станций, карточка с данными |
 | `frontend/src/twin/kz_outline.json` | Контур страны, Natural Earth 1:50m |
+
+`frontend/src/twin/scene/cityEnvironment.ts` — Three.js-окружение городских крыш: OSM roads/areas, непрерывные дорожные ленты, landuse, зелёные зоны и проверка отступов озеленения. Географическая проекция общая со зданиями.
+
+`docs/city-fidelity.md` — источники геометрии городов, различие между картой и фотограмметрией, путь к точным контурам/высотам/фасадам.
+
+
+## Реальная карта городов
+
+| Файл | Назначение |
+|---|---|
+| `frontend/src/twin/cities.ts` | Тип CityId и центры, стартовый zoom/bearing для Астаны, Алматы и Шымкента |
+| `frontend/src/twin/scene/CityMap.tsx` | Ленивый MapLibre GL: стиль OpenFreeMap, здания OSM, солнечные roofplate/выбор и граница района, DEM Mapterhorn, lifecycle и сетевые ошибки |
+| `frontend/src/twin/scene/city-map.css` | Самостоятельный контейнер карты, навигация, popup, загрузка/ошибка и мобильные состояния |
