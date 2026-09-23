@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { BacktestSummary, ForecastRun, SourceKind, Station, UnitSample } from "../api";
-import { demoBacktest, demoRun, demoSolarRun, demoUnitHistory, DEMO_SOLAR_STATIONS, DEMO_STATIONS } from "./demo";
+import { demoBacktest, demoRun, demoSolarRun, DEMO_SOLAR_STATIONS, DEMO_STATIONS } from "./demo";
 
 export type Origin = "api" | "demo";
 
@@ -50,14 +50,15 @@ export function useForecast(station: Station | null, originIso: string, horizon:
     if (!station) return;
     let alive = true;
     setState((s) => ({ ...s, loading: true }));
-    // Модель обучена только на SCADA станции кейса; /forecast/* не различает
-    // station_id, поэтому остальным станциям — демо с плашкой, а не чужой прогноз.
+    // Тестовый период станции кейса — сохранённые прогоны агента (с фактом для сравнения).
+    // Всё остальное — расчёт на реальной погоде Open-Meteo: для Нурлы обученной моделью,
+    // для других ВЭС кривой мощности, для СЭС по радиации. Демо — только если API недоступен.
     const live = () =>
-      station.data !== "history"
-        ? Promise.reject(new Error("no model for station"))
-        : nonce > 0
-        ? api.runForecast(station.id, originIso, horizon)
-        : api.forecastAt(station.id, originIso);
+      station.data === "history" && ORIGINS.includes(originIso)
+        ? nonce > 0
+          ? api.runForecast(station.id, originIso, horizon)
+          : api.forecastAt(station.id, originIso)
+        : api.predictRun(station, originIso, horizon);
     withFallback(live, () => demoFor(station, originIso, horizon)).then(([run, origin]) => {
       if (alive) setState({ run, origin, loading: false });
     });
@@ -69,17 +70,21 @@ export function useForecast(station: Station | null, originIso: string, horizon:
   return state;
 }
 
+/** Фактическая SCADA агрегата; null — фактов нет (станция без истории или API недоступен).
+ *  Синтетику сюда не подставляем: панель показывала бы её как «выработала». */
 export function useUnitHistory(station: Station, unitId: string | null, fromIso: string, toIso: string) {
-  const [samples, setSamples] = useState<UnitSample[]>([]);
+  const [samples, setSamples] = useState<UnitSample[] | null>(null);
   useEffect(() => {
     if (!unitId) return;
     let alive = true;
-    withFallback(
-      () => api.unitHistory(station.id, unitId, fromIso, toIso),
-      () => demoUnitHistory(station, unitId, fromIso, toIso),
-    ).then(([data]) => {
-      if (alive) setSamples(data);
-    });
+    if (station.data !== "history") {
+      setSamples(null);
+      return;
+    }
+    api.unitHistory(station.id, unitId, fromIso, toIso).then(
+      (data) => alive && setSamples(data),
+      () => alive && setSamples(null),
+    );
     return () => {
       alive = false;
     };
@@ -112,12 +117,14 @@ export type Route =
   | { page: "station"; kind: SourceKind; stationId: string; tab: StationTab }
   | { page: "place"; kind: SourceKind }
   | { page: "roofs" }
+  | { page: "predictions" }
   | { page: "platform" };
 
 export function parseRoute(hash: string): Route {
   const [mode, kind, stationId, tab] = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
   const k: SourceKind | null = kind === "wind" || kind === "solar" ? kind : null;
   if (mode === "platform") return { page: "platform" };
+  if (mode === "predictions") return { page: "predictions" };
   if (mode === "forecast" || mode === "place") {
     if (mode === "place" && kind === "roofs") return { page: "roofs" };
     if (!k) return { page: "kind", mode };
@@ -135,6 +142,8 @@ export function routeHash(r: Route): string {
       return "#/";
     case "platform":
       return "#/platform";
+    case "predictions":
+      return "#/predictions";
     case "kind":
       return `#/${r.mode}`;
     case "stations":
@@ -165,6 +174,18 @@ export function useRoute(): [Route, (r: Route) => void] {
 export const ORIGINS: string[] = Array.from({ length: 28 }, (_, i) =>
   new Date(Date.UTC(2026, 0, 31 + i)).toISOString().slice(0, 19),
 );
+
+/** Живой прогноз: начало текущего часа UTC. Считается на реальной погоде, факта ещё нет. */
+export const LIVE_ORIGIN: string = new Date(Math.floor(Date.now() / 3_600_000) * 3_600_000)
+  .toISOString()
+  .slice(0, 19);
+
+/** Выбор даты на экране станции: «сейчас» и дни тестового периода. */
+export const STATION_ORIGINS: string[] = [LIVE_ORIGIN, ...ORIGINS];
+
+export function originLabel(iso: string): string {
+  return iso === LIVE_ORIGIN ? "Сейчас · живой прогноз" : `${fmtDay(iso)} ${iso.slice(0, 4)}`;
+}
 
 const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 

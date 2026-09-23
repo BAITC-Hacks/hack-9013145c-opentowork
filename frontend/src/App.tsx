@@ -4,7 +4,8 @@ import type { ChatResponse, JobStatus, SearchHit, Stats } from "./api";
 import { AnswerView, MetaBadge, StatsPanel } from "./components";
 import Agent from "./twin/Agent";
 import Backtest from "./twin/Backtest";
-import { canOpen, fmtDay, ORIGINS, useForecast, useRoute, useStations } from "./twin/data";
+import Predictions from "./twin/Predictions";
+import { canOpen, fmtDay, fmtDayTime, LIVE_ORIGIN, ORIGINS, useForecast, useRoute, useStations } from "./twin/data";
 import type { Route, StationTab } from "./twin/data";
 import { Home, KindPick, StationPick } from "./twin/Flow";
 import Placement from "./twin/Placement";
@@ -363,6 +364,7 @@ const TAB_LABEL: [StationTab, string][] = [
 function crumbs(route: Route, stationName: string | null): { label: string; to: Route | null }[] {
   const out: { label: string; to: Route | null }[] = [];
   if (route.page === "platform") return [{ label: "Платформа", to: null }];
+  if (route.page === "predictions") return [{ label: "Прогнозы", to: null }];
   if (route.page === "home") return out;
   if (route.page === "roofs")
     return [
@@ -424,6 +426,7 @@ export default function App() {
     { id: "wind", label: "Ветровая энергия", to: { page: "stations", kind: "wind" } },
     { id: "solar", label: "Солнечная энергия", to: { page: "stations", kind: "solar" } },
     { id: "roofs", label: "Панели на крышах", to: { page: "roofs" } },
+    { id: "predictions", label: "Прогнозы", to: { page: "predictions" } },
   ];
 
   return (
@@ -460,7 +463,7 @@ export default function App() {
       {route.page === "station" && station && (
         <div className="station-heading">
         <div className="station-title"><span className="eyebrow">{station.kind === "wind" ? "Ветровая электростанция" : "Солнечная электростанция"}</span><h1>{station.name}</h1><p>{station.region} <span>·</span> Почасовой прогноз на {horizon} часов</p></div>
-        <div className="station-heading-right"><div className="forecast-date">Прогноз от {fmtDay(originIso)} 2026 <span>00:00 · UTC+5</span></div>
+        <div className="station-heading-right"><div className="forecast-date">{originIso === LIVE_ORIGIN ? <>Живой прогноз от {fmtDayTime(originIso)} <span>UTC · погода Open-Meteo</span></> : <>Прогноз от {fmtDay(originIso)} 2026 <span>00:00 · UTC+5</span></>}</div>
         <nav className="station-tabs" aria-label="Разделы станции">
           {TAB_LABEL.filter(([t]) => t === "map" || station.data === "history").map(([t, label]) => (
             <button
@@ -483,6 +486,15 @@ export default function App() {
       {route.page === "place" && <Placement kind={route.kind} stations={stations} go={go} />}
       {route.page === "roofs" && <Rooftops go={go} />}
       {route.page === "platform" && <PlatformTab />}
+      {route.page === "predictions" && (
+        <Predictions
+          stations={stations}
+          onOpen={(s) => {
+            setOriginIso(LIVE_ORIGIN);
+            go({ page: "station", kind: s.kind, stationId: s.id, tab: "map" });
+          }}
+        />
+      )}
       {route.page === "station" && !station && (
         <div className="flow">
           <h1 className="flow-q">Станция не найдена</h1>

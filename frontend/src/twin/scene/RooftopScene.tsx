@@ -24,7 +24,7 @@ export default function RooftopScene(props: Props) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
+    renderer.toneMappingExposure = 1.02;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.domElement.tabIndex = 0;
@@ -35,8 +35,8 @@ export default function RooftopScene(props: Props) {
     scene.fog = new THREE.Fog("#dce7ec", 1800, 6600);
     const city = createCity(current.current.data);
     scene.add(city.group);
-    scene.add(new THREE.HemisphereLight("#dbeaf5", "#aba38f", 2.1));
-    const sun = new THREE.DirectionalLight("#fff0d7", 3.1);
+    scene.add(new THREE.HemisphereLight("#e3edf5", "#849178", 1.65));
+    const sun = new THREE.DirectionalLight("#fff3e3", 2.8);
     sun.position.set(-550, 1000, 550);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);

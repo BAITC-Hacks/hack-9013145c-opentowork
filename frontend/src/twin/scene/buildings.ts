@@ -82,30 +82,43 @@ function panelTexture() {
     }
   });
 }
-function groundTexture(width: number, depth: number, buildings: CityBuilding[]) {
+function groundTexture() {
   let seed = 714;
   const rand = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-  return texture(2048, 2048, (ctx) => {
-    ctx.fillStyle = "#959c88"; ctx.fillRect(0, 0, 2048, 2048);
-    for (let i = 0; i < 2600; i++) {
-      const x = rand() * 2048, y = rand() * 2048, radius = 6 + rand() * 72;
-      const color = i % 3 === 0 ? "116,131,94" : i % 3 === 1 ? "176,166,137" : "138,145,123";
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-      gradient.addColorStop(0, `rgba(${color},.4)`); gradient.addColorStop(1, `rgba(${color},0)`);
-      ctx.fillStyle = gradient; ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-    }
-    const toX = (x: number) => (x / width + .5) * 2048;
-    const toY = (z: number) => (z / depth + .5) * 2048;
-    // A softly paved perimeter follows each measured footprint; streets are not inferred.
-    for (const b of buildings) {
-      ctx.beginPath(); b.polygon.forEach(([x, z], i) => { if (!i) ctx.moveTo(toX(x), toY(z)); else ctx.lineTo(toX(x), toY(z)); }); ctx.closePath();
-      ctx.strokeStyle = "#bcbeb5"; ctx.fillStyle = "#bcbeb5"; ctx.lineJoin = "round"; ctx.lineWidth = 12 * 2048 / width; ctx.stroke(); ctx.fill();
-    }
-    for (let i = 0; i < 160000; i++) {
-      ctx.fillStyle = i % 2 ? "rgba(239,234,220,.1)" : "rgba(50,59,46,.08)";
-      ctx.fillRect(rand() * 2048, rand() * 2048, 1 + rand() * 2, 1 + rand() * 2);
+  return texture(1024, 1024, (ctx) => {
+    // A fine, coherent lawn surface rather than metre-scale dirt blotches.
+    ctx.fillStyle = "#789169"; ctx.fillRect(0, 0, 1024, 1024);
+    for (let i = 0; i < 125000; i++) {
+      ctx.fillStyle = i % 3 === 0 ? "rgba(204,215,169,.13)" : i % 3 === 1 ? "rgba(44,81,42,.10)" : "rgba(128,151,97,.14)";
+      const x = rand() * 1024, y = rand() * 1024;
+      ctx.fillRect(x, y, .5 + rand(), 1 + rand() * 3);
     }
   });
+}
+function pavingTexture() {
+  let seed = 816;
+  const rand = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  return texture(512, 512, (ctx) => {
+    ctx.fillStyle = "#aeb5b0"; ctx.fillRect(0, 0, 512, 512);
+    const slabs = ["#d0d2c8", "#c8cdc4", "#d7d8d0", "#c9cec8"];
+    for (let row = -1; row < 8; row++) for (let col = -1; col < 8; col++) {
+      const x = col * 128 + (row % 2 ? 64 : 0), y = row * 64;
+      ctx.fillStyle = slabs[(col + row + 16) % slabs.length]; ctx.fillRect(x + 1, y + 1, 126, 62);
+      ctx.fillStyle = "rgba(255,255,255,.16)"; ctx.fillRect(x + 1, y + 1, 126, 1);
+    }
+    for (let i = 0; i < 18000; i++) {
+      ctx.fillStyle = i % 2 ? "rgba(255,255,255,.10)" : "rgba(69,80,66,.08)";
+      ctx.fillRect(rand() * 512, rand() * 512, 1, 1);
+    }
+  });
+}
+function outsideNormal(poly: Point[], index: number): Point {
+  let area = 0;
+  for (let i = 0; i < poly.length; i++) { const p = poly[i], q = poly[(i + 1) % poly.length]; area += p[0] * q[1] - q[0] * p[1]; }
+  const p = poly[index], q = poly[(index + 1) % poly.length];
+  const length = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+  const sign = area >= 0 ? 1 : -1;
+  return [sign * (q[1] - p[1]) / length, -sign * (q[0] - p[0]) / length];
 }
 const inside = (x: number, z: number, poly: Point[]) => {
   let hit = false;
@@ -131,7 +144,7 @@ export function createCity(data: RooftopsResponse) {
   const lat = (south + north) / 2, lon = (west + east) / 2;
   const width = (east - west) * Math.cos(lat * DEG) * 111320;
   const depth = (north - south) * 110540;
-  const walls = surface(), roofs = surface(), trim = surface(), paths = surface();
+  const walls = surface(), roofs = surface(), trim = surface(), paths = surface(), curbs = surface();
   const buildings: CityBuilding[] = [];
   const panelPositions: THREE.Vector3[] = [];
   const fixtures: { x: number; y: number; z: number; scale: number }[] = [];
@@ -159,12 +172,21 @@ export function createCity(data: RooftopsResponse) {
       quad(trim, [[a[0], h, a[1]], [c[0], h, c[1]], [c[0], h + rim, c[1]], [a[0], h + rim, a[1]]], uv, trimColor, b.id);
       quad(trim, [[a[0] + nx, h, a[1] + nz], [c[0] + nx, h, c[1] + nz], [c[0] + nx, h + rim, c[1] + nz], [a[0] + nx, h + rim, a[1] + nz]], uv, trimColor, b.id);
       quad(trim, [[a[0], h + rim, a[1]], [c[0], h + rim, c[1]], [c[0] + nx, h + rim, c[1] + nz], [a[0] + nx, h + rim, a[1] + nz]], uv, trimColor, b.id);
-      // The apron is schematic; no invented streets are drawn through real footprints.
-      const dx = (a[0] - cx) / (Math.hypot(a[0] - cx, a[1] - cz) || 1) * 4.5;
-      const dz = (a[1] - cz) / (Math.hypot(a[0] - cx, a[1] - cz) || 1) * 4.5;
-      const ex = (c[0] - cx) / (Math.hypot(c[0] - cx, c[1] - cz) || 1) * 4.5;
-      const ez = (c[1] - cz) / (Math.hypot(c[0] - cx, c[1] - cz) || 1) * 4.5;
-      quad(paths, [[a[0], .05, a[1]], [c[0], .05, c[1]], [c[0] + ex, .05, c[1] + ez], [a[0] + dx, .05, a[1] + dz]], uv, new THREE.Color("#c5c5bc"), "");
+      // Modest paved aprons follow real building edges; they do not imply mapped streets.
+      const [ox, oz] = outsideNormal(poly, i);
+      const apron = b.roof_m2 > 1000 ? 6 : 4.5;
+      const edgeA = [a[0] + ox * apron, .12, a[1] + oz * apron];
+      const edgeB = [c[0] + ox * apron, .12, c[1] + oz * apron];
+      const paving = [[a[0], .12, a[1]], [c[0], .12, c[1]], edgeB, edgeA];
+      quad(paths, paving, paving.map(([x, , z]) => [x / 5, z / 5]), new THREE.Color("#ffffff"), "");
+      const curbA = [edgeA[0] + ox * .2, .16, edgeA[2] + oz * .2];
+      const curbB = [edgeB[0] + ox * .2, .16, edgeB[2] + oz * .2];
+      quad(curbs, [[edgeA[0], .16, edgeA[2]], [edgeB[0], .16, edgeB[2]], curbB, curbA], uv, new THREE.Color("#bac2b8"), "");
+      quad(curbs, [curbA, curbB, [curbB[0], -.02, curbB[2]], [curbA[0], -.02, curbA[2]]], uv, new THREE.Color("#a5aea0"), "");
+      // Close the small outside corner between consecutive perpendicular offsets.
+      const [px, pz] = outsideNormal(poly, (i + poly.length - 1) % poly.length);
+      const corner = [[a[0], .12, a[1]], edgeA, [a[0] + px * apron, .12, a[1] + pz * apron]];
+      triangle(paths, corner[0], corner[1], corner[2], corner.map(([x, , z]) => [x / 5, z / 5]), new THREE.Color("#ffffff"), "");
     }
     const shape = new THREE.Shape(poly.map(([x, z]) => new THREE.Vector2(x, -z)));
     const roofGeometry = new THREE.ShapeGeometry(shape).toNonIndexed();
@@ -191,7 +213,7 @@ export function createCity(data: RooftopsResponse) {
   const wallMesh = mesh(walls, new THREE.MeshStandardMaterial({ map: facadeTexture(), vertexColors: true, roughness: .76, side: THREE.DoubleSide }));
   const roofMaterial = new THREE.MeshStandardMaterial({ map: roofTexture(), vertexColors: true, roughness: .88, side: THREE.DoubleSide });
   const roofMesh = mesh(roofs, roofMaterial);
-  group.add(wallMesh, roofMesh, mesh(trim, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .65, side: THREE.DoubleSide })), mesh(paths, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide })));
+  group.add(wallMesh, roofMesh, mesh(trim, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .65, side: THREE.DoubleSide })), mesh(paths, new THREE.MeshStandardMaterial({ map: pavingTexture(), vertexColors: true, roughness: .86, side: THREE.DoubleSide })), mesh(curbs, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, side: THREE.DoubleSide })));
   const panels = new THREE.InstancedMesh(new THREE.BoxGeometry(2.5, .10, 3.8), new THREE.MeshStandardMaterial({ color: "#587d96", metalness: .4, roughness: .28, map: panelTexture() }), panelPositions.length);
   const helper = new THREE.Object3D();
   panelPositions.forEach((position, i) => { helper.position.copy(position); helper.rotation.x = Math.PI / 6; helper.updateMatrix(); panels.setMatrixAt(i, helper.matrix); });
@@ -201,34 +223,55 @@ export function createCity(data: RooftopsResponse) {
   fixtures.forEach((f, i) => { helper.position.set(f.x, f.y, f.z); helper.rotation.set(0, 0, 0); helper.scale.set(f.scale * 2, 1.6, f.scale); helper.updateMatrix(); equipment.setMatrixAt(i, helper.matrix); });
   equipment.castShadow = true; equipment.receiveShadow = true;
   group.add(equipment);
-  const groundMap = groundTexture(width + 1000, depth + 1000, buildings);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(width + 1000, depth + 1000), new THREE.MeshStandardMaterial({ map: groundMap, roughness: 1 }));
+  const groundMap = groundTexture();
+  // Extend past the fog horizon so the district never sits on a visible rectangular sheet.
+  groundMap.repeat.set((width + 12000) / 80, (depth + 12000) / 80);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(width + 12000, depth + 12000), new THREE.MeshStandardMaterial({ map: groundMap, roughness: 1 }));
   ground.rotation.x = -Math.PI / 2; ground.position.y = -.08; ground.receiveShadow = true; group.add(ground);
-  // Landscaping is illustrative. Keep every trunk away from all OSM footprints.
-  const bounds = buildings.map((b) => ({ b, x0: Math.min(...b.polygon.map(p => p[0])) - 4, x1: Math.max(...b.polygon.map(p => p[0])) + 4, z0: Math.min(...b.polygon.map(p => p[1])) - 4, z1: Math.max(...b.polygon.map(p => p[1])) + 4 }));
+  // Trees are grouped along the aprons, with clearance from every measured footprint.
+  const bounds = buildings.map((b) => ({ b, x0: Math.min(...b.polygon.map(p => p[0])) - 6, x1: Math.max(...b.polygon.map(p => p[0])) + 6, z0: Math.min(...b.polygon.map(p => p[1])) - 6, z1: Math.max(...b.polygon.map(p => p[1])) + 6 }));
   const trees: { x: number; z: number; scale: number }[] = [];
+  const clear = (x: number, z: number) => !bounds.some(q => x > q.x0 && x < q.x1 && z > q.z0 && z < q.z1 && (inside(x, z, q.b.polygon) || edgeDistance(x, z, q.b.polygon) < 6));
   for (const b of buildings) {
-    for (let j = 0; j < b.polygon.length; j += Math.max(1, Math.floor(b.polygon.length / 3))) {
-      if (trees.length >= 650) break;
-      const p = b.polygon[j], length = Math.hypot(p[0] - b.center.x, p[1] - b.center.z) || 1;
-      const x = p[0] + (p[0] - b.center.x) / length * 13, z = p[1] + (p[1] - b.center.z) / length * 13;
-      if (trees.some(t => Math.hypot(t.x - x, t.z - z) < 14)) continue;
-      const obstructed = bounds.some(q => x > q.x0 && x < q.x1 && z > q.z0 && z < q.z1 && (inside(x, z, q.b.polygon) || edgeDistance(x, z, q.b.polygon) < 4));
-      if (!obstructed) trees.push({ x, z, scale: .8 + (trees.length % 7) * .08 });
+    let planted = 0;
+    for (let j = 0; j < b.polygon.length && planted < 8; j++) {
+      const a = b.polygon[j], p = b.polygon[(j + 1) % b.polygon.length];
+      const length = Math.hypot(p[0] - a[0], p[1] - a[1]);
+      if (length < 20) continue;
+      const [nx, nz] = outsideNormal(b.polygon, j);
+      for (let d = 9; d < length - 7 && planted < 8; d += 18) {
+        if (trees.length >= 1000) break;
+        const x = a[0] + (p[0] - a[0]) * d / length + nx * 10.5;
+        const z = a[1] + (p[1] - a[1]) * d / length + nz * 10.5;
+        if (!clear(x, z) || trees.some(t => Math.hypot(t.x - x, t.z - z) < 12)) continue;
+        trees.push({ x, z, scale: .85 + (trees.length % 5) * .085 }); planted++;
+      }
     }
   }
-  const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(.22, .34, 4, 6), new THREE.MeshStandardMaterial({ color: "#6b6654", roughness: 1 }), trees.length);
-  const crowns = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshStandardMaterial({ color: "#718051", roughness: .92 }), trees.length * 3);
+  const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(.22, .34, 4, 6), new THREE.MeshStandardMaterial({ color: "#6f6c5b", roughness: 1 }), trees.length);
+  const crowns = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: .94 }), trees.length * 3);
+  const beds = new THREE.InstancedMesh(new THREE.CircleGeometry(3.8, 16), new THREE.MeshStandardMaterial({ color: "#52694a", roughness: 1 }), trees.length);
+  const shrubs = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 7, 5), new THREE.MeshStandardMaterial({ color: "#758954", roughness: .95 }), trees.length * 2);
   trees.forEach((t, i) => {
     helper.position.set(t.x, 2 * t.scale, t.z); helper.rotation.set(0, 0, 0); helper.scale.setScalar(t.scale); helper.updateMatrix(); trunks.setMatrixAt(i, helper.matrix);
     for (let j = 0; j < 3; j++) {
       const angle = j / 3 * Math.PI * 2 + i;
       helper.position.set(t.x + Math.cos(angle) * 1.15 * t.scale, (5.2 + j * .3) * t.scale, t.z + Math.sin(angle) * 1.15 * t.scale);
       helper.scale.set(2.7 * t.scale, (2.9 - j * .2) * t.scale, 2.4 * t.scale); helper.updateMatrix(); crowns.setMatrixAt(i * 3 + j, helper.matrix);
-      crowns.setColorAt(i * 3 + j, new THREE.Color(["#c4c895", "#a6b988", "#d2cb9f", "#b1bf97"][i % 4]));
+      crowns.setColorAt(i * 3 + j, new THREE.Color(["#607b4d", "#738950", "#536f45", "#829452"][i % 4]));
+    }
+    helper.position.set(t.x, -.035, t.z); helper.rotation.set(-Math.PI / 2, 0, 0); helper.scale.setScalar(t.scale); helper.updateMatrix(); beds.setMatrixAt(i, helper.matrix);
+    helper.rotation.set(0, 0, 0);
+    for (let j = 0; j < 2; j++) {
+      const angle = i + j * Math.PI;
+      helper.position.set(t.x + Math.cos(angle) * 2.6 * t.scale, .65, t.z + Math.sin(angle) * 2.6 * t.scale);
+      helper.scale.set(1.25 * t.scale, .85, 1.2 * t.scale); helper.updateMatrix(); shrubs.setMatrixAt(i * 2 + j, helper.matrix);
     }
   });
-  trunks.castShadow = true; crowns.castShadow = true; crowns.receiveShadow = true; group.add(trunks, crowns);
+  trunks.name = "landscape-tree-trunks"; crowns.name = "landscape-tree-crowns";
+  trunks.castShadow = true; crowns.castShadow = true; crowns.receiveShadow = true;
+  beds.receiveShadow = true; shrubs.castShadow = true; shrubs.receiveShadow = true;
+  group.add(trunks, crowns, beds, shrubs);
 
   const baseRoofColors = new Float32Array(roofMesh.geometry.getAttribute("color").array);
   const energy = data.buildings.map((b) => Math.log10(Math.max(1, b.kwh_year)));

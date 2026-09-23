@@ -7,6 +7,7 @@ import "@fontsource-variable/inter";
 import "./styles.css";
 import "./twin/twin.css";
 import "./twin/design.css";
+import "./twin/predictions.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

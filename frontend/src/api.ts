@@ -146,6 +146,40 @@ export interface ForecastRun {
   predictions: ForecastPoint[];
   agent_steps?: AgentStep[];
   explanation?: string;
+  live?: boolean; // посчитан сейчас на свежей погоде, а не взят из сохранённого прогона
+  method?: "ml" | "curve" | "solar";
+  degraded?: boolean;
+}
+
+// Живая сводка по всем ВЭС: /predictions/overview. Ряды — доля номинала по часам.
+export interface OverviewStation {
+  id: string;
+  name: string;
+  region: string;
+  lat: number;
+  lon: number;
+  rated_mw: number | null;
+  can_open: boolean;
+  method: "ml" | "curve";
+  times: string[];
+  p50: (number | null)[];
+  p10: (number | null)[] | null;
+  p90: (number | null)[] | null;
+  wind_speed: (number | null)[];
+  wind_dir: (number | null)[];
+  cf24: number | null;
+  mwh24: number | null;
+  peak_at: string | null;
+  peak: number | null;
+}
+
+export interface Overview {
+  origin: string;
+  generated_at: string;
+  horizon: number;
+  sources: Record<string, string>;
+  ml_explanation: string | null;
+  stations: OverviewStation[];
 }
 
 export interface ModelMetric {
@@ -309,6 +343,19 @@ export const api = {
     ),
 
   backtest: () => request<BacktestSummary>("/metrics"),
+
+  // Прогноз на реальной погоде Open-Meteo для любой станции и момента (origin = ISO или "now").
+  predictRun: (station: Station, origin: string, horizon: number) => {
+    const q = new URLSearchParams({ station_id: station.id, origin, horizon: String(horizon), kind: station.kind });
+    if (station.kind === "solar" && station.lat != null && station.lon != null) {
+      q.set("lat", String(station.lat));
+      q.set("lon", String(station.lon));
+      q.set("units", station.units.map((u) => u.id).join(","));
+    }
+    return request<ForecastRun>(`/predictions/run?${q}`);
+  },
+
+  predictionsOverview: (horizon = 48) => request<Overview>(`/predictions/overview?horizon=${horizon}`),
 
   rooftops: () => request<RooftopsResponse>("/solar/rooftops"),
 

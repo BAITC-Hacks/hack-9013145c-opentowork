@@ -36,7 +36,8 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
   const rated = unit.rated_mw ?? RATED_ASSUMPTION_MW;
   const origin = parseTs(originIso);
   const monthStart = toIso(Date.UTC(new Date(origin).getUTCFullYear(), new Date(origin).getUTCMonth(), 1));
-  const history = useUnitHistory(station, unit.id, monthStart, toIso(origin));
+  const facts = useUnitHistory(station, unit.id, monthStart, toIso(origin));
+  const history = facts ?? [];
   const last24 = history.slice(-24);
 
   const p = points[Math.min(cursor, points.length - 1)];
@@ -107,15 +108,15 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
       <div className="energy">
         <div>
           <span className="kpi-label">Выработала за сутки</span>
-          <b>{mw(done24)}<small>МВт·ч</small></b>
+          <b>{facts && last24.length ? <>{mw(done24)}<small>МВт·ч</small></> : "—"}</b>
           <span className="energy-sub">
-            работала {workedHours} из {last24.length || 24} ч
+            {facts && last24.length ? `работала ${workedHours} из ${last24.length} ч` : "нет фактических данных"}
           </span>
         </div>
         <div>
           <span className="kpi-label">С начала месяца</span>
-          <b>{mw(doneMonth)}<small>МВт·ч</small></b>
-          <span className="energy-sub">{history.length} ч данных</span>
+          <b>{facts && history.length ? <>{mw(doneMonth)}<small>МВт·ч</small></> : "—"}</b>
+          <span className="energy-sub">{facts ? `${history.length} ч данных SCADA` : "SCADA нет"}</span>
         </div>
         <div className="accent">
           <span className="kpi-label">Прогноз на сутки</span>

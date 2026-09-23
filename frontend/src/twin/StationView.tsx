@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ForecastPoint, ForecastRun, Station } from "../api";
 import { ForecastChart, Sparkline } from "./charts";
-import { fmtDay, fmtDayTime, mw, ORIGINS, stationRated } from "./data";
+import { fmtDayTime, mw, originLabel, stationRated, STATION_ORIGINS } from "./data";
 import type { Origin } from "./data";
 import { parseTs, powerCurve, RATED_ASSUMPTION_MW, SITE, solarPower, sunPosition } from "./demo";
 import UnitPanel from "./UnitPanel";
 import WindMap, { LEGEND_GRADIENT, SPEED_MARKS } from "./WindMap";
 import type { Layers } from "./WindMap";
+
+const METHOD_LABEL: Record<string, string> = {
+  ml: "ML-модель windcast, погода Open-Meteo",
+  curve: "Ветер Open-Meteo → кривая мощности",
+  solar: "Радиация Open-Meteo → модель панелей",
+  saved: "Сохранённый прогон агента",
+};
 
 const WIND_LAYERS: [keyof Layers, string][] = [
   ["speed", "Сила ветра"],
@@ -90,9 +97,9 @@ export default function StationView({
   const [tilt, setTilt] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
   const [layers, setLayers] = useState<Layers>({
-    speed: false,
-    direction: false,
-    wake: false,
+    speed: wind,
+    direction: wind,
+    wake: wind,
     terrain: true,
     solar: false,
   });
@@ -176,7 +183,7 @@ export default function StationView({
         <div className="forecast-controls">
           <label htmlFor="forecast-date">Дата прогноза</label>
           <select id="forecast-date" value={originIso} onChange={(e) => onOrigin(e.target.value)}>
-            {ORIGINS.map((o) => <option key={o} value={o}>{fmtDay(o)} 2026</option>)}
+            {STATION_ORIGINS.map((o) => <option key={o} value={o}>{originLabel(o)}</option>)}
           </select>
           <div className="seg" aria-label="Горизонт прогноза">
             {[24, 48].map((h) => <button key={h} className={horizon === h ? "on" : ""} aria-pressed={horizon === h} onClick={() => onHorizon(h)}>{h} ч</button>)}
@@ -263,6 +270,9 @@ export default function StationView({
 
         {dataOrigin === "demo" && (
           <div className="float top-center demo-flag">Демонстрационный прогноз</div>
+        )}
+        {dataOrigin === "api" && run?.method === "curve" && (
+          <div className="float top-center demo-flag curve-flag">Реальная погода · кривая мощности, без ML</div>
         )}
 
         {!selected && (
@@ -390,6 +400,7 @@ export default function StationView({
                 <div className="kpi-sub" style={{ marginTop: 0 }}>
                   по погоде от {run ? fmtDayTime(run.weather_run) : "—"}
                 </div>
+                {run && <div className="kpi-sub method-line">{METHOD_LABEL[run.method ?? "saved"]}</div>}
                 <button className="link" onClick={onRerun} disabled={loading}>
                   {loading ? "Пересчитываем…" : "Пересчитать прогноз"}
                 </button>

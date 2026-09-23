@@ -29,16 +29,40 @@ function fbm(x: number, z: number): number {
 
 /** A shared, deterministic elevation function; turbines and overlays use this datum. */
 export function terrainHeight(x: number, z: number): number {
-  return (fbm(x / 1900 + 9, z / 1900 + 23) - 0.5) * 51
-    + (noise(x / 390 + 5, z / 390 + 17) - 0.5) * 5.5
-    + Math.sin(x / 1600 + z / 2700) * 8;
+  const meadow = (fbm(x / 1700 + 9, z / 1700 + 23) - 0.5) * 68
+    + (noise(x / 430 + 5, z / 430 + 17) - 0.5) * 7
+    + Math.sin(x / 1600 + z / 2700) * 10;
+  // Keep the working plain gentle; a continuous distant ridge gives the horizon depth.
+  const ridgeLine = -2800 + Math.sin(x / 1100) * 280;
+  const ridge = Math.exp(-Math.pow((z - ridgeLine) / 950, 2))
+    * (170 + fbm(x / 720 + 51, z / 1400 + 8) * 400);
+  const distant = smooth(clamp((Math.hypot(x, z) - 2500) / 3000))
+    * (110 + fbm(x / 1800 + 13, z / 2100 + 61) * 260);
+  return meadow + ridge + distant;
 }
 
 function snowCover(x: number, z: number): number {
-  const warp = noise(x / 310 + 14, z / 310 + 21);
-  const broad = fbm(x / 190 + warp * 2.4 + 82, z / 170 + 46);
-  const wind = noise(x / 220 + z / 330 + 55, z / 24 + 93);
-  return smooth(clamp((broad * 0.8 + wind * 0.2 - 0.36) / 0.24));
+  const warp = noise(x / 600 + 14, z / 600 + 21);
+  const hollows = fbm(x / 420 + warp * 1.2 + 82, z / 300 + 46);
+  const wind = noise(x / 310 + z / 850 + 55, z / 65 + 93);
+  // Snow remains in sheltered hollows instead of painting the entire scene in white stripes.
+  return smooth(clamp((hollows * 0.85 + wind * 0.15 - 0.57) / 0.16)) * 0.88;
+}
+
+function groundPixel(pixels: Uint8ClampedArray, i: number, x: number, z: number, grain: number, mineral = 0): void {
+  const cover = snowCover(x, z);
+  const meadow = smooth(clamp((fbm(x / 480 + 21, z / 540 + 74) - 0.28) / 0.42));
+  const dry = noise(x / 110 + 33, z / 135 + 67);
+  const detail = grain * 5 + mineral * 9;
+  // Muted sage tussocks merge with warm dormant grass; avoid high-contrast camouflage.
+  const r = THREE.MathUtils.lerp(118, 156, meadow) + dry * 9 + detail;
+  const g = THREE.MathUtils.lerp(128, 154, meadow) + dry * 6 + detail;
+  const b = THREE.MathUtils.lerp(94, 113, meadow) + dry * 5 + detail * .7;
+  const frost = noise(x / 90, z / 100) * 6 + grain * 3;
+  pixels[i] = THREE.MathUtils.lerp(r, 208 + frost, cover);
+  pixels[i + 1] = THREE.MathUtils.lerp(g, 219 + frost, cover);
+  pixels[i + 2] = THREE.MathUtils.lerp(b, 216 + frost, cover);
+  pixels[i + 3] = 255;
 }
 
 function canvas(size: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
@@ -66,16 +90,9 @@ function groundMaps(): { map: THREE.CanvasTexture; normalMap: THREE.CanvasTextur
     const z = (y / (size - 1) - 0.5) * LAND_SIZE;
     for (let x = 0; x < size; x++) {
       const worldX = (x / (size - 1) - 0.5) * LAND_SIZE;
-      const cover = snowCover(worldX, z);
       const grain = hash(x + 121, y + 97) - 0.5;
-      const vegetation = noise(worldX / 25 + 33, z / 25 + 67);
-      const soilVariation = vegetation * 24 + grain * 13;
-      const snowVariation = noise(worldX / 60, z / 70) * 10 + grain * 7;
       const i = (y * size + x) * 4;
-      pixels[i] = THREE.MathUtils.lerp(104 + soilVariation, 218 + snowVariation, cover);
-      pixels[i + 1] = THREE.MathUtils.lerp(94 + soilVariation * 0.9, 220 + snowVariation, cover);
-      pixels[i + 2] = THREE.MathUtils.lerp(75 + soilVariation * 0.8, 217 + snowVariation, cover);
-      pixels[i + 3] = 255;
+      groundPixel(pixels, i, worldX, z, grain);
     }
   }
   ctx.putImageData(image, 0, 0);
@@ -129,10 +146,10 @@ function gravelMap(): THREE.CanvasTexture {
       const i = (y * size + x) * 4;
       const speckle = hash(x + 35, y + 59);
       const grains = noise(x / 4, y / 4);
-      const tone = 122 + speckle * 38 + grains * 16;
+      const tone = 176 + speckle * 22 + grains * 12;
       image.data[i] = tone;
-      image.data[i + 1] = tone - 8;
-      image.data[i + 2] = tone - 18;
+      image.data[i + 1] = tone - 7;
+      image.data[i + 2] = tone - 17;
       image.data[i + 3] = 255;
     }
   }
@@ -154,17 +171,12 @@ function localGround(site: Site, normal: THREE.CanvasTexture, roughness: THREE.C
     const z = startZ + y / (size - 1) * patchSize;
     for (let x = 0; x < size; x++) {
       const worldX = startX + x / (size - 1) * patchSize;
-      const cover = snowCover(worldX, z);
       const distance = Math.hypot(worldX - site.x, z - site.z);
       const alpha = 1 - smooth(clamp((distance - 145) / 30));
       const fineGrain = hash(x + 27, y + 82) - 0.5;
       const mineral = noise(worldX / 0.8 + 18, z / 0.8 + 42) - 0.5;
-      const soil = noise(worldX / 25 + 33, z / 25 + 67) * 24 + fineGrain * 16 + mineral * 22;
-      const frost = noise(worldX / 60, z / 70) * 10 + fineGrain * 5 + mineral * 4;
       const i = (y * size + x) * 4;
-      image.data[i] = THREE.MathUtils.lerp(104 + soil, 218 + frost, cover);
-      image.data[i + 1] = THREE.MathUtils.lerp(94 + soil * 0.9, 220 + frost, cover);
-      image.data[i + 2] = THREE.MathUtils.lerp(75 + soil * 0.8, 217 + frost, cover);
+      groundPixel(image.data, i, worldX, z, fineGrain, mineral);
       image.data[i + 3] = alpha * 255;
     }
   }
@@ -176,7 +188,7 @@ function localGround(site: Site, normal: THREE.CanvasTexture, roughness: THREE.C
     const x = hash(i, 341) * size;
     const y = hash(i, 295) * size;
     if (snowCover(startX + x / size * patchSize, startZ + y / size * patchSize) > 0.65) continue;
-    ctx.strokeStyle = i % 2 ? "rgba(132,115,85,.32)" : "rgba(76,67,51,.22)";
+    ctx.strokeStyle = i % 2 ? "rgba(175,166,119,.28)" : "rgba(91,107,72,.20)";
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.quadraticCurveTo(x + 1.8, y - 1.1, x + 3.5 + hash(i, 492) * 3, y - 1.4);
@@ -199,7 +211,7 @@ function localGround(site: Site, normal: THREE.CanvasTexture, roughness: THREE.C
   geometry.computeVertexNormals();
   const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
     map: texture(surface, true), normalMap, roughnessMap,
-    normalScale: new THREE.Vector2(0.42, 0.42), roughness: 1,
+    normalScale: new THREE.Vector2(0.25, 0.25), roughness: 1,
     transparent: true, depthWrite: false,
   }));
   mesh.name = "Local 0.41 m/texel snow, soil and straw";
@@ -271,9 +283,9 @@ function onClearedGround(x: number, z: number, sites: Site[]): boolean {
 
 function addInfrastructure(group: THREE.Group, sites: Site[]): void {
   const map = gravelMap();
-  const gravel = new THREE.MeshStandardMaterial({ map, roughness: 1, color: 0xc3bbae });
-  const shoulder = new THREE.MeshStandardMaterial({ map, roughness: 1, color: 0x938773 });
-  const track = new THREE.MeshStandardMaterial({ color: 0x746d60, roughness: 1 });
+  const gravel = new THREE.MeshStandardMaterial({ map, roughness: .97, color: 0xf0ebdf });
+  const shoulder = new THREE.MeshStandardMaterial({ map, roughness: 1, color: 0xc1b99a });
+  const track = new THREE.MeshStandardMaterial({ color: 0xa7a18c, roughness: 1 });
   const main = [-3400, -2200, -1100, 0, 1100, 2400, 3400]
     .map((x) => new THREE.Vector3(x, 0, accessRoadZ(x)));
   group.add(ribbon(main, 10, shoulder, 0.2), ribbon(main, 7.4, gravel, 0.25));
@@ -312,7 +324,7 @@ function addVegetation(group: THREE.Group, sites: Site[]): void {
   }
   blades.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
   blades.computeVertexNormals();
-  const material = new THREE.MeshStandardMaterial({ color: 0x86735b, roughness: 1, side: THREE.DoubleSide });
+  const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, side: THREE.DoubleSide });
   const count = 8500 + sites.length * 1500;
   const grass = new THREE.InstancedMesh(blades, material, count);
   let used = 0;
@@ -331,7 +343,7 @@ function addVegetation(group: THREE.Group, sites: Site[]): void {
     dummy.scale.set(scale, scale * (0.7 + cover * 0.35), scale);
     dummy.updateMatrix();
     grass.setMatrixAt(used, dummy.matrix);
-    color.setRGB(0.41 + hash(i, 31) * 0.13, 0.35 + hash(i, 31) * 0.1, 0.26 + hash(i, 31) * 0.08);
+    color.setRGB(0.23 + hash(i, 31) * 0.09, 0.26 + hash(i, 31) * 0.07, 0.12 + hash(i, 31) * 0.05);
     grass.setColorAt(used++, color);
   }
   grass.count = used;
@@ -375,6 +387,41 @@ function addVegetation(group: THREE.Group, sites: Site[]): void {
   group.add(rocks);
 }
 
+function addDistantTerrain(group: THREE.Group): void {
+  const positions: number[] = [], colors: number[] = [], indices: number[] = [];
+  const radii = [LAND_SIZE / 2, 4050, 4750, 5800, 7400, 10000];
+  const edgeSteps = 96;
+  const ringSize = edgeSteps * 4;
+  const color = new THREE.Color();
+  const earth = new THREE.Color("#889178"), crest = new THREE.Color("#b0b6a0");
+  radii.forEach((radius, ring) => {
+    for (let side = 0; side < 4; side++) {
+      for (let step = 0; step < edgeSteps; step++) {
+        const along = (step / edgeSteps * 2 - 1) * radius;
+        const x = side === 0 ? along : side === 1 ? radius : side === 2 ? -along : -radius;
+        const z = side === 0 ? -radius : side === 1 ? along : side === 2 ? radius : -along;
+        const height = terrainHeight(x, z);
+        positions.push(x, height - (ring === 0 ? .4 : 0), z);
+        color.copy(earth).lerp(crest, clamp((height - 130) / 480));
+        colors.push(color.r, color.g, color.b);
+      }
+    }
+  });
+  for (let ring = 0; ring < radii.length - 1; ring++) {
+    for (let i = 0; i < ringSize; i++) {
+      const a = ring * ringSize + i, b = ring * ringSize + (i + 1) % ringSize;
+      indices.push(a, b, a + ringSize, b, b + ringSize, a + ringSize);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setIndex(indices); geometry.computeVertexNormals();
+  const hills = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }));
+  hills.name = "Continuous distant foothills — illustrative terrain";
+  group.add(hills);
+}
+
 /** Winter steppe, modelled in metres. All resources live on traversable meshes. */
 export function createLandscape(sites: Site[]): THREE.Group {
   const group = new THREE.Group();
@@ -390,12 +437,13 @@ export function createLandscape(sites: Site[]): THREE.Group {
   const ground = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
     ...maps,
     roughness: 1,
-    normalScale: new THREE.Vector2(0.42, 0.42),
+    normalScale: new THREE.Vector2(0.25, 0.25),
     metalness: 0,
   }));
-  ground.name = "2048px unique snow / soil surface";
+  ground.name = "Sage and straw steppe with sheltered snow drifts";
   ground.receiveShadow = true;
   group.add(ground);
+  addDistantTerrain(group);
   const details = new THREE.Group();
   details.name = "Ground detail — local surface, roads and vegetation";
   details.userData.terrainDetail = true;

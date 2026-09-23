@@ -59,16 +59,16 @@ export default function Scene(props: Props) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 0.96;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.domElement.className = "scene-canvas";
     renderer.domElement.setAttribute("aria-label", "Трёхмерная сцена станции. Перетащите для вращения, прокрутите для приближения.");
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#bdcbd2");
-    scene.fog = new THREE.FogExp2("#c5d0d5", 0.00031);
-    const camera = new THREE.PerspectiveCamera(40, 1, 1, 12000);
+    scene.background = new THREE.Color("#c5d8e1");
+    scene.fog = new THREE.FogExp2("#c5d8e1", 0.00019);
+    const camera = new THREE.PerspectiveCamera(43, 1, 1, 12000);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.07;
@@ -98,8 +98,9 @@ export default function Scene(props: Props) {
       sites.reduce((a, s) => a + s.z, 0) / Math.max(1, sites.length),
     );
     const span = Math.max(600, ...sites.map((s) => Math.hypot(s.x - center.x, s.z - center.z) * 2));
-    const distance = Math.min(1900, span * 1.25);
-    const home = center.clone().add(new THREE.Vector3(-distance * 0.5, distance * 0.32, distance * 0.78));
+    const viewportAspect = Math.max(0.6, container.clientWidth / Math.max(1, container.clientHeight));
+    const distance = Math.min(2300, span * 1.12 * Math.max(1, 1.25 / viewportAspect));
+    const home = center.clone().add(new THREE.Vector3(-distance * 0.46, distance * 0.17, distance * 0.7));
     camera.position.copy(current.current.tilt ? home : center.clone().add(new THREE.Vector3(0, distance * 1.05, 0.1)));
     controls.target.copy(center);
     controls.update();
@@ -138,17 +139,17 @@ export default function Scene(props: Props) {
     environment.dispose();
     pmrem.dispose();
 
-    const hemisphere = new THREE.HemisphereLight("#dcebf4", "#747164", 1.35);
+    const hemisphere = new THREE.HemisphereLight("#c3dff4", "#7d8875", 0.9);
     scene.add(hemisphere);
-    const sunlight = new THREE.DirectionalLight("#fff2db", 3.1);
+    const sunlight = new THREE.DirectionalLight("#fff0d9", 2.65);
     sunlight.position.set(-700, 750, 500);
     sunlight.castShadow = true;
     sunlight.shadow.mapSize.set(2048, 2048);
     const shadowRadius = Math.max(950, span * 0.8);
     Object.assign(sunlight.shadow.camera, { left: -shadowRadius, right: shadowRadius, top: shadowRadius, bottom: -shadowRadius, near: 10, far: 5000 });
-    sunlight.shadow.normalBias = 0.35;
+    sunlight.shadow.normalBias = 0.22;
     sunlight.shadow.bias = -0.00012;
-    sunlight.shadow.radius = 3;
+    sunlight.shadow.radius = 3.5;
     scene.add(sunlight, sunlight.target);
 
     const landscape = createLandscape(sites);
@@ -156,14 +157,46 @@ export default function Scene(props: Props) {
     const infrastructure = createStationInfrastructure(sites, current.current.kind);
     facilityTarget.copy(infrastructure.children[0].position).add(new THREE.Vector3(0, 8, 0));
     scene.add(infrastructure);
-    // Colour gradient sky, with atmospheric haze rather than a flat background.
+    // Clear winter air, a warm low sun and sparse cirrus; no downloaded sky textures.
     const skyMaterial = new THREE.ShaderMaterial({
       side: THREE.BackSide, depthWrite: false,
-      uniforms: { zenith: { value: new THREE.Color("#7eabc8") }, horizon: { value: new THREE.Color("#dce1df") } },
+      uniforms: {
+        zenith: { value: new THREE.Color("#659fce") },
+        horizon: { value: new THREE.Color("#d5e2e7") },
+        cloudColor: { value: new THREE.Color("#f3f0e6") },
+        cloudAmount: { value: 1 },
+        sunDirection: { value: new THREE.Vector3(0.8, 0.45, 0.4).normalize() },
+        sunGlow: { value: 1 },
+      },
       vertexShader: "varying vec3 vDirection; void main(){vDirection=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
-      fragmentShader: `uniform vec3 zenith;uniform vec3 horizon;varying vec3 vDirection;
-        void main(){float h=max(normalize(vDirection).y,0.0);
-          gl_FragColor=vec4(mix(horizon,zenith,pow(h,0.55)),1.0);
+      fragmentShader: `
+        uniform vec3 zenith, horizon, cloudColor, sunDirection;
+        uniform float cloudAmount, sunGlow;
+        varying vec3 vDirection;
+        float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+        float noise(vec2 p){
+          vec2 i=floor(p), f=fract(p);f=f*f*(3.0-2.0*f);
+          return mix(mix(hash(i),hash(i+vec2(1.0,0.0)),f.x),
+            mix(hash(i+vec2(0.0,1.0)),hash(i+vec2(1.0,1.0)),f.x),f.y);
+        }
+        float fbm(vec2 p){
+          float value=0.0, amplitude=0.55;
+          for(int i=0;i<4;i++){value+=noise(p)*amplitude;p=p*2.03+vec2(13.1,7.7);amplitude*=0.48;}
+          return value;
+        }
+        void main(){
+          vec3 direction=normalize(vDirection);
+          float h=max(direction.y,0.0);
+          vec3 color=mix(horizon,zenith,pow(h,0.42));
+          vec2 uv=direction.xz/max(direction.y+0.25,0.25);
+          float drift=fbm(uv*0.72+vec2(12.0,4.0));
+          float wisps=fbm(uv*vec2(1.65,7.5)+vec2(drift*1.2,8.0));
+          float cloud=smoothstep(0.52,0.77,wisps)*smoothstep(0.27,0.6,drift);
+          cloud*=smoothstep(0.035,0.18,h)*(1.0-smoothstep(0.78,1.0,h));
+          color=mix(color,cloudColor,cloud*0.42*cloudAmount);
+          float facing=max(dot(direction,sunDirection),0.0);
+          color+=vec3(1.0,0.79,0.48)*(pow(facing,18.0)*0.045+pow(facing,220.0)*0.07)*sunGlow;
+          gl_FragColor=vec4(color,1.0);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }`,
@@ -234,6 +267,8 @@ export default function Scene(props: Props) {
       width = Math.max(1, container.clientWidth); height = Math.max(1, container.clientHeight);
       renderer.setSize(width, height);
       camera.aspect = width / height;
+      // Raise the visual centre slightly so the forecast timeline does not cover the foreground.
+      camera.setViewOffset(width, height, 0, height * 0.035, width, height);
       camera.updateProjectionMatrix();
     };
     const observer = new ResizeObserver(resize);
@@ -299,21 +334,33 @@ export default function Scene(props: Props) {
       controls.update();
       // Keep camera above terrain when panning on low elevation views.
       camera.position.y = Math.max(camera.position.y, terrainHeight(camera.position.x, camera.position.z) + 8);
-      const azimuth = (daylightRef.current ? 235 : p.sun.azimuth) * DEG;
-      const elevation = daylightRef.current ? 32 : Math.max(6, p.sun.elevation);
+      const azimuth = (daylightRef.current ? 120 : p.sun.azimuth) * DEG;
+      const elevation = daylightRef.current ? 28 : Math.max(6, p.sun.elevation);
       const lightKey = `${daylightRef.current}:${Math.round(p.sun.elevation)}:${Math.round(p.sun.azimuth)}`;
       if (lightKey !== lastLight) {
         lastLight = lightKey;
         const night = !daylightRef.current && p.sun.elevation < 0;
-        sunlight.position.set(center.x + Math.sin(azimuth) * 1600, Math.sin(elevation * DEG) * 1600, center.z - Math.cos(azimuth) * 1600);
+        const lowSun = daylightRef.current ? 0 : THREE.MathUtils.clamp((14 - p.sun.elevation) / 14, 0, 1);
+        const direction = skyMaterial.uniforms.sunDirection.value as THREE.Vector3;
+        direction.set(Math.sin(azimuth) * Math.cos(elevation * DEG), Math.sin(elevation * DEG), -Math.cos(azimuth) * Math.cos(elevation * DEG));
+        sunlight.position.copy(center).addScaledVector(direction, 1800);
         sunlight.target.position.copy(center);
-        sunlight.intensity = night ? 0.65 : 3.1;
-        sunlight.color.set(night ? "#bdcfe9" : "#fff2db");
-        hemisphere.intensity = night ? 0.7 : 1.35;
-        renderer.toneMappingExposure = night ? 0.85 : 1.05;
-        (scene.fog as THREE.FogExp2).color.set(night ? "#263a50" : "#c5d0d5");
-        skyMaterial.uniforms.zenith.value.set(night ? "#101d34" : "#7eabc8");
-        skyMaterial.uniforms.horizon.value.set(night ? "#405367" : "#dce1df");
+        sunlight.intensity = night ? 0.48 : THREE.MathUtils.lerp(2.65, 1.6, lowSun);
+        sunlight.color.set(night ? "#a6c4ea" : "#fff0d9");
+        if (!night) sunlight.color.lerp(new THREE.Color("#f4bd91"), lowSun);
+        hemisphere.intensity = night ? 0.48 : 0.9;
+        scene.environmentIntensity = night ? 0.14 : 0.22;
+        renderer.toneMappingExposure = night ? 0.82 : 0.96;
+        const fog = scene.fog as THREE.FogExp2;
+        fog.color.set(night ? "#24374f" : "#c5d8e1");
+        if (!night) fog.color.lerp(new THREE.Color("#d7c8b6"), lowSun * 0.65);
+        fog.density = night ? 0.00025 : 0.00019;
+        skyMaterial.uniforms.zenith.value.set(night ? "#11233c" : "#659fce");
+        skyMaterial.uniforms.horizon.value.set(night ? "#3c526c" : "#d5e2e7");
+        if (!night) skyMaterial.uniforms.horizon.value.lerp(new THREE.Color("#ebceb0"), lowSun * 0.7);
+        skyMaterial.uniforms.cloudColor.value.set(night ? "#5c7189" : "#f3f0e6");
+        skyMaterial.uniforms.cloudAmount.value = night ? 0.3 : 1;
+        skyMaterial.uniforms.sunGlow.value = night ? 0 : 1;
       }
       field.visible = p.layers.speed && p.kind === "wind";
       flow.visible = p.layers.direction && p.kind === "wind";
