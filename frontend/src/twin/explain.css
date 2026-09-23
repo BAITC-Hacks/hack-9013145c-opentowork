@@ -1,0 +1,100 @@
+/* Страница «Почему прогноз такой» — палитра и токены из twin.css. */
+.explain { max-width: 1240px; margin: 0 auto; padding: 18px 20px 40px; display: grid; gap: 16px; }
+.explain .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+.explain h1 { margin: 2px 0 4px; font-size: 26px; }
+.explain h2 { margin: 0 0 12px; font-size: 16px; }
+.explain h3 { margin: 0 0 10px; font-size: 13px; color: var(--text-dim); font-weight: 600; }
+.explain .hint { color: var(--text-dim); font-size: 12px; line-height: 1.45; margin: 10px 0 0; }
+.explain .accent { color: var(--accent); }
+.explain .tag { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 99px; background: var(--accent-dim); color: var(--accent); font-size: 11px; font-weight: 600; }
+.explain .tag.muted { background: var(--surface-2); color: var(--text-dim); }
+.explain-head { display: flex; gap: 18px; align-items: flex-start; }
+.explain-head .eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.explain-sub { margin: 0; color: var(--text-dim); font-size: 13px; }
+.explain-summary p { margin: 0; line-height: 1.55; }
+.explain-rev-line { margin-top: 10px !important; padding-top: 10px; border-top: 1px dashed var(--border); }
+.explain-error { border-color: var(--warn) !important; background: var(--warn-dim) !important; }
+.explain-loading { color: var(--text-dim); }
+.explain .card-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; }
+.explain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.explain-grid.three { grid-template-columns: 1fr 1fr 1.2fr; gap: 24px; }
+@media (max-width: 900px) { .explain-grid, .explain-grid.three { grid-template-columns: 1fr; } .explain-head { flex-direction: column; } }
+
+/* Полоса часов */
+.hour-strip { width: 100%; height: auto; display: block; cursor: pointer; }
+.hour-strip .hit { fill: transparent; }
+.hour-strip .bar { fill: #bfe3dc; transition: fill .15s; }
+.hour-strip g:hover .bar { fill: #8ccfc2; }
+.hour-strip g.sel .bar { fill: var(--accent); }
+.hour-strip .raw { fill: var(--warn); }
+.hour-strip text { font-size: 11px; fill: var(--text-dim); }
+
+/* Разбор по шагам */
+.waterfall { display: grid; gap: 12px; }
+.wf-row { display: grid; grid-template-columns: 1fr; gap: 5px; }
+.wf-label { font-size: 13px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.wf-n { width: 20px; height: 20px; border-radius: 50%; background: var(--surface-2); display: inline-grid; place-items: center; font-size: 11px; font-weight: 700; }
+.wf-wind { color: var(--text-dim); font-size: 12px; }
+.wf-track { position: relative; height: 14px; background: var(--surface-2); border-radius: 7px; }
+.wf-bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 7px; background: #9fb3c8; }
+.wf-row.corrected .wf-bar { background: #6fb8a8; }
+.wf-row.uncertainty .wf-bar { background: #3f9d8b; }
+.wf-row.final .wf-bar { background: var(--accent); }
+.wf-band { position: absolute; top: -3px; bottom: -3px; border: 2px solid var(--accent); border-radius: 8px; opacity: .45; }
+.wf-val { font-size: 12px; display: flex; gap: 10px; align-items: baseline; }
+.wf-val b { font-size: 15px; }
+.wf-val span { color: var(--text-dim); }
+.wf-d.up { color: var(--accent) !important; font-weight: 600; }
+.wf-d.down { color: var(--danger) !important; font-weight: 600; }
+
+/* Вклады */
+.contrib-base { font-size: 13px; line-height: 1.5; margin: 0 0 12px; }
+.contrib-row { display: grid; grid-template-columns: 170px 1fr 150px; gap: 10px; align-items: center; padding: 4px 0; font-size: 12.5px; }
+.contrib-track { position: relative; height: 12px; background: linear-gradient(90deg, transparent calc(50% - .5px), var(--border) calc(50% - .5px), var(--border) calc(50% + .5px), transparent calc(50% + .5px)); }
+.contrib-bar { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.contrib-bar.pos { background: var(--accent); }
+.contrib-bar.neg { background: var(--danger); }
+.contrib-val { font-variant-numeric: tabular-nums; }
+.contrib-val small { color: var(--text-dim); }
+@media (max-width: 560px) { .contrib-row { grid-template-columns: 1fr; } }
+
+/* Погодные модели */
+.models-hour { display: grid; gap: 8px; }
+.mh-row { display: grid; grid-template-columns: 180px 1fr 90px; gap: 10px; align-items: center; font-size: 12.5px; }
+.mh-track { position: relative; height: 10px; background: var(--surface-2); border-radius: 5px; }
+.mh-bar { position: absolute; left: 0; top: 0; bottom: 0; background: #9fb3c8; border-radius: 5px; }
+.mh-row.ens .mh-bar { background: var(--warn); }
+.mh-band { position: absolute; top: 0; bottom: 0; background: #cfd8e3; border-radius: 5px; }
+.mh-mark { position: absolute; top: -3px; bottom: -3px; width: 3px; margin-left: -1.5px; background: var(--accent); border-radius: 2px; }
+.mh-row.corr { font-weight: 600; }
+
+/* Столбики */
+.bars { display: grid; gap: 7px; }
+.bars-row { display: grid; grid-template-columns: 1fr 1.2fr 80px; gap: 10px; align-items: center; font-size: 12.5px; }
+.bars-track { height: 10px; background: var(--surface-2); border-radius: 5px; }
+.bars-bar { height: 100%; background: var(--accent); border-radius: 5px; }
+.bars-row b { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Ревизии */
+.revisions { display: grid; gap: 12px; }
+.rev { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; }
+.rev-head { font-weight: 600; font-size: 13px; }
+.rev p { margin: 6px 0; font-size: 13px; }
+.rev ul { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--text-dim); }
+
+/* Модель в целом */
+.power-curve { width: 100%; height: auto; }
+.power-curve .grid { stroke: var(--border); }
+.power-curve text { font-size: 10px; fill: var(--text-dim); }
+.power-curve polyline { fill: none; stroke-width: 2.2; }
+.power-curve .curve-a { stroke: #3b82c4; fill: #3b82c4; }
+.power-curve .curve-b { stroke: var(--warn); fill: var(--warn); }
+.power-curve text.legend { font-size: 11px; stroke: none; }
+.explain-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.explain-table th { text-align: left; color: var(--text-dim); font-weight: 600; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.explain-table td { padding: 5px 6px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.explain-table tr.best td { font-weight: 700; color: var(--accent); }
+
+/* Кнопка под графиком прогноза */
+.explain-cta { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.explain-cta span { color: var(--text-dim); font-size: 12px; }

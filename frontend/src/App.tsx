@@ -4,8 +4,9 @@ import type { ChatResponse, JobStatus, SearchHit, Stats } from "./api";
 import { AnswerView, MetaBadge, StatsPanel } from "./components";
 import Agent from "./twin/Agent";
 import Backtest from "./twin/Backtest";
+import Explain from "./twin/Explain";
 import Predictions from "./twin/Predictions";
-import { canOpen, fmtDay, fmtDayTime, LIVE_ORIGIN, ORIGINS, useForecast, useRoute, useStations } from "./twin/data";
+import { canOpen, fmtDay, fmtDayTime, LIVE_ORIGIN, ORIGINS, stationRated, useForecast, useRoute, useStations } from "./twin/data";
 import type { Route, StationTab } from "./twin/data";
 import { Home, KindPick, StationPick } from "./twin/Flow";
 import { PageLoader } from "./twin/Loading";
@@ -367,6 +368,16 @@ function crumbs(route: Route, stationName: string | null): { label: string; to: 
   if (route.page === "platform") return [{ label: "Платформа", to: null }];
   if (route.page === "predictions") return [{ label: "Прогнозы", to: null }];
   if (route.page === "home") return out;
+  if (route.page === "explain")
+    return [
+      { label: "Прогноз", to: { page: "kind", mode: "forecast" } },
+      { label: KIND_LABEL[route.kind], to: { page: "stations", kind: route.kind } },
+      {
+        label: stationName ?? route.stationId,
+        to: { page: "station", kind: route.kind, stationId: route.stationId, tab: "map" },
+      },
+      { label: "Почему такой прогноз", to: null },
+    ];
   if (route.page === "roofs")
     return [
       { label: "Новая станция", to: { page: "kind", mode: "place" } },
@@ -521,6 +532,29 @@ export default function App() {
           horizon={horizon}
           onHorizon={setHorizon}
           onRerun={rerun}
+          onExplain={
+            station.data === "history" && forecast.run && forecast.origin === "api"
+              ? () =>
+                  go({
+                    page: "explain",
+                    kind: station.kind,
+                    stationId: station.id,
+                    origin: forecast.run!.forecast_origin,
+                  })
+              : undefined
+          }
+        />
+      )}
+      {route.page === "explain" && (
+        <Explain
+          station={stations.find((s) => s.id === route.stationId) ?? null}
+          stationId={route.stationId}
+          origin={route.origin}
+          rated={(() => {
+            const s = stations.find((x) => x.id === route.stationId);
+            return (s && stationRated(s)) || 5;
+          })()}
+          onBack={() => go({ page: "station", kind: route.kind, stationId: route.stationId, tab: "map" })}
         />
       )}
       {route.page === "station" && station && route.tab === "accuracy" && (

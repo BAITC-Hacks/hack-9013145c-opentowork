@@ -206,6 +206,89 @@ export interface Overview {
   stations: OverviewStation[];
 }
 
+// ─── Интерпретация прогноза (/explain) ───────────────────────────────────────
+
+export interface ExplainGroup {
+  group: string;
+  label: string;
+  wind_ms: number; // вклад в поправку ветра, м/с (TreeSHAP)
+  power_via_wind: number; // тот же вклад, переведённый в мощность через наклон кривой
+  power_direct: number; // вклад в прямую модель, доля номинала
+}
+
+export interface ExplainStep {
+  key: "raw" | "corrected" | "uncertainty" | "final";
+  label: string;
+  power: number;
+  wind?: number;
+}
+
+export interface ExplainHour {
+  time: string;
+  local: string;
+  horizon_h: number;
+  nwp_day: number;
+  steps: ExplainStep[];
+  direct_p50: number;
+  cascade_mean: number;
+  interval: [number, number];
+  wind: {
+    raw: number;
+    spread: number;
+    corrected: number;
+    p10: number;
+    p90: number;
+    base: number;
+    by_model: Record<string, number | null>;
+  };
+  groups: ExplainGroup[];
+  temp: number;
+}
+
+export interface ExplainRevision {
+  from: string;
+  to: string;
+  summary: string;
+  mean_abs_change?: number;
+  hours: {
+    time: string;
+    local: string;
+    delta_power: number;
+    was: number;
+    now: number;
+    raw_wind_change: number;
+    model_wind_change: Record<string, number | null>;
+    group_changes: { label: string; delta_wind_ms: number }[];
+  }[];
+}
+
+export interface Explanation {
+  origin: string;
+  forecast_id?: string;
+  published?: boolean;
+  live?: boolean;
+  summary: string;
+  hours: ExplainHour[];
+  overall: { group: string; label: string; mean_abs_wind_ms: number; mean_wind_ms: number }[];
+  revision?: ExplainRevision;
+  versions?: { origin: string; published: boolean; revision?: ExplainRevision | null }[];
+}
+
+export interface GlobalExplanation {
+  power_curve: { ws: number[]; curves: Record<string, number[]> };
+  importance_wind_correction: { group: string; label: string; share: number }[];
+  importance_direct: { group: string; label: string; share: number }[];
+  weather_models: { model: string; hours: number; corr: number; mae_ms: number; bias_ms: number }[];
+  ensemble_weights: Record<string, number>;
+  calibration: {
+    reliability?: Record<string, number>;
+    cov80?: number;
+    cov90?: number;
+    by_horizon?: { h: number; ensemble: number; raw: number }[];
+  };
+  trained_until: string;
+}
+
 export interface ModelMetric {
   model: string;
   mae: number;
@@ -427,6 +510,13 @@ export const api = {
     ),
 
   backtest: () => request<BacktestSummary>("/metrics"),
+
+  explain: (stationId: string, origin: string) =>
+    request<Explanation>(
+      `/explain?station_id=${encodeURIComponent(stationId)}&origin=${encodeURIComponent(origin)}`,
+    ),
+
+  explainGlobal: () => request<GlobalExplanation>("/explain/global"),
 
   stationWind: (stationId: string, origin: string, horizon: number) =>
     request<StationWind>(

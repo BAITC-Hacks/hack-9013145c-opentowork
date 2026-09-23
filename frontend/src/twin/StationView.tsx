@@ -78,6 +78,8 @@ interface Props {
   horizon: number;
   onHorizon: (h: number) => void;
   onRerun: () => void;
+  /** Есть только у станции с обученной моделью: открывает страницу «Почему такой прогноз». */
+  onExplain?: () => void;
 }
 
 export default function StationView({
@@ -90,6 +92,7 @@ export default function StationView({
   horizon,
   onHorizon,
   onRerun,
+  onExplain,
 }: Props) {
   const wind = station.kind === "wind";
   const units = station.units;
@@ -488,6 +491,14 @@ export default function StationView({
           scenario={scenario}
           rated={rated}
         />
+        {onExplain && (
+          <div className="explain-cta">
+            <button className="primary" onClick={onExplain}>
+              Объяснить прогноз →
+            </button>
+            <span>разбор по шагам модели, вклад факторов и причины ревизий</span>
+          </div>
+        )}
       </section>
 
       <section className="card bottom turb-card">
