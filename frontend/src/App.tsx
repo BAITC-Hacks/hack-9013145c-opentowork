@@ -4,7 +4,7 @@ import type { ChatResponse, JobStatus, SearchHit, Stats } from "./api";
 import { AnswerView, MetaBadge, StatsPanel } from "./components";
 import Agent from "./twin/Agent";
 import Backtest from "./twin/Backtest";
-import { fmtDay, ORIGINS, useForecast, useRoute, useStations } from "./twin/data";
+import { canOpen, fmtDay, ORIGINS, useForecast, useRoute, useStations } from "./twin/data";
 import type { Route, StationTab } from "./twin/data";
 import { Home, KindPick, StationPick } from "./twin/Flow";
 import Placement from "./twin/Placement";
@@ -57,23 +57,26 @@ function Login({ onDone }: { onDone: () => void }) {
 
   return (
     <form className="card login stack" onSubmit={submit}>
-      <h2>Вход</h2>
+      <div className="login-brand"><Logo /> Renewable Twin</div>
+      <h2>Энергия начинается с понимания</h2>
+      <p className="login-intro">Прогнозы ветра, солнечные станции и потенциал городских крыш — в одном пространстве.</p>
       {error && <div className="error">{error}</div>}
       <div>
         <label htmlFor="email">Почта</label>
-        <input id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input id="email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <div>
         <label htmlFor="password">Пароль</label>
         <input
           id="password"
           type="password"
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
       <button className="primary" type="submit" disabled={busy}>
-        {busy ? <span className="spin" /> : "Войти"}
+        {busy ? <span className="spin" /> : "Открыть рабочее пространство →"}
       </button>
       <div className="hint">Демо-учётка подставлена: проверка не требует своих аккаунтов.</div>
     </form>
@@ -341,19 +344,17 @@ function readLast(): string | null {
 
 function Logo() {
   return (
-    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden>
-      <circle cx="16" cy="12" r="2.2" fill="currentColor" />
-      <path d="M16 12 L16.8 30 L15.2 30 Z" fill="currentColor" opacity="0.7" />
-      <path d="M16 12 Q18 5 16.5 1 Q14.5 6 16 12Z" fill="currentColor" />
-      <path d="M16 12 Q9 13 5 16 Q11 17 16 12Z" fill="currentColor" />
-      <path d="M16 12 Q21 17 26 18 Q23 13 16 12Z" fill="currentColor" />
+    <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden>
+      <rect width="36" height="36" rx="11" fill="#087f72" />
+      <path d="M10 25V12h6.5c4.8 0 7 2 7 5.1 0 2.6-1.8 4.4-5 4.8L25 27" fill="none" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="26" cy="10" r="3" fill="#ecca7d" />
     </svg>
   );
 }
 
 const KIND_LABEL = { wind: "Ветер", solar: "Солнце" } as const;
 const TAB_LABEL: [StationTab, string][] = [
-  ["map", "Карта станции"],
+  ["map", "Обзор станции"],
   ["accuracy", "Точность прогноза"],
   ["agent", "Как считается"],
 ];
@@ -384,12 +385,12 @@ function crumbs(route: Route, stationName: string | null): { label: string; to: 
 export default function App() {
   const [authed, setAuthed] = useState(Boolean(token.get()));
   const [route, go] = useRoute();
-  const { stations } = useStations();
+  const { stations } = useStations(authed);
   const [originIso, setOriginIso] = useState(ORIGINS[0]);
   const [horizon, setHorizon] = useState(48);
   const [nonce, setNonce] = useState(0);
   const station =
-    route.page === "station" ? stations.find((s) => s.id === route.stationId && s.data !== "none") ?? null : null;
+    route.page === "station" ? stations.find((s) => s.id === route.stationId && canOpen(s)) ?? null : null;
   const forecast = useForecast(station, originIso, horizon, nonce);
   const [lastId, setLastId] = useState(readLast);
 
@@ -416,40 +417,30 @@ export default function App() {
 
   const rerun = () => setNonce((n) => n + 1);
   const path = crumbs(route, station?.name ?? null);
-  const lastStation = stations.find((s) => s.id === lastId && s.data !== "none") ?? null;
+  const lastStation = stations.find((s) => s.id === lastId && canOpen(s)) ?? null;
+  const activeSection = route.page === "roofs" ? "roofs" : "kind" in route ? route.kind : route.page;
+  const primaryNav: { id: string; label: string; to: Route }[] = [
+    { id: "home", label: "Обзор", to: { page: "home" } },
+    { id: "wind", label: "Ветровая энергия", to: { page: "stations", kind: "wind" } },
+    { id: "solar", label: "Солнечная энергия", to: { page: "stations", kind: "solar" } },
+    { id: "roofs", label: "Панели на крышах", to: { page: "roofs" } },
+  ];
 
   return (
-    <div className="shell">
+    <div className={`shell ${activeSection === "solar" || activeSection === "roofs" ? "theme-solar" : "theme-wind"}`}>
+      <a className="skip-link" href="#workspace" onClick={(e) => { e.preventDefault(); document.getElementById("workspace")?.focus(); }}>К содержимому</a>
       <header className="topbar">
         <button className="brand" onClick={() => go({ page: "home" })} aria-label="На главный экран">
           <Logo />
           <span>
             <span className="brand-name">Renewable Twin</span>
-            <span className="brand-sub">прогноз и цифровой двойник</span>
+            <span className="brand-sub">Energy workspace</span>
           </span>
         </button>
-        {path.length > 0 && (
-          <nav className="crumbs" aria-label="Где вы">
-            {path.map((c, i) =>
-              c.to ? (
-                <button key={i} onClick={() => go(c.to!)}>
-                  {c.label}
-                </button>
-              ) : (
-                <span key={i} aria-current="page">
-                  {c.label}
-                </span>
-              ),
-            )}
-          </nav>
-        )}
+        <nav className="primary-nav" aria-label="Основные разделы">
+          {primaryNav.map((item) => <button key={item.id} className={activeSection === item.id ? "active" : ""} aria-current={activeSection === item.id ? "page" : undefined} onClick={() => go(item.to)}>{item.label}</button>)}
+        </nav>
         <div className="spacer" />
-        {station && (
-          <div className="clock">
-            <span>прогноз от {fmtDay(originIso)} 2026, 00:00</span>
-            <span className="dim">UTC+5</span>
-          </div>
-        )}
         <button
           className="ghost"
           onClick={() => {
@@ -461,21 +452,30 @@ export default function App() {
         </button>
       </header>
 
+      <main id="workspace" tabIndex={-1}>
+      {path.length > 0 && <div className="location-bar"><nav className="crumbs" aria-label="Где вы">
+        <button onClick={() => go({ page: "home" })}>Рабочее пространство</button>
+        {path.map((c, i) => c.to ? <button key={i} onClick={() => go(c.to!)}>{c.label}</button> : <span key={i} aria-current="page">{c.label}</span>)}
+      </nav></div>}
       {route.page === "station" && station && (
+        <div className="station-heading">
+        <div className="station-title"><span className="eyebrow">{station.kind === "wind" ? "Ветровая электростанция" : "Солнечная электростанция"}</span><h1>{station.name}</h1><p>{station.region} <span>·</span> Почасовой прогноз на {horizon} часов</p></div>
+        <div className="station-heading-right"><div className="forecast-date">Прогноз от {fmtDay(originIso)} 2026 <span>00:00 · UTC+5</span></div>
         <nav className="station-tabs" aria-label="Разделы станции">
           {TAB_LABEL.filter(([t]) => t === "map" || station.data === "history").map(([t, label]) => (
             <button
               key={t}
-              className={route.tab === t ? "active" : ""}
+              className={route.tab === t ? "active" : ""} aria-current={route.tab === t ? "page" : undefined}
               onClick={() => go({ ...route, tab: t })}
             >
               {label}
             </button>
           ))}
         </nav>
+        </div></div>
       )}
 
-      {route.page === "home" && <Home go={go} lastStation={lastStation} />}
+      {route.page === "home" && <Home go={go} lastStation={lastStation} stations={stations} />}
       {route.page === "kind" && <KindPick mode={route.mode} stations={stations} go={go} />}
       {route.page === "stations" && (
         <StationPick kind={route.kind} stations={stations} originIso={originIso} go={go} />
@@ -512,6 +512,8 @@ export default function App() {
       {route.page === "station" && station && route.tab === "agent" && (
         <Agent run={forecast.run} onRerun={rerun} loading={forecast.loading} />
       )}
+      </main>
+      <footer className="workspace-footer"><span>Renewable Twin <span>·</span> Энергия с ясной перспективой</span><button onClick={() => go({ page: "platform" })}>Платформа и инструменты ↗</button></footer>
     </div>
   );
 }

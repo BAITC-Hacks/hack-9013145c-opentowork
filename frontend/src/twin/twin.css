@@ -1,18 +1,16 @@
-/* «Степь зимней ночью». Два акцента с разными ролями: ледник — данные
-   прогноза, натрий — то, что требует внимания (шторм, cut-out, сценарий).
-   Переменные базовой темы переопределены, чтобы экраны платформы жили
-   в той же гамме. */
-:root {
-  --ink: #0b1418;
-  --slate: #121f25;
-  --slate-2: #172a31;
-  --rime: #22363d;
-  --frost: #e6eeec;
-  --lichen: #93a7a4;
-  --glacier: #7fd4d9;
-  --sodium: #f0a43a;
-  --steppe: #c8b98a;
+/* Общие компоненты Renewable Twin. Светлая палитра и единая типографика. */
 
+:root {
+  color-scheme: light;
+  --ink: #f6f7f9;
+  --slate: #ffffff;
+  --slate-2: #f2f4f7;
+  --rime: #e5e9ef;
+  --frost: #18212f;
+  --lichen: #667085;
+  --glacier: #087f72;
+  --sodium: #b56a08;
+  --steppe: #a87416;
   --bg: var(--ink);
   --surface: var(--slate);
   --surface-2: var(--slate-2);
@@ -20,21 +18,20 @@
   --text: var(--frost);
   --text-dim: var(--lichen);
   --accent: var(--glacier);
-  --accent-dim: #10343a;
+  --accent-dim: #e6f4ef;
   --live: var(--glacier);
-  --live-dim: #10343a;
+  --live-dim: #e6f4ef;
   --warn: var(--sodium);
-  --warn-dim: #3a2a10;
-  --danger: #e2674a;
-  --radius: 4px;
-
-  --font: "Golos Text", -apple-system, "Segoe UI", sans-serif;
-  --display: "Tektur", "Golos Text", sans-serif;
-  --mono: "Martian Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --warn-dim: #fff5df;
+  --danger: #c44337;
+  --radius: 12px;
+  --font: "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --display: var(--font);
+  --mono: var(--font);
 }
 
 body { background: var(--ink); font-family: var(--font); font-size: 14px; }
-/* Tektur — только цифры и бренд: в нём строчная кириллическая «д» похожа на «g». */
+/* Одинаковое семейство для текста и цифр упрощает чтение панелей. */
 h1, h2 { font-family: var(--font); font-weight: 600; letter-spacing: -0.01em; }
 
 :focus-visible { outline: 2px solid var(--sodium); outline-offset: 2px; }
@@ -136,7 +133,7 @@ button:hover:not(:disabled) { border-color: var(--glacier); }
 .tl-wind small { font-family: var(--mono); font-size: 10px; color: var(--lichen); margin-left: 4px; font-weight: 400; }
 
 .float { position: absolute; z-index: 5; }
-.panel { background: rgba(11, 20, 24, 0.9); border: 1px solid var(--rime); border-radius: var(--radius); padding: 12px 14px; }
+.panel { background: rgba(255, 255, 255, 0.95); border: 1px solid var(--rime); border-radius: var(--radius); padding: 12px 14px; }
 .panel-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--lichen); margin: 14px 0 7px; }
 .panel-title:first-child { margin-top: 0; }
 .left-top summary {
@@ -168,7 +165,7 @@ button:hover:not(:disabled) { border-color: var(--glacier); }
 
 .right-top { right: 12px; top: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .view-toggle { padding: 5px 10px; font-size: 12px; background: var(--ink); }
-.compass { position: relative; width: 76px; height: 76px; border-radius: 50%; border: 1px solid var(--rime); background: rgba(11, 20, 24, 0.9); }
+.compass { position: relative; width: 76px; height: 76px; border-radius: 50%; border: 1px solid var(--rime); background: rgba(255, 255, 255, 0.95); }
 .compass::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; border: 1px dashed rgba(147, 167, 164, 0.35); }
 .cardinal { position: absolute; font-family: var(--mono); font-size: 9px; color: var(--lichen); }
 .cardinal.c0 { top: 2px; left: 50%; transform: translateX(-50%); color: var(--frost); }
@@ -198,14 +195,14 @@ button:hover:not(:disabled) { border-color: var(--glacier); }
 .track { flex: 1; min-width: 0; position: relative; }
 .baro {
   display: block; width: 100%; height: 38px;
-  background-color: #0e1a1f;
+  background-color: #f1f5f5;
   background-image:
     linear-gradient(rgba(147, 167, 164, 0.09) 1px, transparent 1px),
     linear-gradient(90deg, rgba(147, 167, 164, 0.09) 1px, transparent 1px);
   background-size: 100% 25%, 4.1667% 100%;
   border: 1px solid var(--rime); border-radius: 2px;
 }
-.baro-band { fill: rgba(127, 212, 217, 0.2); }
+.baro-band { fill: rgba(8, 127, 114, 0.14); }
 .baro-line { fill: none; stroke: var(--glacier); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
 .baro-day { stroke: var(--lichen); stroke-width: 1; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; opacity: 0.6; }
 .baro-storm { fill: rgba(240, 164, 58, 0.28); }
@@ -273,10 +270,10 @@ h2 .unit { font-family: var(--mono); font-size: 10px; font-weight: 400; color: v
 
 .chart { position: relative; width: 100%; }
 .chart svg { display: block; cursor: crosshair; }
-.grid-line { stroke: #1a2c33; stroke-width: 1; }
+.grid-line { stroke: #e9edf2; stroke-width: 1; }
 .grid-line.day { stroke: var(--rime); stroke-dasharray: 2 3; }
 .axis { fill: var(--lichen); font-family: var(--mono); font-size: 9.5px; }
-.band { fill: rgba(127, 212, 217, 0.16); }
+.band { fill: rgba(8, 127, 114, 0.10); }
 .line { fill: none; stroke-width: 2; stroke-linejoin: round; }
 .line.p50 { stroke: var(--glacier); stroke-width: 2.2; }
 .line.actual { stroke: var(--frost); stroke-width: 1.4; }
@@ -323,7 +320,7 @@ h2 .unit { font-family: var(--mono); font-size: 10px; font-weight: 400; color: v
 
 .table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .table th { text-align: left; font-family: var(--mono); font-weight: 400; font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--lichen); padding: 6px 8px; border-bottom: 1px solid var(--rime); }
-.table td { padding: 10px 8px; border-bottom: 1px solid #192a30; }
+.table td { padding: 10px 8px; border-bottom: 1px solid var(--rime); }
 .table td.mono { font-size: 12px; }
 .table tr.selected td { background: rgba(127, 212, 217, 0.06); }
 .table tr.selected td:first-child { box-shadow: inset 2px 0 0 var(--glacier); }
@@ -504,7 +501,7 @@ button.brand:hover:not(:disabled) .brand-name { color: var(--glacier); }
 /* ─── станция и агрегат ─── */
 .map-hint {
   left: 50%; bottom: 100px; transform: translateX(-50%); pointer-events: none;
-  background: rgba(11, 20, 24, 0.85); color: var(--frost); font-size: 12.5px; padding: 6px 12px; border-radius: 99px; white-space: nowrap;
+  background: rgba(255, 255, 255, 0.93); color: var(--frost); font-size: 12.5px; padding: 6px 12px; border-radius: 99px; white-space: nowrap;
 }
 .facts { display: grid; grid-template-columns: 1fr auto; gap: 7px 14px; margin: 14px 0 0; font-size: 13px; }
 .facts dt { color: var(--lichen); }

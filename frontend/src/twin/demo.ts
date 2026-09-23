@@ -14,16 +14,17 @@ import type {
 } from "../api";
 
 export const SITE = {
-  name: "Ерейментау ВЭС",
-  // Заменить на координаты турбин из датасета, когда их подтвердят.
-  lat: 51.628,
-  lon: 73.105,
+  name: "ВЭС Нурлы",
+  // Центр между турбинами кейса, Алматинская область.
+  lat: 43.644174,
+  lon: 78.537216,
   utcOffset: 5,
 };
 
+// Координаты турбин из датасета кейса (переданы организатором).
 export const DEMO_TURBINES: Turbine[] = [
-  { id: "T1", name: "Турбина 1", lat: 51.6305, lon: 73.0985 },
-  { id: "T2", name: "Турбина 2", lat: 51.6262, lon: 73.1112 },
+  { id: "T1", name: "Турбина 1", lat: 43.64515, lon: 78.535604, model: "Goldwind GW109/2500" },
+  { id: "T2", name: "Турбина 2", lat: 43.643198, lon: 78.538828, model: "Goldwind GW109/2500" },
 ];
 
 const HOUR = 3_600_000;
@@ -284,43 +285,32 @@ export function solarPower(localMs: number, cloud = cloudCover(localMs)): number
 
 export const RATED_ASSUMPTION_MW = 2.5;
 
-export const DEMO_STATIONS: Station[] = [
+// Запасной каталог на случай, если бэкенд недоступен: полный список ВЭС
+// приходит из /stations (таблица wind_farms). СЭС пока только виртуальная.
+export const DEMO_WIND_STATIONS: Station[] = [
   {
-    id: "ereymentau",
+    id: "nurly",
     kind: "wind",
-    name: "Ерейментау ВЭС",
-    region: "Акмолинская область",
+    name: "ВЭС Нурлы",
+    region: "Алматинская область",
     lat: SITE.lat,
     lon: SITE.lon,
+    location: "turbines",
     units: DEMO_TURBINES.map((t) => ({ ...t, rated_mw: RATED_ASSUMPTION_MW })),
     data: "history",
-    note: "Данные SCADA с марта 2023 по январь 2026",
+    capacity_mw: 4.5,
+    capacity_source: "registry",
+    operators: ["ТОО «ВЭС НУРЛЫ»"],
+    note: "Станция из датасета кейса: SCADA с марта 2023 по январь 2026",
   },
+];
+
+export const DEMO_SOLAR_STATIONS: Station[] = [
   {
-    id: "shokpar",
-    kind: "wind",
-    name: "Шокпар ВЭС",
-    region: "Жамбылская область",
-    lat: 43.08,
-    lon: 74.97,
-    units: [],
-    data: "none",
-  },
-  {
-    id: "badamsha",
-    kind: "wind",
-    name: "Бадамша ВЭС",
-    region: "Актюбинская область",
-    lat: 50.56,
-    lon: 58.2,
-    units: [],
-    data: "none",
-  },
-  {
-    id: "ereymentau-pv",
+    id: "nurly-pv",
     kind: "solar",
-    name: "СЭС у Ерейментау",
-    region: "Акмолинская область · виртуальная",
+    name: "СЭС у Нурлы",
+    region: "Алматинская область · виртуальная",
     lat: SITE.lat - 0.004,
     lon: SITE.lon + 0.012,
     units: ["Б1", "Б2", "Б3", "Б4"].map((id, i) => ({
@@ -333,17 +323,9 @@ export const DEMO_STATIONS: Station[] = [
     data: "model",
     note: "Расчёт по положению солнца и облачности, фактических данных нет",
   },
-  {
-    id: "burnoe",
-    kind: "solar",
-    name: "Бурное Солар",
-    region: "Жамбылская область",
-    lat: 42.6,
-    lon: 70.9,
-    units: [],
-    data: "none",
-  },
 ];
+
+export const DEMO_STATIONS: Station[] = [...DEMO_WIND_STATIONS, ...DEMO_SOLAR_STATIONS];
 
 const BLOCK_FACTOR: Record<string, number> = { Б1: 1, Б2: 0.97, Б3: 0.99, Б4: 0.94 };
 
@@ -440,7 +422,8 @@ function fbm2(x: number, y: number): number {
 
 /** Среднегодовая скорость ветра на высоте ступицы, м/с. */
 export function meanWindAt(lat: number, lon: number): number {
-  const ridge = Math.exp(-(((lat - SITE.lat) / 0.35) ** 2)) * 1.1;
+  // Ерейментауский хребет: синтетическая карта ресурса нарисована вокруг него.
+  const ridge = Math.exp(-(((lat - 51.62) / 0.35) ** 2)) * 1.1;
   return 5.2 + 3.2 * fbm2(lon * 2.2, lat * 2.6) + ridge;
 }
 

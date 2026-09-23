@@ -138,7 +138,8 @@ export default function Placement({
   };
 
   const existing = stations.filter(
-    (s) =>
+    (s): s is Station & { lat: number; lon: number } =>
+      s.lat != null && s.lon != null &&
       s.lat >= REGION.lat0 && s.lat <= REGION.lat1 && s.lon >= REGION.lon0 && s.lon <= REGION.lon1,
   );
   const fmtRes = (s: Spot) =>

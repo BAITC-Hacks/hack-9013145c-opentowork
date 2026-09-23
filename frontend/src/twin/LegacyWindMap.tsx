@@ -39,9 +39,13 @@ const reducedMotion = () =>
 const SOLAR = { x: 640, y: -160, w: 460, h: 260 };
 const BLOCK = { w: 380, h: 210 };
 
-function worldOf(t: Turbine) {
-  const x = (t.lon - SITE.lon) * Math.cos((SITE.lat * Math.PI) / 180) * 111_320;
-  const y = -(t.lat - SITE.lat) * 110_540;
+// Начало координат — центр станции, к которой относится агрегат.
+function worldOf(t: Turbine, units: Turbine[]) {
+  const ref = units.length
+    ? { lat: units.reduce((a, u) => a + u.lat, 0) / units.length, lon: units.reduce((a, u) => a + u.lon, 0) / units.length }
+    : SITE;
+  const x = (t.lon - ref.lon) * Math.cos((ref.lat * Math.PI) / 180) * 111_320;
+  const y = -(t.lat - ref.lat) * 110_540;
   return { x, y };
 }
 
@@ -234,7 +238,7 @@ export default function WindMap(props: Props) {
       const dy = -Math.cos(theta);
       const r0 = ROTOR_M * ppm();
       for (const t of propsRef.current.units) {
-        const w = worldOf(t);
+        const w = worldOf(t, propsRef.current.units);
         const { px: tx, py: ty } = toPlane(w.x, w.y);
         const along = (px - tx) * dx + (py - ty) * dy;
         if (along <= 0) continue;
@@ -376,7 +380,7 @@ export default function WindMap(props: Props) {
 
     if (P.kind === "solar") {
       for (const u of P.units) {
-        const w = worldOf(u);
+        const w = worldOf(u, P.units);
         const rect = { x: w.x - BLOCK.w / 2, y: w.y - BLOCK.h / 2, w: BLOCK.w, h: BLOCK.h };
         const power = P.point?.per_turbine?.[u.id] ?? P.point?.p50 ?? 0;
         drawPanels(ctx, rect, power, P.selected === u.id);
@@ -392,7 +396,7 @@ export default function WindMap(props: Props) {
     const yawDeg = P.point ? P.point.wind_dir : 270;
     const face = Math.max(0.45, Math.abs(Math.cos((yawDeg * Math.PI) / 180)));
     const sorted = [...P.units]
-      .map((t) => ({ t, w: worldOf(t) }))
+      .map((t) => ({ t, w: worldOf(t, P.units) }))
       .sort((a, b) => a.w.y - b.w.y);
     for (const { t, w } of sorted) {
       const { px, py } = toPlane(w.x, w.y);

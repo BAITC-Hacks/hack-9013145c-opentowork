@@ -170,7 +170,20 @@ export default function StationView({
   const selectedUnit = units.find((u) => u.id === selected) ?? null;
 
   return (
-    <div className="dash">
+    <div className={`dash ${wind ? "wind-dashboard" : "solar-dashboard"}`}>
+      <div className="dashboard-toolbar">
+        <div className="scene-section-title"><span className={`source-indicator ${wind ? "wind" : "solar"}`} /><b>Цифровой двойник</b><span>3D-обзор территории</span></div>
+        <div className="forecast-controls">
+          <label htmlFor="forecast-date">Дата прогноза</label>
+          <select id="forecast-date" value={originIso} onChange={(e) => onOrigin(e.target.value)}>
+            {ORIGINS.map((o) => <option key={o} value={o}>{fmtDay(o)} 2026</option>)}
+          </select>
+          <div className="seg" aria-label="Горизонт прогноза">
+            {[24, 48].map((h) => <button key={h} className={horizon === h ? "on" : ""} aria-pressed={horizon === h} onClick={() => onHorizon(h)}>{h} ч</button>)}
+          </div>
+          <button className="refresh-forecast" onClick={onRerun} disabled={loading}>{loading ? "Обновляем…" : "↻ Обновить"}</button>
+        </div>
+      </div>
       <section className="map-area">
         <WindMap
           point={point}
@@ -185,25 +198,9 @@ export default function StationView({
           solarOutput={solarNow}
         />
 
-        <details className="float left-top panel" open={!compact}>
-          <summary>Период и слои</summary>
-          <div className="panel-title">Прогноз на</div>
-          <div className="seg">
-            {[24, 48].map((h) => (
-              <button key={h} className={horizon === h ? "on" : ""} onClick={() => onHorizon(h)}>
-                {h} часа
-              </button>
-            ))}
-          </div>
-          <div className="panel-title">Прогноз от</div>
-          <select value={originIso} onChange={(e) => onOrigin(e.target.value)}>
-            {ORIGINS.map((o) => (
-              <option key={o} value={o}>
-                {fmtDay(o)} 2026, 00:00
-              </option>
-            ))}
-          </select>
-          <div className="panel-title">На карте</div>
+        <details className="float left-top panel">
+          <summary>Слои сцены</summary>
+          <div className="panel-title">Отображение</div>
           {(wind ? WIND_LAYERS : SOLAR_LAYERS).map(([key, label]) => (
             <label key={key} className="check">
               <input
@@ -265,7 +262,7 @@ export default function StationView({
         </div>
 
         {dataOrigin === "demo" && (
-          <div className="float top-center demo-flag">Демо-данные — модель ещё не подключена</div>
+          <div className="float top-center demo-flag">Демонстрационный прогноз</div>
         )}
 
         {!selected && (
@@ -324,7 +321,7 @@ export default function StationView({
           <>
             <div className="card kpi">
               <div className="kpi-label">
-                Станция выдаёт <em>{point ? fmtDayTime(point.forecast_for) : "—"}</em>
+                Мощность станции <em>{point ? fmtDayTime(point.forecast_for) : "—"}</em>
               </div>
               <div className="kpi-big">
                 {point ? mw(point.p50 * rated) : "—"}

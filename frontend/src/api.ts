@@ -80,7 +80,8 @@ export interface Turbine {
   name: string;
   lat: number;
   lon: number;
-  rated_mw?: number; // номинал; в датасете не дан, поэтому необязателен
+  rated_mw?: number | null; // номинал; в датасете не дан, поэтому необязателен
+  model?: string | null;
 }
 
 export type SourceKind = "wind" | "solar";
@@ -90,11 +91,19 @@ export interface Station {
   kind: SourceKind;
   name: string;
   region: string;
-  lat: number;
-  lon: number;
+  lat: number | null; // null — станция есть в реестре, координаты не опубликованы
+  lon: number | null;
   units: Turbine[]; // турбины ВЭС или блоки панелей СЭС
   data: "history" | "model" | "none"; // есть ли фактические данные
-  note?: string;
+  note?: string | null;
+  // Справочник ВЭС (реестр Минэнерго + OSM), см. /stations
+  location?: "turbines" | "plant" | "district" | null;
+  capacity_mw?: number | null;
+  capacity_source?: "registry" | "osm" | null;
+  operators?: string[];
+  commissioned?: string | null;
+  in_registry?: boolean;
+  osm?: string | null;
 }
 
 export interface UnitSample {

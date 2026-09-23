@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError } from "../api";
 import type { Rooftop, RooftopsResponse } from "../api";
-import { StepBar } from "./Flow";
 import type { Route } from "./data";
 import "./rooftops.css";
 
-type Metric = "energy" | "quality";
+const RooftopScene = lazy(() => import("./scene/RooftopScene"));
+type Metric = "materials" | "energy" | "quality";
 
 const MONTHS = ["Я", "Ф", "М", "А", "М", "И", "И", "А", "С", "О", "Н", "Д"];
 const TYPE_LABEL: Record<string, string> = {
@@ -34,9 +34,9 @@ const fmt = (n: number) => Math.round(n).toLocaleString("ru-RU");
 const mwh = (kwh: number) => (kwh >= 10_000 ? fmt(kwh / 1000) : (kwh / 1000).toFixed(1));
 
 // Та же охристая шкала, что у солнечной карты региона: ярче — больше солнца.
-function rampRgb(f: number): string {
-  const lo = [22, 38, 45];
-  const hi = [226, 200, 128];
+function rampRgb(f: number, quality = false): string {
+  const lo = [226, 232, 235];
+  const hi = quality ? [21, 149, 129] : [217, 146, 34];
   const t = Math.max(0, Math.min(1, f)) ** 1.1;
   return `rgb(${lo.map((c, i) => Math.round(c + (hi[i] - c) * t)).join(",")})`;
 }
@@ -61,7 +61,10 @@ interface View {
 
 export default function Rooftops({ go }: { go: (r: Route) => void }) {
   const { data, error } = useRooftops();
-  const [metric, setMetric] = useState<Metric>("energy");
+  const [sceneMetric, setSceneMetric] = useState<Metric>("materials");
+  const metric = sceneMetric === "quality" ? "quality" : "energy";
+  const [sceneAvailable, setSceneAvailable] = useState(true);
+  const [show3D, setShow3D] = useState(true);
   const [picked, setPicked] = useState<Rooftop | null>(null);
   const [hover, setHover] = useState<{ b: Rooftop; x: number; y: number } | null>(null);
   const [tariff, setTariff] = useState(35);
@@ -197,14 +200,14 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
       : [`${fmt(Math.min(...data.buildings.map((b) => b.kwh_per_kwp)))}`, `${fmt(data.irradiance.kwh_per_kwp_year)} кВт·ч с 1 кВт панелей`];
 
   return (
-    <div className="flow wide">
-      <StepBar step={2} mode="place" />
+    <div className="flow wide rooftops-page">
       <div className="place-head">
-        <h1 className="flow-q">На каких крышах ставить солнечные панели?</h1>
+        <div><span className="roof-eyebrow">СОЛНЕЧНАЯ ЭНЕРГИЯ</span><h1 className="flow-q">Найдите потенциал каждой крыши</h1></div>
+        <span className="roof-district-badge">{data.district}</span>
       </div>
       <p className="flow-sub">
-        {data.district}: {fmt(data.summary.buildings)} зданий. Для каждой крыши посчитали, сколько на неё
-        поместится панелей и сколько энергии они дадут за год с учётом теней от соседних домов.
+        Исследуйте здания в 3D, сравните выработку и оцените окупаемость солнечных панелей.
+        Расчёт учитывает площадь крыши и тени от соседних домов.
       </p>
 
       <div className="roof-kpis">
@@ -230,19 +233,24 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
       <div className="place">
         <div className="place-map card">
           <div className="roof-toolbar">
-            <div className="seg" role="tablist" aria-label="Что показывать цветом">
-              <button className={metric === "energy" ? "on" : ""} onClick={() => setMetric("energy")}>
-                Сколько энергии за год
-              </button>
-              <button className={metric === "quality" ? "on" : ""} onClick={() => setMetric("quality")}>
-                Насколько мешают тени
-              </button>
+            <div className="roof-map-heading"><strong>Крыши района</strong><span>{fmt(data.summary.buildings)} зданий · выберите объект</span></div>
+            <div className="roof-view-switch" aria-label="Режим отображения">
+              <button className={show3D && sceneAvailable ? "on" : ""} disabled={!sceneAvailable} onClick={() => setShow3D(true)}>3D</button>
+              <button className={!show3D || !sceneAvailable ? "on" : ""} onClick={() => setShow3D(false)}>2D</button>
             </div>
-            <div className="roof-zoom">
-              <button className="ghost" onClick={() => zoom(1 / 1.5)} aria-label="Приблизить">+</button>
-              <button className="ghost" onClick={() => zoom(1.5)} aria-label="Отдалить">−</button>
-              <button className="ghost" onClick={() => setView({ x: 0, y: 0, w: geo.W })}>Весь район</button>
-            </div>
+          </div>
+          <div className="roof-layers" role="group" aria-label="Слой на крышах">
+            <button aria-pressed={sceneMetric === "materials"} onClick={() => setSceneMetric("materials")}>Здания и панели</button>
+            <button aria-pressed={sceneMetric === "energy"} onClick={() => setSceneMetric("energy")}>Выработка за год</button>
+            <button aria-pressed={sceneMetric === "quality"} onClick={() => setSceneMetric("quality")}>Влияние теней</button>
+          </div>
+          {show3D && sceneAvailable ? <Suspense fallback={<div className="roof-scene roof-scene-loading"><span className="spin" /> Загружаем 3D-сцену…</div>}>
+            <RooftopScene data={data} selected={picked} metric={sceneMetric} onSelect={setPicked} onUnavailable={() => setSceneAvailable(false)} />
+          </Suspense> : <>
+          <div className="roof-zoom">
+            <button className="ghost" onClick={() => zoom(1 / 1.5)} aria-label="Приблизить">+</button>
+            <button className="ghost" onClick={() => zoom(1.5)} aria-label="Отдалить">−</button>
+            <button className="ghost" onClick={() => setView({ x: 0, y: 0, w: geo.W })}>Весь район</button>
           </div>
           <svg
             ref={svgRef}
@@ -275,7 +283,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
               <path
                 key={b.id}
                 d={geo.paths.get(b.id)}
-                fill={rampRgb(scale(b))}
+                fill={sceneMetric === "materials" ? "#bdc9cc" : rampRgb(scale(b), sceneMetric === "quality")}
                 className={picked?.id === b.id ? "roof picked" : "roof"}
                 strokeWidth={(picked?.id === b.id ? 2.2 : 0.6) * (view.w / geo.W)}
                 onClick={() => {
@@ -286,6 +294,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
               />
             ))}
           </svg>
+          </>}
           {hover && (
             <span className="roof-tip" style={{ left: hover.x + 14, top: hover.y + 14 }}>
               <b>{hover.b.name ?? TYPE_LABEL[hover.b.type ?? ""] ?? "Здание"}</b>
@@ -293,10 +302,12 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
             </span>
           )}
           <div className="region-legend">
-            <span>{legend[0]}</span>
-            <i style={{ background: `linear-gradient(90deg, ${rampRgb(0)}, ${rampRgb(0.5)}, ${rampRgb(1)})` }} />
-            <span>{legend[1]}</span>
-            <span className="dim">колесо — масштаб, перетаскивание — сдвиг</span>
+            {sceneMetric !== "materials" ? <>
+              <span>{legend[0]}</span>
+              <i style={{ background: `linear-gradient(90deg, ${rampRgb(0, sceneMetric === "quality")}, ${rampRgb(0.5, sceneMetric === "quality")}, ${rampRgb(1, sceneMetric === "quality")})` }} />
+              <span>{legend[1]}</span>
+            </> : <span>Контуры — OSM · часть высот принята по типу здания</span>}
+            <span className="dim">{show3D && sceneAvailable ? "Вращайте мышью · Колесо — масштаб" : "Колесо — масштаб · Потяните для сдвига"}</span>
           </div>
         </div>
 
@@ -306,8 +317,10 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
               <RoofCard b={picked} data={data} tariff={tariff} costPerKw={costPerKw} />
             ) : (
               <div className="spot-empty">
-                <h2>Здание не выбрано</h2>
-                <p>Нажмите на крышу на карте или выберите из списка ниже.</p>
+                <span className="roof-selection-icon" aria-hidden="true">⌂</span>
+                <h2>Начните с одного здания</h2>
+                <p>Выберите крышу в 3D или в списке. Здесь появятся выработка, площадь панелей и срок окупаемости.</p>
+                {top[0] && <button className="roof-start-button" onClick={() => focus(top[0])}>Показать лучшую крышу →</button>}
               </div>
             )}
           </section>
@@ -317,7 +330,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
             <ol className="best">
               {top.map((b) => (
                 <li key={b.id}>
-                  <button onClick={() => focus(b)}>
+                  <button aria-pressed={picked?.id === b.id} onClick={() => focus(b)}>
                     <span>{b.name ?? TYPE_LABEL[b.type ?? ""] ?? "Здание"}</span>
                     <span className="dim">
                       {fmt(b.usable_m2)} м² под панели · тень −{Math.round(b.shading_loss * 100)}%
@@ -355,7 +368,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
       </div>
 
       <p className="flow-foot">
-        Радиация — {data.sources.irradiance} (среднее за многолетний период), панели на юг под {data.irradiance.tilt_deg}°,
+        3D — реконструкция по контурам и высотам, фасады и размещение панелей иллюстративные. Радиация — {data.sources.irradiance} (среднее за многолетний период), панели на юг под {data.irradiance.tilt_deg}°,
         потери системы 14%. Контуры и этажность — {data.sources.buildings}, выгрузка {data.sources.fetched}. Тени считаются
         по высотам соседних зданий для прямого света; рассеянный свет и снег на панелях не учитываются. Купола и шатры
         (Хан Шатыр) исключены. Где высоты нет в OSM, она принята по типу здания — такие здания помечены.

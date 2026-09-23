@@ -1,44 +1,108 @@
-/* Экран «Крыши под панели». Токены — из twin.css. */
-
-.roof-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 16px; }
-.roof-kpis > div { background: var(--slate); border: 1px solid var(--rime); border-radius: var(--radius); padding: 12px 14px; }
-.roof-kpis b { font-family: var(--display); font-size: 26px; font-weight: 600; }
-.roof-kpis small { font-family: var(--mono); font-size: 10.5px; color: var(--lichen); }
-
-.roof-toolbar { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
-.roof-toolbar .seg { flex: 0 1 420px; }
-.roof-zoom { display: flex; gap: 6px; }
+/* Solar roof explorer: light surfaces, quiet typography, amber for solar data. */
+.rooftops-page { --roof-accent: #b56a08; --roof-ink: #18212f; --roof-muted: #667085; --roof-border: #e5e9ef; }
+.rooftops-page .place-head { align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 8px; }
+.roof-eyebrow { display: block; color: var(--roof-accent); font-size: 10px; letter-spacing: .14em; font-weight: 700; margin-bottom: 10px; }
+.rooftops-page .flow-q { margin-bottom: 0; }
+.roof-district-badge { border: 1px solid var(--roof-border); background: #fff; color: var(--roof-muted); padding: 9px 13px; border-radius: 30px; font-size: 12px; white-space: nowrap; }
+.rooftops-page .flow-sub { max-width: 770px; color: var(--roof-muted); font-size: 14px; line-height: 1.7; }
+.roof-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 24px 0; }
+.roof-kpis > div { background: #fff; border: 1px solid var(--roof-border); border-radius: 14px; padding: 18px 20px; box-shadow: 0 2px 3px #18212f02; }
+.roof-kpis > div:first-child { border-top: 3px solid #d39432; padding-top: 16px; }
+.roof-kpis .kpi-label { display: block; color: var(--roof-muted); font-size: 11px; letter-spacing: .01em; text-transform: none; margin-bottom: 9px; }
+.roof-kpis b { font-family: var(--font); font-size: 29px; letter-spacing: -.055em; font-weight: 650; color: var(--roof-ink); }
+.roof-kpis small { font-family: var(--font); font-size: 11px; color: var(--roof-muted); margin-left: 3px; }
+.rooftops-page .place { grid-template-columns: minmax(0, 1fr) 315px; align-items: start; gap: 20px; }
+.rooftops-page .place-map { background: #fff; border: 1px solid var(--roof-border); border-radius: 16px; padding: 0; overflow: hidden; position: sticky; top: 92px; }
+.roof-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 20px 12px; }
+.roof-map-heading { display: flex; flex-direction: column; gap: 5px; }
+.roof-map-heading strong { color: var(--roof-ink); font-size: 14px; font-weight: 650; }
+.roof-map-heading > span { font-size: 11px; color: var(--roof-muted); }
+.roof-view-switch { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--roof-border); background: #f6f7f9; border-radius: 8px; }
+.roof-view-switch button { padding: 5px 12px; min-width: 35px; border: none; border-radius: 5px; background: transparent; color: var(--roof-muted); font-size: 11px; font-weight: 600; }
+.roof-view-switch button.on { background: #fff; box-shadow: 0 1px 4px #18212f13; color: var(--roof-ink); }
+.roof-view-switch button:disabled { opacity: .4; cursor: default; }
+.roof-layers { display: flex; padding: 0 20px 16px; gap: 6px; flex-wrap: wrap; }
+.roof-layers button { border: 1px solid var(--roof-border); color: #596575; padding: 7px 10px; background: #fff; border-radius: 7px; font-size: 11px; font-weight: 500; }
+.roof-layers button[aria-pressed="true"] { border-color: #ecd4b0; background: #fff5e7; color: #955707; }
+.roof-zoom { display: flex; gap: 6px; margin: 0 20px 12px; }
 .roof-zoom button { padding: 6px 10px; min-width: 34px; }
-
-.roof-map { display: block; width: 100%; height: auto; cursor: grab; touch-action: none; user-select: none; border-radius: 2px; }
+.roof-map { display: block; width: 100%; height: auto; max-height: 640px; cursor: grab; touch-action: none; user-select: none; }
 .roof-map:active { cursor: grabbing; }
-.roof-ground { fill: var(--ink); }
-.roof { stroke: var(--ink); cursor: pointer; }
-.roof:hover { stroke: var(--frost); }
-.roof.picked { stroke: var(--glacier); }
-
-.roof-tip { position: fixed; z-index: 20; pointer-events: none; display: flex; flex-direction: column; gap: 2px; max-width: 260px;
-  background: var(--ink); border: 1px solid var(--rime); color: var(--frost); font-family: var(--mono); font-size: 10.5px; padding: 6px 8px; border-radius: 2px; }
-.roof-tip b { font-family: var(--font); font-size: 12.5px; font-weight: 600; }
-
+.roof-ground { fill: #eef0eb; }
+.roof { stroke: #f7f8f5; cursor: pointer; }
+.roof:hover { stroke: #b56a08; }
+.roof.picked { stroke: #b56a08; }
+.roof-tip { position: fixed; z-index: 20; pointer-events: none; display: flex; flex-direction: column; gap: 4px; max-width: 260px; background: #fff; border: 1px solid var(--roof-border); color: var(--roof-muted); font-family: var(--font); font-size: 11px; padding: 10px 12px; border-radius: 9px; box-shadow: 0 8px 24px #18212f15; }
+.roof-tip b { color: var(--roof-ink); font-size: 12px; font-weight: 600; }
+.roof-scene { height: clamp(420px, calc(100vh - 285px), 610px); min-height: 420px; position: relative; overflow: hidden; background: #dce7ec; }
+.roof-scene-host { position: absolute; inset: 0; }
+.roof-scene-host canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.roof-scene-host canvas:active { cursor: grabbing; }
+.roof-scene-host canvas:focus-visible { outline: 3px solid #b56a08; outline-offset: -4px; }
+.roof-scene-tools { position: absolute; right: 16px; top: 16px; display: flex; flex-direction: column; gap: 4px; }
+.roof-scene-tools button { min-width: 35px; min-height: 35px; border: 1px solid #dce3e6; background: #fffffff0; color: #344252; border-radius: 8px; font-size: 20px; box-shadow: 0 2px 4px #18212f05; }
+.roof-scene-tools button:hover { background: #fff; color: #b56a08; }
+.roof-scene-tools button.roof-view-button { font-size: 10px; padding: 8px; margin-top: 3px; }
+.roof-scene-compass { position: absolute; left: 20px; top: 17px; display: flex; flex-direction: column; align-items: center; color: #465b63; font-size: 25px; text-shadow: 0 1px 2px #fff; line-height: 1.15; }
+.roof-scene-compass span { font-size: 10px; font-weight: 700; }
+.roof-scene-caption { position: absolute; bottom: 16px; left: 16px; display: flex; flex-direction: column; gap: 4px; max-width: calc(100% - 32px); padding: 9px 12px; background: #ffffffe0; backdrop-filter: blur(12px); border: 1px solid #ffffffa0; border-radius: 8px; font-size: 10px; color: #67747e; pointer-events: none; }
+.roof-scene-caption b { color: #344252; font-weight: 600; font-size: 10px; }
+.roof-scene-loading { display: flex; align-items: center; justify-content: center; gap: 8px; color: #596575; font-size: 13px; }
+.rooftops-page .region-legend { min-height: 53px; padding: 12px 17px; gap: 8px; color: var(--roof-muted); border-top: 1px solid var(--roof-border); font-size: 10px; line-height: 1.5; flex-wrap: wrap; }
+.rooftops-page .region-legend .dim { margin-left: auto; }
+.rooftops-page .place-side { gap: 16px; }
+.rooftops-page .place-side .card { background: #fff; padding: 20px; border: 1px solid var(--roof-border); border-radius: 14px; }
+.rooftops-page .place-side h2 { color: var(--roof-ink); font-size: 14px; letter-spacing: -.015em; margin: 0 0 16px; }
+.rooftops-page .spot-empty { min-height: 210px; padding: 5px 0 0; color: var(--roof-muted); }
+.rooftops-page .spot-empty h2 { margin: 15px 0 8px; }
+.rooftops-page .spot-empty p { font-size: 12px; line-height: 1.75; }
+.roof-selection-icon { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 13px; background: #fff3df; color: #b56a08; font-size: 28px; }
+.roof-start-button { background: #fff7eb; color: #955707; border: 1px solid #efdab9; border-radius: 8px; font-size: 11px; padding: 9px 12px; margin-top: 10px; }
 .roof-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.roof-card-head h2 { margin: 0 0 10px; }
+.rooftops-page .roof-card-head h2 { margin: 0 0 15px; line-height: 1.4; font-size: 15px; }
+.roof-card-head .pill { font-size: 9px; white-space: nowrap; background: #fff5e6; color: #a26919; border-color: #f0dfc4; }
+.rooftops-page .spot .kpi-label { color: var(--roof-muted); text-transform: none; font-size: 11px; }
+.rooftops-page .spot .kpi-big { font-size: 39px; letter-spacing: -.05em; color: var(--roof-ink); font-family: var(--font); }
+.rooftops-page .spot .kpi-big small { font-family: var(--font); font-size: 13px; color: var(--roof-muted); margin-left: 7px; }
+.roof-months { width: 100%; height: auto; margin: 20px 0 3px; }
+.roof-months .got { fill: #d89a3f; }
+.roof-months .lost { fill: #ede9e0; }
+.roof-months text { fill: var(--roof-muted); font-family: var(--font); font-size: 8px; }
+.roof-months-legend { display: flex; gap: 14px; font-size: 10px; color: var(--roof-muted); margin-bottom: 17px; }
+.roof-months-legend i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 5px; }
+.roof-months-legend i.got { background: #d89a3f; }
+.roof-months-legend i.lost { background: #ede9e0; }
+.rooftops-page .facts { font-size: 11px; color: var(--roof-muted); gap: 11px 6px; }
+.rooftops-page .facts dd { font-family: var(--font); color: #344252; font-weight: 500; }
+.roof-flag { color: #a36a13; font-size: 10px; }
+.roof-notes { margin: 18px 0 14px; padding-left: 15px; font-size: 11px; line-height: 1.65; color: var(--roof-muted); display: flex; flex-direction: column; gap: 6px; }
+.roof-osm { font-size: 11px; color: #997027; text-decoration: none; }
+.roof-assume { margin: -6px 0 16px; font-size: 11px; color: var(--roof-muted); }
+.rooftops-page .best { margin: 0; padding-left: 20px; }
+.rooftops-page .best li { color: #98a2b3; border-color: #eef0f3; }
+.rooftops-page .best button { color: #344252; text-align: left; padding: 11px 5px; width: 100%; border: 0; border-radius: 7px; background: transparent; }
+.rooftops-page .best button[aria-pressed="true"] { background: #fff6e8; }
+.rooftops-page .best button:hover { background: #f7f8fa; }
+.rooftops-page .best button > span:first-child { font-size: 12px; line-height: 1.4; }
+.rooftops-page .best button .dim { color: #84909e; font-size: 10px; }
+.rooftops-page .best button b { font-family: var(--font); color: #a46918; font-size: 12px; }
+.rooftops-page .slider-head { color: #667085; font-size: 11px; line-height: 1.5; }
+.rooftops-page .slider-head b { color: #344252; font-family: var(--font); }
+.rooftops-page input[type="range"] { accent-color: #b56a08; }
+.rooftops-page .flow-foot { color: #84909e; font-size: 10px; line-height: 1.8; margin-top: 22px; }
+@media (max-width: 1100px) { .rooftops-page .place { grid-template-columns: minmax(0, 1fr) 290px; gap: 14px; } .roof-toolbar, .roof-layers { padding-left: 14px; padding-right: 14px; } }
+@media (max-width: 850px) { .rooftops-page .place { grid-template-columns: 1fr; } .rooftops-page .place-map { position: relative; top: auto; } .rooftops-page .place-side { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } .roof-kpis { gap: 9px; } .roof-kpis > div { padding: 14px; } .roof-kpis > div:first-child { padding-top: 12px; } }
+@media (max-width: 600px) { .rooftops-page .place-head { align-items: flex-start; flex-direction: column; gap: 12px; } .roof-district-badge { font-size: 10px; padding: 6px 10px; } .roof-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 19px 0; } .roof-kpis b { font-size: 25px; } .roof-scene { height: 460px; min-height: 360px; } .rooftops-page .place-side { grid-template-columns: 1fr; } .roof-layers { gap: 5px; } .roof-layers button { font-size: 10px; padding: 7px 8px; } .roof-scene-caption { font-size: 9px; } .rooftops-page .region-legend .dim { width: 100%; margin-left: 0; } }
 
-.roof-months { width: 100%; height: auto; margin: 12px 0 2px; }
-.roof-months .got { fill: var(--steppe); }
-.roof-months .lost { fill: var(--rime); }
-.roof-months text { fill: var(--lichen); font-family: var(--mono); font-size: 8px; }
-.roof-months-legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--lichen); }
-.roof-months-legend i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; vertical-align: -1px; }
-.roof-months-legend i.got { background: var(--steppe); }
-.roof-months-legend i.lost { background: var(--rime); }
-
-.roof-flag { color: var(--sodium); font-size: 11px; }
-.roof-notes { margin: 14px 0 8px; padding-left: 18px; font-size: 12.5px; color: var(--lichen); display: flex; flex-direction: column; gap: 6px; }
-.roof-osm { font-size: 12px; color: var(--glacier); }
-.roof-assume { margin: -4px 0 10px; font-size: 12px; color: var(--sodium); }
-
-@media (max-width: 700px) {
-  .roof-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .roof-toolbar .seg { flex-basis: 100%; }
-}
+/* Keep the solar workspace and model visible on a typical laptop viewport. */
+.rooftops-page .flow-q { font-size: clamp(25px, 2.35vw, 34px); letter-spacing: -.045em; line-height: 1.18; }
+.rooftops-page .flow-sub { margin-bottom: 0; font-size: 13px; }
+.roof-eyebrow { margin-bottom: 7px; }
+.roof-kpis { margin: 18px 0; }
+.roof-kpis > div { padding: 14px 18px; }
+.roof-kpis > div:first-child { padding-top: 12px; }
+.roof-kpis .kpi-label { margin-bottom: 6px; }
+.roof-kpis b { font-size: 27px; }
+.roof-scene-tools { align-items: flex-end; }
+.roof-scene-tools button { width: 38px; height: 38px; min-width: 38px; min-height: 38px; padding: 0; }
+.roof-scene-tools button.roof-view-button { width: 85px; height: 34px; min-height: 34px; padding: 7px; }

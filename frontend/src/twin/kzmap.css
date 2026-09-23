@@ -1,0 +1,66 @@
+.kzmap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 14px;
+  margin: 8px 0 22px;
+}
+.kzmap-canvas {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  min-width: 0;
+}
+.kzmap-canvas svg { display: block; width: 100%; height: auto; }
+.kzmap-land { fill: var(--surface-2); stroke: var(--lichen); stroke-width: 1.2; stroke-linejoin: round; }
+.kzmap-city circle { fill: var(--lichen); }
+.kzmap-city text { font-size: 13px; fill: var(--lichen); font-family: var(--font); }
+.kzmap-pin { cursor: pointer; outline: none; }
+.kzmap-pin circle { fill: var(--accent); fill-opacity: 0.55; stroke: var(--accent); stroke-width: 1.5; transition: fill-opacity 0.15s; }
+.kzmap-pin.approx circle { fill-opacity: 0.08; stroke-dasharray: 3 3; }
+.kzmap-pin.history circle { fill: var(--sodium); stroke: var(--sodium); fill-opacity: 0.85; }
+.kzmap-pin .kzmap-halo { fill: none !important; stroke-width: 1.5; stroke-opacity: 0.6; }
+.kzmap-pin:hover circle, .kzmap-pin:focus-visible circle { fill-opacity: 0.9; }
+.kzmap-pin.focus circle:not(.kzmap-halo) { stroke: var(--text); stroke-width: 2.5; }
+.kzmap-legend {
+  display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; margin: 8px 0 0; padding: 0;
+  font-size: 12px; color: var(--text-dim);
+}
+.kzmap-legend li { display: flex; align-items: center; gap: 6px; }
+.kzmap-legend .lg { width: 11px; height: 11px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 55%, transparent); border: 1.5px solid var(--accent); }
+.kzmap-legend .lg.approx { background: transparent; border-style: dashed; }
+.kzmap-legend .lg.history { background: var(--sodium); border-color: var(--sodium); }
+.kzmap-legend .dim { opacity: 0.8; }
+.kzmap-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 10px;
+  min-width: 0;
+}
+.kzmap-card h2 { margin: 0; font-size: 20px; color: var(--text); }
+.kzmap-region { font-size: 12px; color: var(--text-dim); }
+.kzmap-card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 4px 0 0; font-size: 13px; }
+.kzmap-card dt { color: var(--text-dim); }
+.kzmap-card dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+.kzmap-card small { color: var(--text-dim); }
+.kzmap-note { margin: 0; font-size: 12.5px; color: var(--text-dim); }
+.kzmap-open {
+  margin-top: auto;
+  background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+  padding: 10px 14px; font: 600 14px var(--font); cursor: pointer;
+}
+.kzmap-open:hover { filter: brightness(1.08); }
+.kzmap-registry { margin: 18px 0 8px; font-size: 13px; color: var(--text-dim); }
+.kzmap-registry summary { cursor: pointer; color: var(--text); font-weight: 600; }
+.kzmap-registry table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.kzmap-registry td, .kzmap-registry th { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); }
+.kzmap-registry td:last-child, .kzmap-registry th:last-child { text-align: right; white-space: nowrap; }
+.kzmap-source { font-size: 11.5px; color: var(--text-dim); margin: 6px 0 0; }
+
+@media (max-width: 860px) {
+  .kzmap { grid-template-columns: 1fr; }
+  .kzmap-canvas { padding: 6px; }
+}

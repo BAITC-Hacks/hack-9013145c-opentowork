@@ -7,9 +7,10 @@ import { speedColor } from "../LegacyWindMap";
 import { SITE } from "../demo";
 import { createLandscape, terrainHeight } from "./terrain";
 import { createSolarArray, createTurbine } from "./turbines";
+import { createStationInfrastructure } from "./infrastructure";
 
 type Props = WindMapProps & { onUnavailable: () => void };
-type CameraAction = "in" | "out" | "reset";
+type CameraAction = "in" | "out" | "reset" | "facility";
 const DEG = Math.PI / 180;
 
 function disposeScene(scene: THREE.Scene) {
@@ -81,10 +82,15 @@ export default function Scene(props: Props) {
     controls.zoomSpeed = 0.7;
     controls.rotateSpeed = 0.65;
 
-    const sites = current.current.units.map((u) => ({
+    // Начало координат — центр своей станции: станции разнесены на тысячи км.
+    const units = current.current.units;
+    const ref = units.length
+      ? { lat: units.reduce((a, u) => a + u.lat, 0) / units.length, lon: units.reduce((a, u) => a + u.lon, 0) / units.length }
+      : SITE;
+    const sites = units.map((u) => ({
       id: u.id,
-      x: (u.lon - SITE.lon) * Math.cos(SITE.lat * DEG) * 111320,
-      z: -(u.lat - SITE.lat) * 110540,
+      x: (u.lon - ref.lon) * Math.cos(ref.lat * DEG) * 111320,
+      z: -(u.lat - ref.lat) * 110540,
     }));
     const center = new THREE.Vector3(
       sites.reduce((a, s) => a + s.x, 0) / Math.max(1, sites.length),
@@ -93,12 +99,13 @@ export default function Scene(props: Props) {
     );
     const span = Math.max(600, ...sites.map((s) => Math.hypot(s.x - center.x, s.z - center.z) * 2));
     const distance = Math.min(1900, span * 1.25);
-    const home = center.clone().add(new THREE.Vector3(-distance * 0.5, distance * 0.22, distance * 0.66));
+    const home = center.clone().add(new THREE.Vector3(-distance * 0.5, distance * 0.32, distance * 0.78));
     camera.position.copy(current.current.tilt ? home : center.clone().add(new THREE.Vector3(0, distance * 1.05, 0.1)));
     controls.target.copy(center);
     controls.update();
     const goalPosition = home.clone();
     const goalTarget = center.clone();
+    const facilityTarget = center.clone();
     let flying = false;
     let lastTilt = current.current.tilt;
     let lastSelected = current.current.selected;
@@ -113,6 +120,8 @@ export default function Scene(props: Props) {
     actions.current = (action) => {
       if (action === "reset") {
         fly(current.current.tilt ? home : center.clone().add(new THREE.Vector3(0, distance * 1.05, 0.1)), center);
+      } else if (action === "facility") {
+        fly(facilityTarget.clone().add(new THREE.Vector3(-100, 65, 135)), facilityTarget);
       } else {
         const offset = camera.position.clone().sub(controls.target).multiplyScalar(action === "in" ? 0.75 : 1.33);
         offset.clampLength(controls.minDistance, controls.maxDistance);
@@ -144,6 +153,9 @@ export default function Scene(props: Props) {
 
     const landscape = createLandscape(sites);
     scene.add(landscape);
+    const infrastructure = createStationInfrastructure(sites, current.current.kind);
+    facilityTarget.copy(infrastructure.children[0].position).add(new THREE.Vector3(0, 8, 0));
+    scene.add(infrastructure);
     // Colour gradient sky, with atmospheric haze rather than a flat background.
     const skyMaterial = new THREE.ShaderMaterial({
       side: THREE.BackSide, depthWrite: false,
@@ -395,6 +407,11 @@ export default function Scene(props: Props) {
         <button type="button" onClick={() => actions.current("in")} aria-label="Приблизить" title="Приблизить">＋</button>
         <button type="button" onClick={() => actions.current("out")} aria-label="Отдалить" title="Отдалить">−</button>
         <button type="button" onClick={() => actions.current("reset")} aria-label="Показать всю станцию" title="Вся станция">⌖</button>
+        <button type="button" onClick={() => actions.current("facility")} aria-label="Осмотреть сервисный корпус" title="Осмотреть сервисный корпус">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+            <path d="M3 21V7l10-4v18M13 10h8v11M1 21h22M6 9h4M6 13h4M6 17h4M16 13h2M16 17h2" />
+          </svg>
+        </button>
       </div>
       <button type="button" className="scene-light" onClick={() => setDaylight((d) => !d)} aria-pressed={daylight} title="Дневное освещение для осмотра или освещение по часу прогноза">
         <span aria-hidden="true">{daylight ? "☀" : "◐"}</span> {daylight ? "Дневной свет" : "По времени суток"}

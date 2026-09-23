@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { BacktestSummary, ForecastRun, SourceKind, Station, UnitSample } from "../api";
-import { demoBacktest, demoRun, demoSolarRun, demoUnitHistory, DEMO_STATIONS } from "./demo";
+import { demoBacktest, demoRun, demoSolarRun, demoUnitHistory, DEMO_SOLAR_STATIONS, DEMO_STATIONS } from "./demo";
 
 export type Origin = "api" | "demo";
 
@@ -16,16 +16,20 @@ async function withFallback<T>(live: () => Promise<T>, demo: () => T): Promise<[
   }
 }
 
-export function useStations() {
+// До входа /stations отвечает 401 — запрашиваем заново, когда появился токен.
+export function useStations(authed = true) {
   const [state, setState] = useState<{ stations: Station[]; origin: Origin }>({
     stations: DEMO_STATIONS,
     origin: "demo",
   });
   useEffect(() => {
-    withFallback(api.stations, () => DEMO_STATIONS).then(([stations, origin]) =>
-      setState({ stations, origin }),
-    );
-  }, []);
+    if (!authed) return;
+    // ВЭС — из справочника в БД; СЭС в нём нет, виртуальная остаётся на фронте.
+    withFallback(
+      async () => [...(await api.stations()), ...DEMO_SOLAR_STATIONS],
+      () => DEMO_STATIONS,
+    ).then(([stations, origin]) => setState({ stations, origin }));
+  }, [authed]);
   return state;
 }
 
@@ -46,8 +50,12 @@ export function useForecast(station: Station | null, originIso: string, horizon:
     if (!station) return;
     let alive = true;
     setState((s) => ({ ...s, loading: true }));
+    // Модель обучена только на SCADA станции кейса; /forecast/* не различает
+    // station_id, поэтому остальным станциям — демо с плашкой, а не чужой прогноз.
     const live = () =>
-      nonce > 0
+      station.data !== "history"
+        ? Promise.reject(new Error("no model for station"))
+        : nonce > 0
         ? api.runForecast(station.id, originIso, horizon)
         : api.forecastAt(station.id, originIso);
     withFallback(live, () => demoFor(station, originIso, horizon)).then(([run, origin]) => {
@@ -178,5 +186,11 @@ export function mw(x: number): string {
 }
 
 export function stationRated(s: Station): number {
-  return s.units.reduce((a, u) => a + (u.rated_mw ?? 0), 0);
+  const units = s.units.reduce((a, u) => a + (u.rated_mw ?? 0), 0);
+  return units || s.capacity_mw || 0;
+}
+
+/** Станцию можно открыть, если известно, где стоят её агрегаты. */
+export function canOpen(s: Station): boolean {
+  return s.units.length > 0;
 }
