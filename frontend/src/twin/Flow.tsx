@@ -3,7 +3,7 @@ import type { SourceKind, Station } from "../api";
 import { mw, stationRated } from "./data";
 import KzMap from "./KzMap";
 import type { Mode, Route } from "./data";
-import { demoRun, demoSolarRun, DEMO_STATIONS } from "./demo";
+import { demoRun, DEMO_STATIONS } from "./demo";
 import "./flow-refresh.css";
 
 const STEP_NAMES = ["Задача", "Источник", "Станция", "Обзор"];
@@ -535,11 +535,8 @@ export function StationPick({
   const summary = useMemo(() => {
     const out: Record<string, number> = {};
     for (const s of list) {
-      if (s.data === "none") continue;
-      const run =
-        s.kind === "solar"
-          ? demoSolarRun(s, originIso, 24)
-          : demoRun(originIso, 24);
+      if (s.data === "none" || s.kind === "solar") continue;
+      const run = demoRun(originIso, 24);
       out[s.id] =
         run.predictions.reduce((a, p) => a + p.p50, 0) * stationRated(s);
     }
@@ -561,12 +558,10 @@ export function StationPick({
           {list.length} {plural(list.length, "объект", "объекта", "объектов")}
         </span>
       </div>
-      {kind === "wind" && (
-        <KzMap
-          stations={list}
-          onOpen={(s) => go({ page: "station", kind, stationId: s.id, tab: "map" })}
-        />
-      )}
+      <KzMap
+        stations={list}
+        onOpen={(s) => go({ page: "station", kind, stationId: s.id, tab: "map" })}
+      />
       <div className="stations">
         {(kind === "wind" ? list.filter((s) => s.data !== "none") : list).map((s) => {
           const disabled = s.data === "none";
@@ -598,16 +593,23 @@ export function StationPick({
                   <span className="sc-stats">
                     <span>
                       <b>
-                        {mw(stationRated(s))} <small>МВт</small>
+                        {stationRated(s) ? mw(stationRated(s)) : "—"} <small>МВт</small>
                       </b>
-                      Мощность станции
+                      {stationRated(s) ? "Мощность станции" : "Мощность не опубликована"}
                     </span>
-                    <span>
-                      <b>
-                        {mw(summary[s.id] ?? 0)} <small>МВт·ч</small>
-                      </b>
-                      За 24 часа · демо
-                    </span>
+                    {kind === "wind" ? (
+                      <span>
+                        <b>
+                          {mw(summary[s.id] ?? 0)} <small>МВт·ч</small>
+                        </b>
+                        За 24 часа · демо
+                      </span>
+                    ) : (
+                      <span>
+                        <b>Open-Meteo</b>
+                        Прогноз по реальной радиации
+                      </span>
+                    )}
                   </span>
                   <span className="sc-bottom">
                     <span>
@@ -631,7 +633,7 @@ export function StationPick({
       <p className="flow-foot">
         {kind === "wind"
           ? `Прогноз выработки — демонстрационный. Турбины Нурлы — Goldwind GW109/2500, номинал ${mw(2.5)} МВт (модель по OSM; в данных кейса мощность нормализована).`
-          : "Выработка показана по демонстрационной модели солнечной станции. Оценки не заменяют проектный расчёт."}
+          : "Станции и контуры — OpenStreetMap; прогноз — прогноз радиации Open-Meteo через физическую модель панелей. Блоки — условное деление контура станции. Оценки не заменяют проектный расчёт."}
       </p>
       <button
         className="back"

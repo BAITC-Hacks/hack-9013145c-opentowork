@@ -321,3 +321,15 @@ OSM-контурам и высотам. Добавлены неоднородн�
 
 **Не сделано:** модель мощности порывы и ветер на 10 м не использует — это только
 информация для оператора.
+
+## Справочник и прогноз СЭС Казахстана
+
+**Где:** `app/solar/catalog.py`, `app/solar/data/kz_solar_farms.json`, `GET /api/v1/stations`
+(записи `kind = "solar"`), `GET /api/v1/predictions/run?kind=solar&station_id=…`, экран `#/forecast/solar`.
+
+26 солнечных станций из OpenStreetMap (контуры `power=plant`, `plant:source=solar`),
+собираются вручную `scripts/fetch_solar_farms.py`. Мощность — только из OSM (есть у 12);
+у остальных `capacity_mw = null`. Блоки Б1–Б4 — условное деление контура по медианам,
+мощность блока пропорциональна площади части. Прогноз — прогноз радиации, облачности и
+температуры Open-Meteo через модель панелей (`windcast/live.py: solar_run`); фактической
+выработки СЭС нет. Проверено: `tests/test_solar_catalog.py`, эндпоинты на пересобранном API.

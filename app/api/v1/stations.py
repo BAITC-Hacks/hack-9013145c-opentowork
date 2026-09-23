@@ -1,4 +1,4 @@
-"""Справочник станций для выбора на карте. Сейчас только ВЭС."""
+"""Справочник станций для выбора на карте: ВЭС из БД, СЭС из OSM-каталога."""
 
 from datetime import UTC, datetime, timedelta
 
@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 from app.deps import SessionDep, UserDep
 from app.errors import NotFound, ServiceUnavailable, ValidationFailed
 from app.models import WindFarm
+from app.solar.catalog import solar_farm, solar_farms
 from app.wind import station_weather as weather
 
 router = APIRouter(prefix="/stations", tags=["stations"])
@@ -75,6 +76,37 @@ def _out(f: WindFarm) -> StationOut:
     )
 
 
+def _solar_out(f: dict) -> StationOut:
+    return StationOut(
+        id=f["id"],
+        kind="solar",
+        name=f["name"],
+        region=f["region"] or "",
+        lat=f["lat"],
+        lon=f["lon"],
+        location=f["location"],
+        units=[
+            UnitOut(
+                id=u["id"],
+                name=f"Блок {u['id'].removeprefix('Б')}",
+                lat=u["lat"],
+                lon=u["lon"],
+                rated_mw=u["rated_kw"] / 1000 if u["rated_kw"] else None,
+                model=None,
+            )
+            for u in f["units"]
+        ],
+        data=f["data"],
+        note=f["note"],
+        capacity_mw=f["capacity_mw"],
+        capacity_source=f["capacity_source"],
+        operators=f["operators"],
+        commissioned=f["commissioned"],
+        in_registry=f["in_registry"],
+        osm=f["osm"],
+    )
+
+
 @router.get("", response_model=list[StationOut])
 async def list_stations(session: SessionDep, _: UserDep) -> list[StationOut]:
     # Сначала станции с данными, затем крупные — так список читается сверху вниз.
@@ -88,7 +120,7 @@ async def list_stations(session: SessionDep, _: UserDep) -> list[StationOut]:
             WindFarm.name,
         )
     )
-    return [_out(f) for f in farms]
+    return [_out(f) for f in farms] + [_solar_out(f) for f in solar_farms()]
 
 
 @router.get("/{station_id}", response_model=StationOut)
@@ -97,7 +129,10 @@ async def get_station(station_id: str, session: SessionDep, _: UserDep) -> Stati
         select(WindFarm).options(selectinload(WindFarm.turbines)).where(WindFarm.id == station_id)
     )
     if farm is None:
-        raise NotFound("station not found")
+        solar = solar_farm(station_id)
+        if solar is None:
+            raise NotFound("station not found")
+        return _solar_out(solar)
     return _out(farm)
 
 

@@ -146,8 +146,9 @@ export default function StationView({
   const point = points[Math.min(cursor, points.length - 1)] ?? null;
   const stationWind = useStationWind(station, originIso, horizon);
   const tMs = point ? parseTs(point.forecast_for) : parseTs(originIso);
-  const sun = sunPosition(tMs - SITE.utcOffset * 3_600_000, SITE.lat, SITE.lon);
-  const solarNow = solarPower(tMs);
+  const sun = sunPosition(tMs - SITE.utcOffset * 3_600_000, station.lat ?? SITE.lat, station.lon ?? SITE.lon);
+  // У СЭС освещённость панелей в сцене — её же прогноз; у ВЭС соседняя СЭС условная.
+  const solarNow = wind ? solarPower(tMs) : (point?.p50 ?? 0);
 
   // Для ВЭС API и Copilot используют один серверный расчёт сценария.
   const scenario = useMemo(() => {
@@ -160,11 +161,10 @@ export default function StationView({
         const next = powerCurve(p.wind_speed * k);
         return base > 0.005 ? Math.min(1, (p.p50 * next) / base) : next * 0.9;
       }
-      const t = parseTs(p.forecast_for);
+      // Прогноз уже учитывает радиацию; сценарий меняет только облачность.
       const cloud = p.cloud_cover ?? 0.5;
-      const base = solarPower(t, cloud);
-      const next = solarPower(t, Math.min(1, cloud * k));
-      return base > 0.001 ? (p.p50 * next) / base : 0;
+      const clearSky = (c: number) => 1 - 0.72 * c ** 2.2;
+      return Math.min(1, (p.p50 * clearSky(Math.min(1, cloud * k))) / clearSky(cloud));
     });
   }, [change, run, wind, serverScenario, remoteScenario, scenarioKey]);
 
@@ -504,7 +504,7 @@ export default function StationView({
             </button>
           ))}
         </div>
-        {wind && perUnit.length > 1 && (
+        {wind && perUnit.length > 1 && perUnit[0].day > 1e-6 && (
           <div className="hint">
             Прогноз {perUnit[1].unit.id} относительно {perUnit[0].unit.id}:{" "}
             <b>{((perUnit[1].day / Math.max(1e-6, perUnit[0].day) - 1) * 100).toFixed(1)}%</b>.

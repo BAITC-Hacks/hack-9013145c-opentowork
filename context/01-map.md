@@ -192,6 +192,10 @@
 | `app/solar/data/astana_left_bank.json` | Контуры и этажность зданий (OSM) + месячная радиация (PVGIS-ERA5). **Лежит в репозитории**: проверка не ходит во внешние API |
 | `app/api/v1/solar.py` | `GET /api/v1/solar/rooftops` — рейтинг крыш района |
 | `scripts/fetch_solar_data.py` | Перекачать данные; запускать вручную, не при старте |
+| `app/solar/data/kz_solar_farms.json` | Справочник СЭС Казахстана (OSM): контур → центр, мощность, область, блоки Б1–Б4 — условное деление контура |
+| `app/solar/catalog.py` | Чтение справочника СЭС (без БД); используется в `/stations` и `/predictions/run` |
+| `scripts/fetch_solar_farms.py` | Пересобрать справочник СЭС из Overpass; вручную, не при старте |
+| `tests/test_solar_catalog.py` | Справочник СЭС: координаты в пределах РК, сумма мощностей блоков, контракт станции |
 | `frontend/src/twin/Rooftops.tsx`, `rooftops.css` | Экран «Крыши города»: карта, рейтинг, карточка здания, экономика |
 | `tests/test_solar.py` | Геометрия солнца, парсинг высот, тени, исключение куполов — без БД и сети |
 

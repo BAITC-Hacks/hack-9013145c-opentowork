@@ -66,7 +66,7 @@ export default function KzMap({ stations, onOpen, placement }: {
     <div className={`kzmap${placement ? " kzmap-placement" : ""}`}>
       <div className="kzmap-canvas">
         <svg viewBox={`0 0 ${W} ${H}`} role="img"
-          aria-label={placement ? "Карта Казахстана: выберите место новой турбины" : `Карта ВЭС Казахстана: ${mapped.length} станций`}
+          aria-label={placement ? "Карта Казахстана: выберите место новой турбины" : `Карта станций Казахстана: ${mapped.length}`}
           onClick={placement ? (event) => {
             const svg = event.currentTarget;
             const matrix = svg.getScreenCTM();
@@ -156,7 +156,7 @@ export default function KzMap({ stations, onOpen, placement }: {
                 {focus.capacity_mw != null ? `${mw(focus.capacity_mw)} МВт` : "не опубликована"}
                 {focus.capacity_source && <small> · {focus.capacity_source === "registry" ? "реестр Минэнерго" : "OSM"}</small>}
               </dd>
-              <dt>Турбины</dt>
+              <dt>{focus.kind === "solar" ? "Блоки" : "Турбины"}</dt>
               <dd>
                 {focus.units.length > 0 ? focus.units.length : "не нанесены"}
                 {(() => {
@@ -181,7 +181,7 @@ export default function KzMap({ stations, onOpen, placement }: {
             {focus.note && <p className="kzmap-note">{focus.note}</p>}
             {canOpen(focus) ? (
               <button className="kzmap-open" onClick={() => onOpen(focus)}>
-                {focus.data === "history" ? "Открыть прогноз" : "Открыть станцию · прогноз демо"}
+                {focus.data === "history" || focus.kind === "solar" ? "Открыть прогноз" : "Открыть станцию · прогноз демо"}
               </button>
             ) : (
               <p className="kzmap-note">Расположение турбин неизвестно — 3D-обзор недоступен.</p>

@@ -16,6 +16,7 @@ from sqlalchemy.orm import selectinload
 from app.deps import SessionDep, UserDep
 from app.errors import NotFound, ServiceUnavailable, ValidationFailed
 from app.models import WindFarm
+from app.solar.catalog import solar_farm
 
 router = APIRouter(prefix="/predictions", tags=["predictions"])
 
@@ -78,11 +79,16 @@ async def prediction_run(
     lon: float | None = Query(None, ge=-180, le=180),
     units: str = Query("", max_length=256),
 ) -> dict:
-    """Прогноз станции. СЭС нет в справочнике — для неё координаты передаются явно."""
+    """Прогноз станции. Координаты СЭС берутся из OSM-каталога; для точки вне
+    каталога (виртуальная станция) их можно передать явно."""
     from windcast import live
 
     ts = _origin(origin)
     if kind == "solar":
+        farm = solar_farm(station_id)
+        if farm is not None:
+            lat, lon = farm["lat"], farm["lon"]
+            units = ",".join(u["id"] for u in farm["units"])
         if lat is None or lon is None:
             raise ValidationFailed("для СЭС нужны lat и lon")
         ids = [u for u in units.split(",") if u] or ["Б1"]

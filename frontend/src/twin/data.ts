@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { BacktestSummary, ForecastRun, SourceKind, Station, StationWind, UnitSample } from "../api";
-import { demoBacktest, demoRun, demoSolarRun, DEMO_SOLAR_STATIONS, DEMO_STATIONS } from "./demo";
+import { demoBacktest, demoRun, demoSolarRun, DEMO_STATIONS } from "./demo";
 
 export type Origin = "api" | "demo";
 
@@ -24,9 +24,9 @@ export function useStations(authed = true) {
   });
   useEffect(() => {
     if (!authed) return;
-    // ВЭС — из справочника в БД; СЭС в нём нет, виртуальная остаётся на фронте.
+    // ВЭС — справочник в БД, СЭС — каталог OSM; виртуальная СЭС только без API.
     withFallback(
-      async () => [...(await api.stations()), ...DEMO_SOLAR_STATIONS],
+      () => api.stations(),
       () => DEMO_STATIONS,
     ).then(([stations, origin]) => setState({ stations, origin }));
   }, [authed]);

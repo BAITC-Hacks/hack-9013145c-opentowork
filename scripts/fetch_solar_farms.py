@@ -174,8 +174,11 @@ def main() -> None:
 
     print("OSM: населённые пункты…")
     places = [
-        {"name": n["tags"].get("name:ru") or n["tags"].get("name"),
-         "lat": n["lat"], "lon": n["lon"]}
+        {
+            "name": n["tags"].get("name:ru") or n["tags"].get("name"),
+            "lat": n["lat"],
+            "lon": n["lon"],
+        }
         for n in overpass(
             f'[out:json][timeout:180];{KZ_AREA}node["place"~"^(city|town|village)$"](area.kz);out;'
         )

@@ -21,7 +21,7 @@ function unitShare(p: ForecastPoint, id: string): number {
 function status(station: Station, p: ForecastPoint | undefined, power: number) {
   if (!p) return { text: "—", tone: "" };
   if (station.kind === "solar") {
-    const sun = sunPosition(parseTs(p.forecast_for) - SITE.utcOffset * HOUR, SITE.lat, SITE.lon);
+    const sun = sunPosition(parseTs(p.forecast_for) - SITE.utcOffset * HOUR, station.lat ?? SITE.lat, station.lon ?? SITE.lon);
     if (sun.elevation <= 0) return { text: "Ночь", tone: "idle" };
     if ((p.cloud_cover ?? 0) > 0.7) return { text: "Сплошная облачность", tone: "warn" };
     return { text: "Работает", tone: "ok" };
@@ -52,7 +52,9 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
   const wake = station.kind === "wind" && p && unit.id === "T2" ? wakeFactor(p.wind_dir) : 1;
   const hubWind = p ? p.wind_speed * wake ** (1 / 3) : 0;
   const rpm = share > 0.01 ? 5 + 11 * share : 0;
-  const sun = p ? sunPosition(parseTs(p.forecast_for) - SITE.utcOffset * HOUR, SITE.lat, SITE.lon) : null;
+  const sun = p
+    ? sunPosition(parseTs(p.forecast_for) - SITE.utcOffset * HOUR, station.lat ?? SITE.lat, station.lon ?? SITE.lon)
+    : null;
 
   return (
     <div className="unit-panel">
