@@ -42,16 +42,19 @@ function demoFor(station: Station, originIso: string, horizon: number): Forecast
 }
 
 export function useForecast(station: Station | null, originIso: string, horizon: number, nonce = 0) {
-  const [state, setState] = useState<{ run: ForecastRun | null; origin: Origin; loading: boolean }>({
+  const [state, setState] = useState<{ run: ForecastRun | null; origin: Origin; key: string | null; stationId: string | null }>({
     run: null,
     origin: "demo",
-    loading: true,
+    key: null,
+    stationId: null,
   });
+  // Загрузка выводится из ключа запроса, а не из флага: флаг ставится в эффекте,
+  // то есть уже после первого кадра с новыми параметрами — и этот кадр шёл без лоадера.
+  const key = station ? `${station.id}|${originIso}|${horizon}|${nonce}` : null;
 
   useEffect(() => {
-    if (!station) return;
+    if (!station || !key) return;
     let alive = true;
-    setState((s) => ({ ...s, loading: true }));
     // Тестовый период станции кейса — сохранённые прогоны агента (с фактом для сравнения).
     // Всё остальное — расчёт на реальной погоде Open-Meteo: для Нурлы обученной моделью,
     // для других ВЭС кривой мощности, для СЭС по радиации. Демо — только если API недоступен.
@@ -62,14 +65,21 @@ export function useForecast(station: Station | null, originIso: string, horizon:
           : api.forecastAt(station.id, originIso, horizon)
         : api.predictRun(station, originIso, horizon);
     withFallback(live, () => demoFor(station, originIso, horizon)).then(([run, origin]) => {
-      if (alive) setState({ run, origin, loading: false });
+      if (alive) setState({ run, origin, key, stationId: station.id });
     });
     return () => {
       alive = false;
     };
-  }, [station, originIso, horizon, nonce]);
+  }, [station, originIso, horizon, nonce, key]);
 
-  return state;
+  // Прогноз другой станции не показываем даже под лоадером; при смене даты
+  // прежний прогноз остаётся под лоадером, чтобы экран не мигал пустотой.
+  const sameStation = station !== null && state.stationId === station.id;
+  return {
+    run: sameStation ? state.run : null,
+    origin: state.origin,
+    loading: key !== null && state.key !== key,
+  };
 }
 
 /** Фактическая SCADA агрегата; null — фактов нет (станция без истории или API недоступен).

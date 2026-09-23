@@ -3,10 +3,11 @@ import type { SourceKind, Station } from "../api";
 import { mw, stationRated } from "./data";
 import KzMap from "./KzMap";
 import type { Mode, Route } from "./data";
-import { DEMO_STATIONS } from "./demo";
 import "./flow-refresh.css";
 
 const STEP_NAMES = ["Задача", "Источник", "Станция", "Обзор"];
+// Станция из технического задания: две турбины с историей SCADA, на ней обучена модель.
+const CASE_STATION_ID = "nurly";
 
 export function StepBar({ step, mode }: { step: number; mode?: Mode }) {
   const names = mode === "place" ? ["Задача", "Источник", "Место"] : STEP_NAMES;
@@ -279,20 +280,13 @@ function Choice({
 export function Home({
   go,
   lastStation,
-  stations = DEMO_STATIONS,
 }: {
   go: (r: Route) => void;
   lastStation: Station | null;
-  stations?: Station[];
 }) {
-  const openSource = (kind: SourceKind) => {
-    const station = stations.find((s) => s.kind === kind && s.data !== "none");
-    go(
-      station
-        ? { page: "station", kind, stationId: station.id, tab: "map" }
-        : { page: "stations", kind },
-    );
-  };
+  // Карточка источника ведёт на выбор станции: сразу открывать первую из списка
+  // значило бы молча подменить выбор пользователя станцией кейса.
+  const openSource = (kind: SourceKind) => go({ page: "stations", kind });
   return (
     <div className="flow flow-refresh overview">
       <div className="overview-heading">
@@ -309,7 +303,26 @@ export function Home({
           Демонстрационная среда
         </span>
       </div>
-      {lastStation && (
+      <button
+        className="case-station"
+        onClick={() => go({ page: "station", kind: "wind", stationId: CASE_STATION_ID, tab: "map" })}
+      >
+        <span className="case-station-icon">
+          <SourceIcon kind="wind" />
+        </span>
+        <span className="case-station-body">
+          <span className="case-station-eyebrow">Станция из ТЗ</span>
+          <b>ВЭС Нурлы · 2 турбины</b>
+          <span>
+            Алматинская область · Goldwind GW109/2500 × 2 · SCADA 03.2023–01.2026.
+            Прогноз на 24–48 ч, точность, объяснение и заявка РФЦ.
+          </span>
+        </span>
+        <span className="case-station-cta">
+          Открыть станцию <Arrow />
+        </span>
+      </button>
+      {lastStation && lastStation.id !== CASE_STATION_ID && (
         <button
           className="overview-resume"
           onClick={() =>

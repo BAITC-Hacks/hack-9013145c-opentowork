@@ -728,3 +728,39 @@
     transform: none;
   }
 }
+
+/* ─── станция из ТЗ на главной ─── */
+.flow-refresh .case-station {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  margin-top: 25px;
+  padding: 16px 18px;
+  border: 1px solid #bfe0d6;
+  border-radius: 12px;
+  background: linear-gradient(100deg, #eaf6f1 0%, #ffffff 70%);
+  color: var(--frost);
+}
+.flow-refresh .case-station:hover:not(:disabled) { border-color: var(--glacier); box-shadow: 0 4px 14px #087f7214; }
+.flow-refresh .case-station-icon {
+  flex: none; width: 44px; height: 44px; display: grid; place-items: center;
+  border-radius: 10px; background: var(--glacier); color: #fff;
+}
+.flow-refresh .case-station-icon svg { width: 24px; height: 24px; }
+.flow-refresh .case-station-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.flow-refresh .case-station-eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--glacier);
+}
+.flow-refresh .case-station-body b { font-size: 17px; font-weight: 600; }
+.flow-refresh .case-station-body > span:last-child { font-size: 13px; color: var(--lichen); line-height: 1.45; }
+.flow-refresh .case-station-cta {
+  flex: none; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13.5px; font-weight: 600; color: var(--glacier); white-space: nowrap;
+}
+.flow-refresh .case-station-cta svg { width: 16px; height: 16px; }
+@media (max-width: 720px) {
+  .flow-refresh .case-station { flex-wrap: wrap; padding: 14px; }
+  .flow-refresh .case-station-cta { width: 100%; justify-content: flex-end; }
+}

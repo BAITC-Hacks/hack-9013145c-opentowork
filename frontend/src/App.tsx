@@ -405,8 +405,12 @@ export default function App() {
   const [originIso, setOriginIso] = useState(ORIGINS[0]);
   const [horizon, setHorizon] = useState(48);
   const [nonce, setNonce] = useState(0);
+  // Пока справочник грузится, в stations лежит демо-список: станцию из него не открываем,
+  // иначе на миг показывается демо-Нурлы вместо лоадера.
   const station =
-    route.page === "station" ? stations.find((s) => s.id === route.stationId && canOpen(s)) ?? null : null;
+    route.page === "station" && !stationsLoading
+      ? stations.find((s) => s.id === route.stationId && canOpen(s)) ?? null
+      : null;
   const forecast = useForecast(station, originIso, horizon, nonce);
   const [lastId, setLastId] = useState(readLast);
 
@@ -441,7 +445,7 @@ export default function App() {
   const crumbStation =
     station ?? ("stationId" in route ? stations.find((s) => s.id === route.stationId) ?? null : null);
   const path = crumbs(route, crumbStation?.name ?? null);
-  const lastStation = stations.find((s) => s.id === lastId && canOpen(s)) ?? null;
+  const lastStation = stationsLoading ? null : stations.find((s) => s.id === lastId && canOpen(s)) ?? null;
   const activeSection = route.page === "roofs" ? "roofs" : "kind" in route ? route.kind : route.page;
   const primaryNav: { id: string; label: string; to: Route }[] = [
     { id: "home", label: "Обзор", to: { page: "home" } },
@@ -500,7 +504,7 @@ export default function App() {
         </div></div>
       )}
 
-      {route.page === "home" && <Home go={go} lastStation={lastStation} stations={stations} />}
+      {route.page === "home" && <Home go={go} lastStation={lastStation} />}
       {route.page === "kind" && <KindPick mode={route.mode} stations={stations} go={go} />}
       {route.page === "stations" &&
         (stationsLoading ? (
