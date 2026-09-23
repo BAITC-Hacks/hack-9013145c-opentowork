@@ -1,0 +1,44 @@
+# Секреты — никогда в git
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.coverage
+htmlcov/
+
+# Node / frontend
+node_modules/
+.next/
+dist/
+.vite/
+
+# Данные и артефакты
+*.db
+*.sqlite3
+uploads/
+data/
+models/
+*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Локальные скиллы Claude Code (симлинки на ~/.claude/vendor)
+.claude/
+.mcp.json

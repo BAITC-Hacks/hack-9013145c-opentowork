@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: hackalem
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"      # совпадает с MAX_FILE_SIZE_MB
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"   # запас на долгие AI-ответы
+    cert-manager.io/cluster-issuer: letsencrypt-prod        # TLS автоматом
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ["app.example.kz"]
+      secretName: api-tls
+  rules:
+    - host: app.example.kz
+      http:
+        paths:
+          # Более специфичные префиксы идут первыми: API забирает свои пути,
+          # всё остальное достаётся фронтенду.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service: { name: api, port: { number: 8000 } }
+          # Swagger и служебные эндпоинты живут на бэкенде и фронтендом
+          # не проксируются — выносим их явно.
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service: { name: api, port: { number: 8000 } }
+          - path: /openapi.json
+            pathType: Exact
+            backend:
+              service: { name: api, port: { number: 8000 } }
+          - path: /health
+            pathType: Exact
+            backend:
+              service: { name: api, port: { number: 8000 } }
+          - path: /ready
+            pathType: Exact
+            backend:
+              service: { name: api, port: { number: 8000 } }
+          # /metrics наружу отдавать не нужно: Prometheus скрейпит поды напрямую
+          # по аннотациям prometheus.io/* из api-deployment.yaml.
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: frontend, port: { number: 3000 } }

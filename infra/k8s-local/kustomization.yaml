@@ -1,0 +1,134 @@
+# Оверлей для локального кластера (Docker Desktop Kubernetes / kind / minikube).
+#
+#   kubectl apply -k infra/k8s-local/
+#
+# Отличия от базового набора:
+#   * образы — локально собранные, без registry;
+#   * imagePullPolicy: Never — иначе кластер полезет в интернет за несуществующим тегом;
+#   * меньше реплик и requests: ноутбук, а не прод;
+#   * LLM_MODE=mock — локально работает без ключей;
+#   * Ingress исключён: для него нужен отдельный контроллер, локально удобнее
+#     `kubectl port-forward`.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: hackalem
+
+resources:
+  - ../k8s
+
+# Ingress требует установленного ingress-контроллера и DNS — локально не нужен.
+patches:
+  - target: { kind: Ingress, name: api-ingress }
+    patch: |
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: api-ingress
+
+  # На одной ноде три реплики API только отнимают память.
+  - target: { kind: Deployment, name: api }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "100m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "192Mi"
+
+  - target: { kind: Deployment, name: worker }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "100m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "192Mi"
+
+  - target: { kind: Deployment, name: frontend }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+
+  # minAvailable/maxUnavailable при одной реплике мешает обновлению.
+  - target: { kind: PodDisruptionBudget, name: api-pdb }
+    patch: |
+      $patch: delete
+      apiVersion: policy/v1
+      kind: PodDisruptionBudget
+      metadata:
+        name: api-pdb
+
+  - target: { kind: StatefulSet, name: postgres }
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "100m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "256Mi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 2Gi
+
+  - target: { kind: StatefulSet, name: minio }
+    patch: |
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 1Gi
+
+# Локально работаем без ключей и с демо-данными.
+# Патч, а не configMapGenerator: базовый ConfigMap — обычный манифест,
+# а `behavior: merge` умеет сливаться только с таким же генератором.
+  - target: { kind: ConfigMap, name: app-config }
+    patch: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: app-config
+      data:
+        LLM_MODE: "mock"
+        EMBEDDING_PROVIDER: "mock"
+        SEED_ON_START: "true"
+        APP_ENV: "dev"
+        LOG_FORMAT: "console"
+        CORS_ORIGINS: "http://localhost:3000,http://localhost:5173"
+
+# Секрет создаётся здесь, а не берётся из infra/k8s/secret.yaml: тот файл —
+# шаблон со значениями REPLACE_ME и намеренно не подключён к базовому набору,
+# чтобы в кластер нельзя было случайно выкатить общеизвестный JWT_SECRET.
+# Значения ниже заведомо небоевые и годятся только для ноутбука; APP_ENV=dev
+# выше отключает проверку небезопасных значений на старте.
+secretGenerator:
+  - name: app-secrets
+    literals:
+      - POSTGRES_PASSWORD=localdev
+      - DATABASE_URL=postgresql+asyncpg://app:localdev@postgres:5432/app
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=local-only-not-a-real-secret-0123456789abcdef
+      - LLM_API_KEY=
+      - EMBEDDING_API_KEY=
+      - S3_ENDPOINT=http://minio:9000
+      - S3_BUCKET=uploads
+      - S3_ACCESS_KEY=minioadmin
+      - S3_SECRET_KEY=minioadmin
+
+# Хеш-суффикс в имени заставлял бы пересоздавать поды на каждое изменение.
+generatorOptions:
+  disableNameSuffixHash: true
+
+images:
+  - name: ghcr.io/OWNER/hackalem-api
+    newName: docker.io/library/hackalem-api
+    newTag: latest
+  - name: ghcr.io/OWNER/hackalem-frontend
+    newName: docker.io/library/hackalem-frontend
+    newTag: latest

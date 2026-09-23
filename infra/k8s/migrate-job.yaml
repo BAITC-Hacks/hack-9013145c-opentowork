@@ -1,0 +1,53 @@
+# Миграции схемы БД — отдельной задачей, а не в подах приложения.
+#
+# Почему: у API три реплики, и все они стартуют одновременно. Если миграции
+# делает entrypoint пода, три процесса выполняют `alembic upgrade head`
+# наперегонки по одной базе. В лучшем случае двое падают и перезапускаются,
+# в худшем — схема остаётся в промежуточном состоянии.
+#
+# Job выполняется ровно один раз, поды ждут его благодаря RUN_MIGRATIONS=false
+# и readinessProbe: пока схемы нет, /ready вернёт 503 и трафик не пойдёт.
+#
+# Повторный запуск (Job нельзя применить поверх завершённого):
+#   kubectl -n hackalem delete job db-migrate --ignore-not-found
+#   kubectl apply -k infra/k8s/
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+  namespace: hackalem
+  labels: { app: db-migrate }
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600      # убрать за собой через 10 минут
+  template:
+    metadata:
+      labels: { app: db-migrate }
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: migrate
+          image: ghcr.io/OWNER/hackalem-api:latest
+          imagePullPolicy: IfNotPresent
+          # Идём ЧЕРЕЗ entrypoint, а не мимо: там живёт ожидание готовности базы.
+          # Прямой вызов `alembic upgrade head` падал с ошибкой разрешения имени,
+          # потому что Job стартует раньше, чем поднимется postgres и CoreDNS.
+          # Entrypoint применит миграции и выполнит команду ниже, завершив Job.
+          args: ["echo", "migrations applied"]
+          envFrom:
+            - configMapRef: { name: app-config }
+            - secretRef: { name: app-secrets }
+          env:
+            - name: RUN_MIGRATIONS
+              value: "true"
+            - name: SEED_ON_START
+              value: "false"
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }

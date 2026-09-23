@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: hackalem
+
+# Весь стек одной командой:
+#   kubectl apply -k infra/k8s/
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  # secret.yaml НАМЕРЕННО не подключён: это шаблон со значениями REPLACE_ME.
+  # Применять его вместе с остальным означало бы выкатить в кластер заведомо
+  # известный JWT_SECRET, то есть полный обход аутентификации.
+  # Секрет создаётся отдельно — команда в шапке secret.yaml.
+  - stateful-services.yaml
+  - migrate-job.yaml
+  - api-deployment.yaml
+  - api-service.yaml
+  - worker-deployment.yaml
+  - frontend.yaml
+  - hpa.yaml
+  - ingress.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: hackalem
+    includeSelectors: false
+
+# Тег образа подставляется в CI:
+#   kustomize edit set image ghcr.io/OWNER/hackalem-api=ghcr.io/OWNER/hackalem-api:$GITHUB_SHA
+images:
+  - name: ghcr.io/OWNER/hackalem-api
+    newTag: latest
+  - name: ghcr.io/OWNER/hackalem-frontend
+    newTag: latest

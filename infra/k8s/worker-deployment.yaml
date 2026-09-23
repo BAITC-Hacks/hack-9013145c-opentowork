@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: hackalem
+  labels: { app: worker }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: worker }
+  template:
+    metadata:
+      labels: { app: worker }
+    spec:
+      # Воркер должен успеть доработать текущий job перед остановкой
+      terminationGracePeriodSeconds: 120
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: worker
+          image: ghcr.io/OWNER/hackalem-api:latest   # тот же образ, что и API
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "app.workers.main"]
+          envFrom:
+            - configMapRef: { name: app-config }
+            - secretRef: { name: app-secrets }
+          env:
+            - name: RUN_MIGRATIONS
+              value: "false"          # миграции применяет только API
+          resources:
+            requests: { cpu: "500m", memory: "512Mi" }
+            limits:   { cpu: "2000m", memory: "2Gi" }   # AI-задачи тяжелее HTTP
+          # Нет HTTP-порта → liveness через файл-маркер, который воркер обновляет в цикле
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import time,os,sys; sys.exit(0 if time.time()-os.path.getmtime('/tmp/worker_alive') < 120 else 1)"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }

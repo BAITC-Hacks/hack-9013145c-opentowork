@@ -1,0 +1,81 @@
+# Несекретные настройки. Секреты — в secret.yaml.
+# Держать в синхроне с app/config.py: всё, чего нет здесь, берёт значение
+# по умолчанию из кода, и расхождение обнаружится только в проде.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: hackalem
+data:
+  APP_ENV: "prod"
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  METRICS_ENABLED: "true"
+
+  # Миграции применяет отдельный Job (migrate-job.yaml), а не поды:
+  # три реплики API, стартующие одновременно, выполняли бы alembic наперегонки.
+  RUN_MIGRATIONS: "false"
+  # Демо-данные в кластере не нужны. Для демо-стенда поставить "true",
+  # тогда появится учётка из DEMO_USER_EMAIL.
+  SEED_ON_START: "false"
+
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "5"
+  DB_POOL_TIMEOUT: "30"
+
+  QUEUE_NAME: "ai_jobs"
+  QUEUE_VISIBILITY_TIMEOUT: "600"
+
+  LLM_MODE: "live"
+  LLM_PRIMARY: "anthropic:claude-sonnet-5"
+  LLM_FALLBACK: "anthropic:claude-haiku-4-5"
+  LLM_TIMEOUT_S: "30"
+  LLM_MAX_RETRIES: "2"
+  LLM_MAX_OUTPUT_TOKENS: "2048"
+
+  # Без EMBEDDING_PROVIDER=openai и ключа система считает эмбеддинги локально
+  # и автоматически переключается на пороги *_LOCAL — в проде это не то,
+  # что вы хотите. Ключ кладётся в secret как EMBEDDING_API_KEY.
+  EMBEDDING_PROVIDER: "openai"
+  EMBEDDING_MODEL: "text-embedding-3-small"
+  EMBEDDING_DIM: "1536"
+
+  SEMANTIC_CACHE_ENABLED: "true"
+  SEMANTIC_CACHE_THRESHOLD: "0.92"
+  SEMANTIC_CACHE_TTL: "86400"
+  SEMANTIC_CACHE_MAX_ROWS: "50000"
+  SEMANTIC_CACHE_SCOPE: "global"
+  CACHE_PURGE_INTERVAL_S: "300"
+  EXACT_CACHE_TTL: "3600"
+  # Поля, по которым фильтруется retrieval, ОБЯЗАНЫ быть здесь,
+  # иначе кэш отдаст ответ, собранный по другому набору документов.
+  CACHE_CONTEXT_FIELDS: "language,region,doc_kind"
+  PROMPT_VERSION: "v1"
+
+  RAG_ENABLED: "true"
+  RAG_TOP_K: "5"
+  RAG_CANDIDATES: "20"
+  RAG_MIN_SIMILARITY: "0.5"
+  RAG_CHUNK_SIZE: "800"
+  RAG_CHUNK_OVERLAP: "120"
+
+  VALIDATION_MAX_ATTEMPTS: "2"
+  INPUT_MAX_CHARS: "8000"
+  INJECTION_GUARD_ENABLED: "true"
+
+  JWT_ALGORITHM: "HS256"
+  JWT_EXPIRE_MINUTES: "60"
+  REFRESH_EXPIRE_DAYS: "7"
+  # Фронтенд и API за одним Ingress — обращения идут с того же origin.
+  # Добавьте сюда домен, если фронтенд вынесен отдельно.
+  CORS_ORIGINS: "https://api.example.kz"
+
+  RATE_LIMIT_ANON: "20"
+  RATE_LIMIT_USER: "100"
+  RATE_LIMIT_AI: "20"
+  RATE_LIMIT_LOGIN: "10"
+
+  S3_BUCKET: "uploads"
+  S3_REGION: "us-east-1"
+  MAX_FILE_SIZE_MB: "20"

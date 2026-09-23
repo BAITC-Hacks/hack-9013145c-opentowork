@@ -1,0 +1,315 @@
+{
+  "uid": "hackalem-ai",
+  "title": "HackAlem AI — экономика и качество",
+  "tags": ["hackalem"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Доля ответов из кэша",
+      "description": "Сколько запросов обслужено без обращения к языковой модели.",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "hackalem-prom" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(ai_cache_hits_total) / clamp_min(sum(ai_cache_hits_total) + sum(ai_cache_misses_total), 1)",
+          "legendFormat": "hit rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "color": { "mode": "fixed", "fixedColor": "#199e70" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "textMode": "value",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Сэкономлено на модели, $",
+      "description": "Стоимость токенов, которые не пришлось отправлять провайдеру. В режиме mock — оценка по тарифу боевой модели.",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "hackalem-prom" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(ai_estimated_cost_saved_usd_total)",
+          "legendFormat": "сэкономлено"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "color": { "mode": "fixed", "fixedColor": "#199e70" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "textMode": "value",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Заблокировано инъекций",
+      "description": "Запросы, отклонённые входным guard-слоем.",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "hackalem-prom" },
+      "targets": [
+        { "refId": "A", "expr": "sum(ai_injection_blocked_total)", "legendFormat": "блокировок" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": { "mode": "fixed", "fixedColor": "#3987e5" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "textMode": "value",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Degraded-ответов",
+      "description": "Случаи, когда вывод модели не прошёл валидацию и пользователю отдан безопасный ответ вместо выдумки. Ноль — норма, рост — сигнал.",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "hackalem-prom" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(ai_requests_total{status=\"degraded\"})",
+          "legendFormat": "degraded"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "#f2cc0c", "value": 1 },
+              { "color": "#e0226e", "value": 5 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "textMode": "value",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Откуда приходят ответы, запросов/мин",
+      "description": "Три источника ответа. Чем выше доля кэша, тем меньше счёт от провайдера.",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "hackalem-prom" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (source) (rate(ai_requests_total[1m]) * 60)",
+          "legendFormat": "{{source}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "pointSize": 8
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "live" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "#3987e5" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "exact_cache" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "#d95926" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "semantic_cache" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "#199e70" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Задержка по стадиям, p95",
+      "description": "Где уходит время: эмбеддинг, поиск в кэше, retrieval, вызов модели, валидация.",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "hackalem-prom" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (stage, le) (rate(ai_latency_seconds_bucket[5m])))",
+          "legendFormat": "{{stage}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Схожесть при обращении к семантическому кэшу, p50",
+      "description": "Распределение косинусной близости. Порог попадания настраивается через SEMANTIC_CACHE_THRESHOLD.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "hackalem-prom" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(ai_cache_similarity_bucket[5m])))",
+          "legendFormat": "медианная схожесть"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 3,
+          "min": 0,
+          "max": 1,
+          "color": { "mode": "fixed", "fixedColor": "#199e70" },
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 12 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Отказы валидации по типу правила",
+      "description": "Что именно ловит проверка выхода модели: выдуманные источники, необоснованные числа, доменные правила.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "hackalem-prom" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (rule) (rate(ai_validation_failures_total[5m]) * 60)",
+          "legendFormat": "{{rule}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "bars", "lineWidth": 1, "fillOpacity": 70 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Очередь задач: выполнено и провалено, задач/мин",
+      "description": "Пропускная способность воркеров. Рост FAILED — повод смотреть логи воркера.",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "datasource": { "type": "prometheus", "uid": "hackalem-prom" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (status) (rate(jobs_total[1m]) * 60)",
+          "legendFormat": "{{status}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "COMPLETED" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "#199e70" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "FAILED" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "#e0226e" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "PENDING" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "#3987e5" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    }
+  ]
+}

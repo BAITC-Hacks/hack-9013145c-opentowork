@@ -1,0 +1,68 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-hpa
+  namespace: hackalem
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 2                  # >= 2 → нет единой точки отказа
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }
+    - type: Resource
+      resource:
+        name: memory
+        target: { type: Utilization, averageUtilization: 80 }
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30      # быстро вверх при всплеске
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 300     # медленно вниз, чтобы не «дёргало»
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: worker-hpa
+  namespace: hackalem
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: worker
+  minReplicas: 1
+  maxReplicas: 20                 # AI-нагрузка упирается в воркеров, а не в API
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 75 }
+# Правильнее скейлить воркеров по длине очереди, а не по CPU
+# (CPU простаивает, пока воркер ждёт ответ LLM). Если в кластере есть KEDA:
+#
+# apiVersion: keda.sh/v1alpha1
+# kind: ScaledObject
+# metadata: { name: worker-scaler, namespace: hackalem }
+# spec:
+#   scaleTargetRef: { name: worker }
+#   minReplicaCount: 1
+#   maxReplicaCount: 20
+#   triggers:
+#     - type: redis
+#       metadata:
+#         address: redis:6379
+#         listName: ai_jobs
+#         listLength: "5"        # 1 воркер на каждые 5 задач в очереди
