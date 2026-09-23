@@ -95,6 +95,10 @@ export default function StationView({
   onExplain,
 }: Props) {
   const wind = station.kind === "wind";
+  // Выработку показываем только у ВЭС с историей турбин (Нурлы): там модель проверена
+  // бэктестом. У остальных кривая чужой станции и номинал из справочников — точность
+  // не проверить, поэтому только ветер и паспорт станции.
+  const noYield = wind && station.data !== "history";
   const units = station.units;
   const rated = stationRated(station) || units.length * RATED_ASSUMPTION_MW;
   const capacity = stationCapacity(station);
@@ -196,10 +200,12 @@ export default function StationView({
   const labels = Object.fromEntries(
     perUnit.map(({ unit, now }) => [
       unit.id,
-      {
-        main: `${mw(now)} МВт`,
-        sub: wind && point ? `${point.wind_speed.toFixed(1)} м/с` : unit.name,
-      },
+      noYield
+        ? { main: point ? `${point.wind_speed.toFixed(1)} м/с` : "—", sub: unit.name }
+        : {
+            main: `${mw(now)} МВт`,
+            sub: wind && point ? `${point.wind_speed.toFixed(1)} м/с` : unit.name,
+          },
     ]),
   );
   const selectedUnit = units.find((u) => u.id === selected) ?? null;
@@ -310,7 +316,9 @@ export default function StationView({
           <div className="float top-center demo-flag">Демонстрационный прогноз</div>
         )}
         {dataOrigin === "api" && run?.method === "curve" && (
-          <div className="float top-center demo-flag curve-flag">Реальная погода · кривая мощности Нурлы, без ML</div>
+          <div className="float top-center demo-flag curve-flag">
+            {noYield ? "Реальная погода · выработка считается только для ВЭС Нурлы" : "Реальная погода · кривая мощности Нурлы, без ML"}
+          </div>
         )}
 
         {!selected && (
@@ -328,7 +336,14 @@ export default function StationView({
             {playing ? "❚❚" : "▶"}
           </button>
           <div className="track">
-            <Barograph points={points} storms={wind} />
+            {/* Без прогноза выработки лента показывает ветер: 0…20 м/с на всю высоту. */}
+            <Barograph
+              points={noYield ? points.map((p) => {
+                const v = Math.min(1, p.wind_speed / 20);
+                return { ...p, p10: v, p50: v, p90: v };
+              }) : points}
+              storms={wind}
+            />
             <input
               type="range"
               min={0}
@@ -365,6 +380,51 @@ export default function StationView({
               onClose={() => setSelected(null)}
             />
           </div>
+        ) : noYield ? (
+          <>
+            <div className="card kpi">
+              <div className="kpi-label">Номинал станции</div>
+              <div className="kpi-big">
+                {stationRated(station) ? mw(stationRated(station)) : "—"}
+                <small>{stationRated(station) ? "МВт" : "не опубликован"}</small>
+              </div>
+              {stationRated(station) > 0 && (
+                <div className="kpi-sub" title={capacityNote || undefined}>
+                  {CAPACITY_SOURCE_LABEL[capacity.source]}{capacityNote && ` · ${capacityNote}`}
+                </div>
+              )}
+            </div>
+            <div className="card kpi two">
+              <div>
+                <div className="kpi-label">Ветер <em>{point ? fmtDayTime(point.forecast_for) : "—"}</em></div>
+                <div className="kpi-mid">{point ? point.wind_speed.toFixed(1) : "—"}<small>м/с</small></div>
+              </div>
+              <div>
+                <div className="kpi-label">Средний <em>за сутки</em></div>
+                <div className="kpi-mid">{avgWind.toFixed(1)}<small>м/с</small></div>
+              </div>
+            </div>
+            <div className="card agent-mini">
+              <div className="kpi-label">Почему нет прогноза выработки</div>
+              <div className="kpi-sub" style={{ marginTop: 0 }}>
+                Выработку считаем только для ВЭС Нурлы: у неё есть история турбин, и модель проверена
+                бэктестом за год. Для этой станции истории нет — показываем прогноз ветра по 7 погодным
+                моделям Open-Meteo.
+              </div>
+            </div>
+            {storm && (
+              <div className="card alert">
+                <div className="alert-title">Штормовой ветер</div>
+                <div>
+                  {fmtDayTime(storm.forecast_for)}: ветер до {storm.wind_speed.toFixed(0)} м/с. При 25 м/с
+                  турбины остановятся ради безопасности.
+                </div>
+                <button className="link" onClick={() => setCursor(points.indexOf(storm))}>
+                  Перейти к этому часу
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <>
             <div className="card kpi">
@@ -453,6 +513,7 @@ export default function StationView({
         )}
       </aside>
 
+      {!noYield && <>
       <section className="card bottom chart-card">
         <div className="card-head">
           <h2>
@@ -613,6 +674,7 @@ export default function StationView({
             : "Облака сильнее всего режут выработку в полдень, когда солнце выше всего."}
         </div>
       </section>
+      </>}
 
       {wind && <WindPanel wind={stationWind.wind} loading={stationWind.loading} atIso={point?.forecast_for ?? null} />}
     </div>

@@ -3,7 +3,7 @@ import type { SourceKind, Station } from "../api";
 import { mw, stationRated } from "./data";
 import KzMap from "./KzMap";
 import type { Mode, Route } from "./data";
-import { demoRun, DEMO_STATIONS } from "./demo";
+import { DEMO_STATIONS } from "./demo";
 import "./flow-refresh.css";
 
 const STEP_NAMES = ["Задача", "Источник", "Станция", "Обзор"];
@@ -520,7 +520,6 @@ const DATA_LABEL: Record<Station["data"], string> = {
 export function StationPick({
   kind,
   stations,
-  originIso,
   go,
 }: {
   kind: SourceKind;
@@ -532,16 +531,6 @@ export function StationPick({
     () => stations.filter((s) => s.kind === kind),
     [stations, kind],
   );
-  const summary = useMemo(() => {
-    const out: Record<string, number> = {};
-    for (const s of list) {
-      if (s.data === "none" || s.kind === "solar") continue;
-      const run = demoRun(originIso, 24);
-      out[s.id] =
-        run.predictions.reduce((a, p) => a + p.p50, 0) * stationRated(s);
-    }
-    return out;
-  }, [list, originIso]);
   return (
     <div className={`flow flow-refresh station-picker ${kind}`}>
       <StepBar step={2} />
@@ -598,11 +587,10 @@ export function StationPick({
                       {stationRated(s) ? "Мощность станции" : "Мощность не опубликована"}
                     </span>
                     {kind === "wind" ? (
+                      // Выработку прогнозируем только для станции с историей турбин.
                       <span>
-                        <b>
-                          {mw(summary[s.id] ?? 0)} <small>МВт·ч</small>
-                        </b>
-                        За 24 часа · демо
+                        <b>{s.data === "history" ? "ML-прогноз" : "Ветер"}</b>
+                        {s.data === "history" ? "выработки на 24–48 ч" : "прогноз Open-Meteo"}
                       </span>
                     ) : (
                       <span>

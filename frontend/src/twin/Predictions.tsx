@@ -16,12 +16,18 @@ type Sort = "mwh" | "wind" | "cf" | "name";
 
 const METHOD: Record<OverviewStation["method"], { short: string; long: string }> = {
   ml: { short: "ML-модель", long: "обученная модель windcast на истории турбин" },
-  curve: { short: "Кривая мощности", long: "ветер Open-Meteo на 100 м → кривая мощности ВЭС Нурлы (доля номинала), без ML" },
+  curve: { short: "Только ветер", long: "ветер Open-Meteo на 100 м; выработку не считаем — у станции нет истории турбин" },
 };
 
 function num(v: number | null | undefined): number {
   return v ?? 0;
 }
+
+// Выработку показываем только там, где модель проверена бэктестом (ВЭС Нурлы, method "ml").
+// У остальных кривая чужой станции и номинал из справочников — только ветер.
+const hasYield = (s: OverviewStation) => s.method === "ml";
+/** Ветер 0…20 м/с в долях — для мини-графика станций без прогноза выработки. */
+const windShare = (v: number | null) => Math.min(1, (v ?? 0) / 20);
 
 export default function Predictions({
   stations,
@@ -69,9 +75,9 @@ export default function Predictions({
       `${s.name} ${s.region}`.toLowerCase().includes(query.trim().toLowerCase()),
     );
     const key: Record<Sort, (s: OverviewStation) => number | string> = {
-      mwh: (s) => -num(s.mwh24),
+      mwh: (s) => -(hasYield(s) ? num(s.mwh24) : -1),
       wind: (s) => -num(s.wind_speed[0]),
-      cf: (s) => -num(s.cf24),
+      cf: (s) => -(hasYield(s) ? num(s.cf24) : -1),
       name: (s) => s.name,
     };
     return [...list].sort((a, b) => {
@@ -83,7 +89,7 @@ export default function Predictions({
 
   const totals = useMemo(() => {
     const all = data?.stations ?? [];
-    const withRated = all.filter((s) => s.rated_mw && s.mwh24 != null);
+    const withRated = all.filter((s) => hasYield(s) && s.rated_mw && s.mwh24 != null);
     const mwh = withRated.reduce((a, s) => a + num(s.mwh24), 0);
     const rated = withRated.reduce((a, s) => a + num(s.rated_mw), 0);
     const windy = [...all].sort((a, b) => num(b.wind_speed[0]) - num(a.wind_speed[0]))[0];
@@ -124,14 +130,14 @@ export default function Predictions({
         <>
           <div className="pred-kpis">
             <div className="card">
-              <span className="kpi-label">Выработка парка за сутки</span>
+              <span className="kpi-label">Выработка ВЭС Нурлы за сутки</span>
               <b>{mw(totals.mwh)}<small>МВт·ч</small></b>
-              <span className="kpi-sub">станции с известной мощностью, {mw(totals.rated)} МВт</span>
+              <span className="kpi-sub">ML-прогноз, {mw(totals.rated)} МВт; у остальных ВЭС — только ветер</span>
             </div>
             <div className="card">
               <span className="kpi-label">Средняя загрузка</span>
               <b>{pct(totals.cf)}</b>
-              <span className="kpi-sub">КИУМ на ближайшие 24 ч</span>
+              <span className="kpi-sub">ВЭС Нурлы, КИУМ на ближайшие 24 ч</span>
             </div>
             <div className="card">
               <span className="kpi-label">Сильнее всего дует</span>
@@ -216,7 +222,9 @@ export default function Predictions({
                           )}
                         </td>
                         <td className="num">
-                          {now != null && s.rated_mw ? (
+                          {!hasYield(s) ? (
+                            <span className="dim" title="Нет истории турбин — выработку не считаем">—</span>
+                          ) : now != null && s.rated_mw ? (
                             <>
                               {mw(now * s.rated_mw)} <small>МВт</small>
                             </>
@@ -227,7 +235,7 @@ export default function Predictions({
                           )}
                         </td>
                         <td className="num">
-                          {s.mwh24 != null ? (
+                          {hasYield(s) && s.mwh24 != null ? (
                             <>
                               {mw(s.mwh24)} <small>МВт·ч</small>
                             </>
@@ -235,11 +243,11 @@ export default function Predictions({
                             <span className="dim" title="Мощность станции неизвестна">—</span>
                           )}
                         </td>
-                        <td className="num">{s.cf24 != null ? pct(s.cf24) : "—"}</td>
-                        <td>{s.peak_at ? fmtDayTime(s.peak_at) : "—"}</td>
+                        <td className="num">{hasYield(s) && s.cf24 != null ? pct(s.cf24) : "—"}</td>
+                        <td>{hasYield(s) && s.peak_at ? fmtDayTime(s.peak_at) : "—"}</td>
                         <td>
                           <Sparkline
-                            values={s.p50.map((v) => v ?? 0)}
+                            values={hasYield(s) ? s.p50.map((v) => v ?? 0) : s.wind_speed.map(windShare)}
                             color={s.method === "ml" ? "var(--glacier)" : "var(--steppe)"}
                           />
                         </td>
@@ -250,7 +258,8 @@ export default function Predictions({
               </table>
             </div>
             <p className="hint">
-              ML-модель: {data.sources.ml}. Кривая мощности: {data.sources.curve}. Время — UTC.
+              ML-модель: {data.sources.ml}. Выработка считается только для ВЭС Нурлы; у остальных станций —
+              ветер Open-Meteo на 100 м, мини-график 48 ч показывает ветер. Время — UTC.
             </p>
           </div>
         </>
@@ -306,7 +315,7 @@ function SelectedForecast({
           <h2>{summary.name}</h2>
           <span className="dim">
             {summary.region}
-            {rated ? ` · ${mw(rated)} МВт` : " · мощность не опубликована, график в % номинала"}
+            {rated ? ` · ${mw(rated)} МВт` : hasYield(summary) ? " · мощность не опубликована, график в % номинала" : ""}
           </span>
         </div>
         <div className="pred-actions">
@@ -326,7 +335,23 @@ function SelectedForecast({
         </div>
       )}
       {error && <div className="error">Подробный прогноз недоступен: {error}</div>}
-      {run && (
+      {run && !hasYield(summary) && (
+        <>
+          <p className="hint">
+            Выработку этой станции не считаем: у неё нет истории турбин, модель не проверить. Ниже — ветер на 100 м
+            по ансамблю погодных моделей на 48 ч.
+          </p>
+          <Sparkline values={run.predictions.map((p) => windShare(p.wind_speed))} />
+          {run.predictions[0] && (
+            <div className="pred-point">
+              <span>{fmtDayTime(run.predictions[0].forecast_for)} UTC</span>
+              <span>ветер <b>{run.predictions[0].wind_speed.toFixed(1)} м/с</b> {rumb(run.predictions[0].wind_dir)}</span>
+              <span className="dim">макс. за 48 ч {Math.max(...run.predictions.map((p) => p.wind_speed)).toFixed(1)} м/с</span>
+            </div>
+          )}
+        </>
+      )}
+      {run && hasYield(summary) && (
         <>
           <ForecastChart
             points={run.predictions}

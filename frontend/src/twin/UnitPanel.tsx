@@ -34,6 +34,8 @@ function status(station: Station, p: ForecastPoint | undefined, power: number) {
 
 export default function UnitPanel({ station, unit, points, cursor, originIso, onClose }: Props) {
   const rated = unitRated(station, unit, RATED_ASSUMPTION_MW);
+  // Как в StationView: без истории турбин выработку не показываем, только ветер.
+  const noYield = station.kind === "wind" && station.data !== "history";
   const stationMw = stationRated(station);
   const origin = parseTs(originIso);
   const localOrigin = new Date(origin + SITE.utcOffset * HOUR);
@@ -70,7 +72,7 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
         <span className={`status ${st.tone}`}>{st.text}</span>
       </div>
 
-      <div className="unit-now">
+      {!noYield && <div className="unit-now">
         <div className="kpi-label">
           Мощность <em>{p ? fmtDayTime(p.forecast_for) : "—"}</em>
         </div>
@@ -81,15 +83,17 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
         <div className="meter">
           <i style={{ width: `${share * 100}%` }} />
         </div>
-      </div>
+      </div>}
 
       <dl className="facts">
         {station.kind === "wind" ? (
           <>
             <dt>Ветер у ротора</dt>
             <dd>{hubWind.toFixed(1)} м/с</dd>
-            <dt>Обороты ротора</dt>
-            <dd>{rpm ? `${rpm.toFixed(0)} об/мин` : "стоит"}</dd>
+            {!noYield && <>
+              <dt>Обороты ротора</dt>
+              <dd>{rpm ? `${rpm.toFixed(0)} об/мин` : "стоит"}</dd>
+            </>}
           </>
         ) : (
           <>
@@ -109,6 +113,7 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
         )}
       </dl>
 
+      {!noYield && <>
       <div className="energy">
         <div>
           <span className="kpi-label">Выработала за сутки</span>
@@ -135,7 +140,10 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
       {!unit.rated_mw && <p className="hint">Номинал турбины не указан в данных — {stationMw && station.units.length
         ? `принят средний по станции: ${mw(stationMw)} МВт / ${station.units.length} турбин`
         : `принят ${RATED_ASSUMPTION_MW} МВт`}.</p>}
-      {station.data !== "history" && (
+      </>}
+      {noYield ? (
+        <p className="hint">Выработку считаем только для ВЭС Нурлы — у этой станции нет истории турбин. Здесь прогноз ветра Open-Meteo.</p>
+      ) : station.data !== "history" && (
         <p className="hint">Показатели этой станции — расчёт модели, фактических данных нет.</p>
       )}
     </div>
