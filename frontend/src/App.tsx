@@ -4,9 +4,11 @@ import type { ChatResponse, JobStatus, SearchHit, Stats } from "./api";
 import { AnswerView, MetaBadge, StatsPanel } from "./components";
 import Agent from "./twin/Agent";
 import Backtest from "./twin/Backtest";
-import Dashboard from "./twin/Dashboard";
-import { fmtDay, ORIGINS, useForecast } from "./twin/data";
-import { SITE } from "./twin/demo";
+import { fmtDay, ORIGINS, useForecast, useRoute, useStations } from "./twin/data";
+import type { Route, StationTab } from "./twin/data";
+import { Home, KindPick, StationPick } from "./twin/Flow";
+import Placement from "./twin/Placement";
+import StationView from "./twin/StationView";
 
 type Tab = "chat" | "knowledge" | "jobs" | "stats";
 
@@ -326,14 +328,15 @@ function PlatformTab() {
   );
 }
 
-type Screen = "twin" | "backtest" | "agent" | "platform";
+const LAST_STATION_KEY = "twin.lastStation";
 
-const SCREENS: [Screen, string][] = [
-  ["twin", "Карта и прогноз"],
-  ["backtest", "Бэктест"],
-  ["agent", "Агент"],
-  ["platform", "Платформа"],
-];
+function readLast(): string | null {
+  try {
+    return localStorage.getItem(LAST_STATION_KEY);
+  } catch {
+    return null;
+  }
+}
 
 function Logo() {
   return (
@@ -347,62 +350,102 @@ function Logo() {
   );
 }
 
+const KIND_LABEL = { wind: "Ветер", solar: "Солнце" } as const;
+const TAB_LABEL: [StationTab, string][] = [
+  ["map", "Карта станции"],
+  ["accuracy", "Точность прогноза"],
+  ["agent", "Как считается"],
+];
+
+/** Хлебные крошки повторяют шаги мастера — по ним можно вернуться на любой. */
+function crumbs(route: Route, stationName: string | null): { label: string; to: Route | null }[] {
+  const out: { label: string; to: Route | null }[] = [];
+  if (route.page === "platform") return [{ label: "Платформа", to: null }];
+  if (route.page === "home") return out;
+  const mode = route.page === "kind" ? route.mode : route.page === "place" ? "place" : "forecast";
+  const first = mode === "place" ? "Новая станция" : "Прогноз";
+  if (route.page === "kind") return [{ label: first, to: null }];
+  out.push({ label: first, to: { page: "kind", mode } });
+  const kind = route.kind;
+  out.push({
+    label: KIND_LABEL[kind],
+    to: route.page === "station" ? { page: "stations", kind } : null,
+  });
+  if (route.page === "station") out.push({ label: stationName ?? route.stationId, to: null });
+  return out;
+}
+
 export default function App() {
   const [authed, setAuthed] = useState(Boolean(token.get()));
-  const [screen, setScreen] = useState<Screen>("twin");
-  const [who, setWho] = useState<string>("");
+  const [route, go] = useRoute();
+  const { stations } = useStations();
   const [originIso, setOriginIso] = useState(ORIGINS[0]);
   const [horizon, setHorizon] = useState(48);
   const [nonce, setNonce] = useState(0);
-  const forecast = useForecast(originIso, horizon, nonce);
+  const station =
+    route.page === "station" ? stations.find((s) => s.id === route.stationId && s.data !== "none") ?? null : null;
+  const forecast = useForecast(station, originIso, horizon, nonce);
+  const [lastId, setLastId] = useState(readLast);
+
+  useEffect(() => {
+    if (!station) return;
+    setLastId(station.id);
+    try {
+      localStorage.setItem(LAST_STATION_KEY, station.id);
+    } catch {
+      // Приватный режим браузера: «вернуться к станции» просто не появится.
+    }
+  }, [station]);
 
   useEffect(() => {
     if (!authed) return;
-    api
-      .me()
-      .then((user) => setWho(user.email))
-      .catch(() => {
-        // Токен мог протухнуть между сессиями — возвращаем на вход.
-        token.clear();
-        setAuthed(false);
-      });
+    api.me().catch(() => {
+      // Токен мог протухнуть между сессиями — возвращаем на вход.
+      token.clear();
+      setAuthed(false);
+    });
   }, [authed]);
 
   if (!authed) return <div className="app"><Login onDone={() => setAuthed(true)} /></div>;
 
   const rerun = () => setNonce((n) => n + 1);
+  const path = crumbs(route, station?.name ?? null);
+  const lastStation = stations.find((s) => s.id === lastId && s.data !== "none") ?? null;
 
   return (
     <div className="shell">
       <header className="topbar">
-        <div className="brand">
+        <button className="brand" onClick={() => go({ page: "home" })} aria-label="На главный экран">
           <Logo />
-          <div>
-            <div className="brand-name">Renewable Twin</div>
-            <div className="brand-sub">AI Forecast &amp; Digital Twin</div>
-          </div>
-        </div>
-        <nav className="nav">
-          {SCREENS.map(([key, label]) => (
-            <button key={key} className={screen === key ? "active" : ""} onClick={() => setScreen(key)}>
-              {label}
-            </button>
-          ))}
-        </nav>
+          <span>
+            <span className="brand-name">Renewable Twin</span>
+            <span className="brand-sub">прогноз и цифровой двойник</span>
+          </span>
+        </button>
+        {path.length > 0 && (
+          <nav className="crumbs" aria-label="Где вы">
+            {path.map((c, i) =>
+              c.to ? (
+                <button key={i} onClick={() => go(c.to!)}>
+                  {c.label}
+                </button>
+              ) : (
+                <span key={i} aria-current="page">
+                  {c.label}
+                </span>
+              ),
+            )}
+          </nav>
+        )}
         <div className="spacer" />
-        <div className="site">
-          <div>{SITE.name}</div>
-          <div className="dim">
-            {SITE.lat.toFixed(3)}° N, {SITE.lon.toFixed(3)}° E
+        {station && (
+          <div className="clock">
+            <span>прогноз от {fmtDay(originIso)} 2026, 00:00</span>
+            <span className="dim">UTC+5</span>
           </div>
-        </div>
-        <div className="clock">
-          <span>origin {fmtDay(originIso)} 2026, 00:00</span>
-          <span className="dim">UTC+{SITE.utcOffset}</span>
-        </div>
+        )}
         <button
           className="ghost"
-          title={who}
           onClick={() => {
             token.clear();
             setAuthed(false);
@@ -412,8 +455,40 @@ export default function App() {
         </button>
       </header>
 
-      {screen === "twin" && (
-        <Dashboard
+      {route.page === "station" && station && (
+        <nav className="station-tabs" aria-label="Разделы станции">
+          {TAB_LABEL.filter(([t]) => t === "map" || station.data === "history").map(([t, label]) => (
+            <button
+              key={t}
+              className={route.tab === t ? "active" : ""}
+              onClick={() => go({ ...route, tab: t })}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
+
+      {route.page === "home" && <Home go={go} lastStation={lastStation} />}
+      {route.page === "kind" && <KindPick mode={route.mode} stations={stations} go={go} />}
+      {route.page === "stations" && (
+        <StationPick kind={route.kind} stations={stations} originIso={originIso} go={go} />
+      )}
+      {route.page === "place" && <Placement kind={route.kind} stations={stations} go={go} />}
+      {route.page === "platform" && <PlatformTab />}
+      {route.page === "station" && !station && (
+        <div className="flow">
+          <h1 className="flow-q">Станция не найдена</h1>
+          <p className="flow-sub">По этой станции нет данных. Выберите другую из списка.</p>
+          <button className="primary" onClick={() => go({ page: "stations", kind: route.kind })}>
+            К списку станций
+          </button>
+        </div>
+      )}
+      {route.page === "station" && station && route.tab === "map" && (
+        <StationView
+          key={station.id}
+          station={station}
           run={forecast.run}
           dataOrigin={forecast.origin}
           loading={forecast.loading}
@@ -424,16 +499,12 @@ export default function App() {
           onRerun={rerun}
         />
       )}
-      {screen === "backtest" && (
-        <Backtest
-          run={forecast.run}
-          originIso={originIso}
-          onOrigin={setOriginIso}
-          dataOrigin={forecast.origin}
-        />
+      {route.page === "station" && station && route.tab === "accuracy" && (
+        <Backtest run={forecast.run} originIso={originIso} onOrigin={setOriginIso} dataOrigin={forecast.origin} />
       )}
-      {screen === "agent" && <Agent run={forecast.run} onRerun={rerun} loading={forecast.loading} />}
-      {screen === "platform" && <PlatformTab />}
+      {route.page === "station" && station && route.tab === "agent" && (
+        <Agent run={forecast.run} onRerun={rerun} loading={forecast.loading} />
+      )}
     </div>
   );
 }

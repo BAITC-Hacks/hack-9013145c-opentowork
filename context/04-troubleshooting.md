@@ -173,6 +173,22 @@ docker compose up -d --build frontend    # правки видны только 
 
 ---
 
+## Стек отвечает, но работает старый код
+
+**Симптом:** `docker compose ps` всё зелёное, но новых таблиц/колонок нет,
+`select version_num from alembic_version` меньше последней миграции в
+`migrations/versions/`, фронтенд-контейнера нет в списке.
+**Причина:** `docker compose up -d` без `--build` переиспользует старые образы.
+**Решение:** `docker compose up -d --build`, затем `make smoke`.
+
+## Фронтенд `unhealthy`, хотя :3000 открывается
+
+**Причина:** в alpine `localhost` резолвится в `::1`, а nginx слушает только
+IPv4 (`listen 3000`). Healthcheck стучался в IPv6 и получал отказ.
+**Решение:** в `infra/docker/frontend.Dockerfile` healthcheck ходит на `127.0.0.1`.
+
+---
+
 ## Куда смотреть, когда непонятно
 
 | Вопрос | Где ответ |

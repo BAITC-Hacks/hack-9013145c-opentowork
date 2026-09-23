@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { ForecastPoint, Turbine } from "../api";
+import type { ForecastPoint, SourceKind, Turbine } from "../api";
 import { SITE } from "./demo";
 
 // Визуализация — только отображение прогноза: поле, частицы и след
@@ -16,7 +16,9 @@ export interface Layers {
 
 interface Props {
   point: ForecastPoint | null;
-  turbines: Turbine[];
+  kind: SourceKind;
+  units: Turbine[]; // турбины ВЭС или блоки панелей СЭС
+  labels: Record<string, { main: string; sub: string }>;
   layers: Layers;
   tilt: boolean;
   selected: string | null;
@@ -35,6 +37,7 @@ const EXAGGERATE = 2.4;
 const reducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const SOLAR = { x: 640, y: -160, w: 460, h: 260 };
+const BLOCK = { w: 380, h: 210 };
 
 function worldOf(t: Turbine) {
   const x = (t.lon - SITE.lon) * Math.cos((SITE.lat * Math.PI) / 180) * 111_320;
@@ -134,6 +137,7 @@ export default function WindMap(props: Props) {
     gh: 0,
     particles: [] as { x: number; y: number; age: number }[],
     rotor: {} as Record<string, number>,
+    hit: {} as Record<string, { x: number; y: number }>,
     last: 0,
   });
 
@@ -171,7 +175,7 @@ export default function WindMap(props: Props) {
 
   useEffect(() => {
     rebuildField();
-  }, [props.point, props.layers.wake, props.layers.speed, props.turbines]);
+  }, [props.point, props.layers.wake, props.layers.speed, props.units, props.kind]);
 
   const ppm = () => sim.current.w / WORLD_W;
   const toPlane = (x: number, y: number) => ({
@@ -224,12 +228,12 @@ export default function WindMap(props: Props) {
     const p = propsRef.current.point;
     if (!p) return 0;
     let v = p.wind_speed * (0.88 + 0.26 * elevationAt(px, py));
-    if (withWake) {
+    if (withWake && propsRef.current.kind === "wind") {
       const theta = (((p.wind_dir + 180) % 360) * Math.PI) / 180;
       const dx = Math.sin(theta);
       const dy = -Math.cos(theta);
       const r0 = ROTOR_M * ppm();
-      for (const t of propsRef.current.turbines) {
+      for (const t of propsRef.current.units) {
         const w = worldOf(t);
         const { px: tx, py: ty } = toPlane(w.x, w.y);
         const along = (px - tx) * dx + (py - ty) * dy;
@@ -368,11 +372,26 @@ export default function WindMap(props: Props) {
     ctx.setTransform(s.dpr, 0, 0, s.dpr, 0, 0);
     ctx.clearRect(0, 0, s.w, s.h);
 
-    if (P.layers.solar) drawSolarFarm(ctx);
+    if (P.kind === "wind" && P.layers.solar) drawPanels(ctx, SOLAR, P.solarOutput, false);
+
+    if (P.kind === "solar") {
+      for (const u of P.units) {
+        const w = worldOf(u);
+        const rect = { x: w.x - BLOCK.w / 2, y: w.y - BLOCK.h / 2, w: BLOCK.w, h: BLOCK.h };
+        const power = P.point?.per_turbine?.[u.id] ?? P.point?.p50 ?? 0;
+        drawPanels(ctx, rect, power, P.selected === u.id);
+        const top = project(...xy(toPlane(w.x, rect.y)));
+        const mid = project(...xy(toPlane(w.x, w.y)));
+        s.hit[u.id] = { x: mid.sx, y: mid.sy };
+        const label = labelRefs.current[u.id];
+        if (label) label.style.transform = `translate(${top.sx - 30}px, ${top.sy - 52}px)`;
+      }
+      return;
+    }
 
     const yawDeg = P.point ? P.point.wind_dir : 270;
     const face = Math.max(0.45, Math.abs(Math.cos((yawDeg * Math.PI) / 180)));
-    const sorted = [...P.turbines]
+    const sorted = [...P.units]
       .map((t) => ({ t, w: worldOf(t) }))
       .sort((a, b) => a.w.y - b.w.y);
     for (const { t, w } of sorted) {
@@ -384,9 +403,29 @@ export default function WindMap(props: Props) {
       s.rotor[t.id] = ((s.rotor[t.id] ?? Math.random() * 6) + (rpm / 60) * 2 * Math.PI * dt) % (2 * Math.PI);
       if (P.sun.elevation > 2) drawShadow(ctx, px, py, scale);
       drawTurbine(ctx, sx, sy, scale, s.rotor[t.id], face, P.selected === t.id);
+      s.hit[t.id] = { x: sx, y: sy - (HUB_M * scale) / 2 };
       const label = labelRefs.current[t.id];
       if (label) label.style.transform = `translate(${sx + 16 * Math.max(0.7, k)}px, ${sy - HUB_M * scale - 12}px)`;
     }
+  }
+
+  const xy = (p: { px: number; py: number }): [number, number] => [p.px, p.py];
+
+  /** Клик по самому объекту на карте, а не только по подписи. */
+  function unitAt(evt: React.MouseEvent): string | null {
+    const box = wrapRef.current!.getBoundingClientRect();
+    const x = evt.clientX - box.left;
+    const y = evt.clientY - box.top;
+    let best: string | null = null;
+    let bestD = 70;
+    for (const [id, p] of Object.entries(sim.current.hit)) {
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < bestD) {
+        bestD = d;
+        best = id;
+      }
+    }
+    return best;
   }
 
   function drawTurbine(
@@ -463,47 +502,51 @@ export default function WindMap(props: Props) {
     ctx.restore();
   }
 
-  function drawSolarFarm(ctx: CanvasRenderingContext2D) {
-    const P = propsRef.current;
-    const rows = 7;
-    const cols = 12;
-    const glow = P.solarOutput;
+  function drawPanels(
+    ctx: CanvasRenderingContext2D,
+    rect: { x: number; y: number; w: number; h: number },
+    glow: number,
+    selected: boolean,
+  ) {
+    const rows = 6;
+    const cols = 10;
     for (let r = 0; r < rows; r += 1) {
       for (let q = 0; q < cols; q += 1) {
-        const x0 = SOLAR.x + (q / cols) * SOLAR.w;
-        const y0 = SOLAR.y + (r / rows) * SOLAR.h;
-        const cw = (SOLAR.w / cols) * 0.86;
-        const ch = (SOLAR.h / rows) * 0.62;
+        const x0 = rect.x + (q / cols) * rect.w;
+        const y0 = rect.y + (r / rows) * rect.h;
+        const cw = (rect.w / cols) * 0.86;
+        const ch = (rect.h / rows) * 0.62;
         const corners = [
           [x0, y0],
           [x0 + cw, y0],
           [x0 + cw, y0 + ch],
           [x0, y0 + ch],
-        ].map(([wx, wy]) => {
-          const { px, py } = toPlane(wx, wy);
-          return project(px, py);
-        });
+        ].map(([wx, wy]) => project(...xy(toPlane(wx, wy))));
         ctx.beginPath();
         corners.forEach((p, i) => (i ? ctx.lineTo(p.sx, p.sy) : ctx.moveTo(p.sx, p.sy)));
         ctx.closePath();
-        ctx.fillStyle = `rgb(${18 + glow * 30}, ${32 + glow * 40}, ${46 + glow * 60})`;
+        ctx.fillStyle = `rgb(${18 + glow * 30}, ${32 + glow * 44}, ${46 + glow * 70})`;
         ctx.fill();
         ctx.strokeStyle = "rgba(230,238,236,0.4)";
         ctx.lineWidth = 0.5;
         ctx.stroke();
       }
     }
-    const { px, py } = toPlane(SOLAR.x + SOLAR.w / 2, SOLAR.y + SOLAR.h + 90);
-    const { sx, sy } = project(px, py);
-    ctx.fillStyle = "#0b1418";
-    ctx.font = "500 10.5px 'Martian Mono', ui-monospace, monospace";
-    const text = `СЭС (вирт.) · ${Math.round(glow * 100)}%`;
-    const tw = ctx.measureText(text).width;
-    ctx.beginPath();
-    ctx.roundRect(sx - tw / 2 - 8, sy - 18, tw + 16, 20, 3);
-    ctx.fill();
-    ctx.fillStyle = "#f0a43a";
-    ctx.fillText(text, sx - tw / 2, sy - 4);
+    if (selected) {
+      const pad = 24;
+      const frame = [
+        [rect.x - pad, rect.y - pad],
+        [rect.x + rect.w + pad, rect.y - pad],
+        [rect.x + rect.w + pad, rect.y + rect.h + pad],
+        [rect.x - pad, rect.y + rect.h + pad],
+      ].map(([wx, wy]) => project(...xy(toPlane(wx, wy))));
+      ctx.beginPath();
+      frame.forEach((p, i) => (i ? ctx.lineTo(p.sx, p.sy) : ctx.moveTo(p.sx, p.sy)));
+      ctx.closePath();
+      ctx.strokeStyle = "#f0a43a";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
   }
 
   /** Тень от реального положения солнца: так видно, как оно движется. */
@@ -526,7 +569,17 @@ export default function WindMap(props: Props) {
 
   const P = props;
   return (
-    <div className="map" ref={wrapRef}>
+    <div
+      className="map"
+      ref={wrapRef}
+      onClick={(e) => {
+        const id = unitAt(e);
+        if (id) P.onSelect(id);
+      }}
+      onMouseMove={(e) => {
+        e.currentTarget.style.cursor = unitAt(e) ? "pointer" : "default";
+      }}
+    >
       <div className="map-sky" />
       <div className="map-plane" ref={planeRef}>
         <canvas ref={baseRef} />
@@ -534,8 +587,8 @@ export default function WindMap(props: Props) {
         <canvas ref={flowRef} />
       </div>
       <canvas ref={overRef} className="map-over" />
-      {P.turbines.map((t) => {
-        const power = P.point?.per_turbine?.[t.id] ?? P.point?.p50 ?? 0;
+      {P.units.map((t) => {
+        const label = P.labels[t.id];
         return (
           <button
             key={t.id}
@@ -543,17 +596,17 @@ export default function WindMap(props: Props) {
               labelRefs.current[t.id] = el;
             }}
             className={`turbine-label ${P.selected === t.id ? "active" : ""}`}
-            onClick={() => P.onSelect(t.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              P.onSelect(t.id);
+            }}
             aria-pressed={P.selected === t.id}
-            aria-label={`${t.name}: ${Math.round(power * 100)}% номинала`}
+            aria-label={`${t.name}: ${label?.main ?? ""}. Открыть показатели`}
           >
             <div className="tl-head">
-              <b>{t.id}</b> <span>{Math.round(power * 100)}%</span>
+              <b>{t.id}</b> <span>{label?.sub}</span>
             </div>
-            <div className="tl-wind">
-              {P.point ? P.point.wind_speed.toFixed(1) : "—"}
-              <small>м/с</small>
-            </div>
+            <div className="tl-wind">{label?.main ?? "—"}</div>
           </button>
         );
       })}

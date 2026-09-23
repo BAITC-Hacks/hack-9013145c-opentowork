@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ForecastPoint } from "../api";
-import { fmtDayTime, pct } from "./data";
+import { fmtDayTime, mw, pct } from "./data";
 
 function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -28,9 +28,12 @@ interface ChartProps extends Series {
   cursor: number;
   onCursor?: (i: number) => void;
   height?: number;
+  rated?: number; // если задан — ось и подсказка в МВт, иначе в % номинала
 }
 
-export function ForecastChart({ points, cursor, onCursor, height = 230, show, scenario }: ChartProps) {
+export function ForecastChart({ points, cursor, onCursor, height = 230, show, scenario, rated }: ChartProps) {
+  const fmt = (v: number) => (rated ? `${mw(v * rated)} МВт` : pct(v));
+  const tick = (v: number) => (rated ? mw(v * rated) : String(v * 100));
   const [ref, width] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
   const pad = { l: 38, r: 12, t: 12, b: 26 };
@@ -69,7 +72,7 @@ export function ForecastChart({ points, cursor, onCursor, height = 230, show, sc
           <g key={v}>
             <line x1={pad.l} x2={pad.l + w} y1={y(v)} y2={y(v)} className="grid-line" />
             <text x={pad.l - 6} y={y(v) + 4} className="axis" textAnchor="end">
-              {v * 100}
+              {tick(v)}
             </text>
           </g>
         ))}
@@ -107,24 +110,27 @@ export function ForecastChart({ points, cursor, onCursor, height = 230, show, sc
       </svg>
       <div
         className="chart-tip"
-        style={{ left: Math.min(width - 190, Math.max(0, x(active) + 12)), top: 8 }}
+        style={{ left: Math.min(width - 210, Math.max(0, x(active) + 12)), top: 8 }}
       >
         <b>{fmtDayTime(ap.forecast_for)}</b> <span className="dim">+{ap.horizon_h} ч</span>
         <div>
-          P50 <b>{pct(ap.p50)}</b> <span className="dim">[{pct(ap.p10)}–{pct(ap.p90)}]</span>
+          Прогноз <b>{fmt(ap.p50)}</b>{" "}
+          <span className="dim">
+            [{fmt(ap.p10)}–{fmt(ap.p90)}]
+          </span>
         </div>
         {ap.actual != null && (
           <div>
-            Факт <b>{pct(ap.actual)}</b>{" "}
+            Факт <b>{fmt(ap.actual)}</b>{" "}
             <span className={Math.abs(ap.actual - ap.p50) > 0.1 ? "bad" : "good"}>
-              {ap.actual - ap.p50 >= 0 ? "+" : ""}
-              {((ap.actual - ap.p50) * 100).toFixed(0)} п.п.
+              {Math.abs(ap.actual - ap.p50) < 0.01 ? "≈ " : ap.actual - ap.p50 >= 0 ? "+" : "−"}
+              {rated ? `${mw(Math.abs(ap.actual - ap.p50) * rated)} МВт` : `${Math.abs((ap.actual - ap.p50) * 100).toFixed(0)} п.п.`}
             </span>
           </div>
         )}
         {scenario && (
           <div>
-            Сценарий <b>{pct(scenario[active])}</b>
+            Сценарий <b>{fmt(scenario[active])}</b>
           </div>
         )}
       </div>

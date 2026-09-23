@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import type { BacktestSummary, ForecastRun } from "../api";
-import { demoBacktest, demoRun } from "./demo";
+import type { BacktestSummary, ForecastRun, SourceKind, Station, UnitSample } from "../api";
+import { demoBacktest, demoRun, demoSolarRun, demoUnitHistory, DEMO_STATIONS } from "./demo";
 
 export type Origin = "api" | "demo";
 
@@ -16,7 +16,26 @@ async function withFallback<T>(live: () => Promise<T>, demo: () => T): Promise<[
   }
 }
 
-export function useForecast(originIso: string, horizon: number, nonce = 0) {
+export function useStations() {
+  const [state, setState] = useState<{ stations: Station[]; origin: Origin }>({
+    stations: DEMO_STATIONS,
+    origin: "demo",
+  });
+  useEffect(() => {
+    withFallback(api.stations, () => DEMO_STATIONS).then(([stations, origin]) =>
+      setState({ stations, origin }),
+    );
+  }, []);
+  return state;
+}
+
+function demoFor(station: Station, originIso: string, horizon: number): ForecastRun {
+  return station.kind === "solar"
+    ? demoSolarRun(station, originIso, horizon)
+    : demoRun(originIso, horizon);
+}
+
+export function useForecast(station: Station | null, originIso: string, horizon: number, nonce = 0) {
   const [state, setState] = useState<{ run: ForecastRun | null; origin: Origin; loading: boolean }>({
     run: null,
     origin: "demo",
@@ -24,19 +43,40 @@ export function useForecast(originIso: string, horizon: number, nonce = 0) {
   });
 
   useEffect(() => {
+    if (!station) return;
     let alive = true;
     setState((s) => ({ ...s, loading: true }));
     const live = () =>
-      nonce > 0 ? api.runForecast(originIso, horizon) : api.forecastAt(originIso);
-    withFallback(live, () => demoRun(originIso, horizon)).then(([run, origin]) => {
+      nonce > 0
+        ? api.runForecast(station.id, originIso, horizon)
+        : api.forecastAt(station.id, originIso);
+    withFallback(live, () => demoFor(station, originIso, horizon)).then(([run, origin]) => {
       if (alive) setState({ run, origin, loading: false });
     });
     return () => {
       alive = false;
     };
-  }, [originIso, horizon, nonce]);
+  }, [station, originIso, horizon, nonce]);
 
   return state;
+}
+
+export function useUnitHistory(station: Station, unitId: string | null, fromIso: string, toIso: string) {
+  const [samples, setSamples] = useState<UnitSample[]>([]);
+  useEffect(() => {
+    if (!unitId) return;
+    let alive = true;
+    withFallback(
+      () => api.unitHistory(station.id, unitId, fromIso, toIso),
+      () => demoUnitHistory(station, unitId, fromIso, toIso),
+    ).then(([data]) => {
+      if (alive) setSamples(data);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [station, unitId, fromIso, toIso]);
+  return samples;
 }
 
 export function useBacktest() {
@@ -48,6 +88,65 @@ export function useBacktest() {
     withFallback(api.backtest, demoBacktest).then(([data, origin]) => setState({ data, origin }));
   }, []);
   return state;
+}
+
+// ─── Маршрут в адресной строке ──────────────────────────────────────────────
+// Шаги мастера лежат в hash: кнопка «назад» браузера возвращает на шаг
+// назад, а после перезагрузки открывается тот же экран.
+
+export type Mode = "forecast" | "place";
+export type StationTab = "map" | "accuracy" | "agent";
+
+export type Route =
+  | { page: "home" }
+  | { page: "kind"; mode: Mode }
+  | { page: "stations"; kind: SourceKind }
+  | { page: "station"; kind: SourceKind; stationId: string; tab: StationTab }
+  | { page: "place"; kind: SourceKind }
+  | { page: "platform" };
+
+export function parseRoute(hash: string): Route {
+  const [mode, kind, stationId, tab] = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  const k: SourceKind | null = kind === "wind" || kind === "solar" ? kind : null;
+  if (mode === "platform") return { page: "platform" };
+  if (mode === "forecast" || mode === "place") {
+    if (!k) return { page: "kind", mode };
+    if (mode === "place") return { page: "place", kind: k };
+    if (!stationId) return { page: "stations", kind: k };
+    const t: StationTab = tab === "accuracy" || tab === "agent" ? tab : "map";
+    return { page: "station", kind: k, stationId, tab: t };
+  }
+  return { page: "home" };
+}
+
+export function routeHash(r: Route): string {
+  switch (r.page) {
+    case "home":
+      return "#/";
+    case "platform":
+      return "#/platform";
+    case "kind":
+      return `#/${r.mode}`;
+    case "stations":
+      return `#/forecast/${r.kind}`;
+    case "place":
+      return `#/place/${r.kind}`;
+    case "station":
+      return `#/forecast/${r.kind}/${r.stationId}${r.tab === "map" ? "" : `/${r.tab}`}`;
+  }
+}
+
+export function useRoute(): [Route, (r: Route) => void] {
+  const [route, setRoute] = useState(() => parseRoute(window.location.hash));
+  useEffect(() => {
+    const onHash = () => {
+      setRoute(parseRoute(window.location.hash));
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  return [route, (r) => (window.location.hash = routeHash(r))];
 }
 
 /** Дни тестового периода: прогноз строится в 00:00 на следующие 24–48 ч. */
@@ -68,4 +167,12 @@ export function fmtDayTime(iso: string): string {
 
 export function pct(x: number, digits = 0): string {
   return `${(x * 100).toFixed(digits)}%`;
+}
+
+export function mw(x: number): string {
+  return x >= 10 ? x.toFixed(0) : x.toFixed(1);
+}
+
+export function stationRated(s: Station): number {
+  return s.units.reduce((a, u) => a + (u.rated_mw ?? 0), 0);
 }

@@ -80,6 +80,27 @@ export interface Turbine {
   name: string;
   lat: number;
   lon: number;
+  rated_mw?: number; // номинал; в датасете не дан, поэтому необязателен
+}
+
+export type SourceKind = "wind" | "solar";
+
+export interface Station {
+  id: string;
+  kind: SourceKind;
+  name: string;
+  region: string;
+  lat: number;
+  lon: number;
+  units: Turbine[]; // турбины ВЭС или блоки панелей СЭС
+  data: "history" | "model" | "none"; // есть ли фактические данные
+  note?: string;
+}
+
+export interface UnitSample {
+  ts: string;
+  power: number; // доля номинала 0..1
+  wind_speed?: number;
 }
 
 export interface ForecastPoint {
@@ -93,7 +114,8 @@ export interface ForecastPoint {
   wind_speed: number; // м/с, из погодного прогноза, выпущенного до origin
   wind_dir: number; // градусы, откуда дует
   temperature: number;
-  per_turbine?: Record<string, number>;
+  cloud_cover?: number; // 0..1, для СЭС
+  per_turbine?: Record<string, number>; // по id агрегата: турбины или блока
 }
 
 export interface AgentStep {
@@ -216,16 +238,23 @@ export const api = {
 
   job: (id: string) => request<JobStatus>(`/jobs/${id}`),
 
-  turbines: () => request<Turbine[]>("/turbines"),
+  stations: () => request<Station[]>("/stations"),
 
-  forecastAt: (origin: string) =>
-    request<ForecastRun>(`/forecast/latest?origin=${encodeURIComponent(origin)}`),
+  forecastAt: (stationId: string, origin: string) =>
+    request<ForecastRun>(
+      `/forecast/latest?station_id=${encodeURIComponent(stationId)}&origin=${encodeURIComponent(origin)}`,
+    ),
 
-  runForecast: (origin: string, horizon: number) =>
+  runForecast: (stationId: string, origin: string, horizon: number) =>
     request<ForecastRun>("/forecast/run", {
       method: "POST",
-      body: JSON.stringify({ forecast_origin: origin, horizon }),
+      body: JSON.stringify({ station_id: stationId, forecast_origin: origin, horizon }),
     }),
+
+  unitHistory: (stationId: string, unitId: string, from: string, to: string) =>
+    request<UnitSample[]>(
+      `/stations/${encodeURIComponent(stationId)}/units/${encodeURIComponent(unitId)}/history?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    ),
 
   backtest: () => request<BacktestSummary>("/metrics"),
 

@@ -8,7 +8,9 @@ import type {
   BacktestSummary,
   ForecastPoint,
   ForecastRun,
+  Station,
   Turbine,
+  UnitSample,
 } from "../api";
 
 export const SITE = {
@@ -54,7 +56,7 @@ export function powerCurve(v: number): number {
   return (v ** 3 - 27) / (12.5 ** 3 - 27);
 }
 
-function trueWind(t: number): number {
+export function trueWind(t: number): number {
   const h = (t - EPOCH) / HOUR;
   let w =
     7.2 +
@@ -68,12 +70,12 @@ function trueWind(t: number): number {
   return Math.max(0.3, w);
 }
 
-function trueDir(t: number): number {
+export function trueDir(t: number): number {
   const h = (t - EPOCH) / HOUR;
   return (280 + 35 * Math.sin((2 * Math.PI * h) / 60) + 25 * smoothNoise(h / 8, 5) + 360) % 360;
 }
 
-function temperature(t: number): number {
+export function temperature(t: number): number {
   const h = (t - EPOCH) / HOUR;
   const hourOfDay = new Date(t).getUTCHours();
   return -13 + 4 * Math.sin((2 * Math.PI * (hourOfDay - 9)) / 24) + 5 * smoothNoise(h / 30, 9);
@@ -266,12 +268,201 @@ export function sunPosition(utcMs: number, lat: number, lon: number) {
 }
 
 /** Нормализованная выработка СЭС: геометрия солнца × облачность × температура. */
-export function solarPower(localMs: number, cloudBoost = 0): number {
+export function solarPower(localMs: number, cloud = cloudCover(localMs)): number {
   const utc = localMs - SITE.utcOffset * HOUR;
   const { elevation } = sunPosition(utc, SITE.lat, SITE.lon);
   if (elevation <= 0) return 0;
   const clear = Math.sin((elevation * Math.PI) / 180) ** 1.15;
-  const cloud = Math.min(1, cloudCover(localMs) * (1 + cloudBoost));
+  const c = Math.min(1, Math.max(0, cloud));
   const tempGain = 1 + 0.004 * (25 - temperature(localMs));
-  return clamp01(clear * (1 - 0.72 * cloud ** 2.2) * tempGain * 1.1);
+  return clamp01(clear * (1 - 0.72 * c ** 2.2) * tempGain * 1.1);
+}
+
+// ─── Каталог станций ────────────────────────────────────────────────────────
+// Данные есть только по одной ВЭС (датасет кейса). Остальные станции видны
+// в списке, но без данных — выбрать их нельзя. СЭС — модель, не факт.
+
+export const RATED_ASSUMPTION_MW = 2.5;
+
+export const DEMO_STATIONS: Station[] = [
+  {
+    id: "ereymentau",
+    kind: "wind",
+    name: "Ерейментау ВЭС",
+    region: "Акмолинская область",
+    lat: SITE.lat,
+    lon: SITE.lon,
+    units: DEMO_TURBINES.map((t) => ({ ...t, rated_mw: RATED_ASSUMPTION_MW })),
+    data: "history",
+    note: "Данные SCADA с марта 2023 по январь 2026",
+  },
+  {
+    id: "shokpar",
+    kind: "wind",
+    name: "Шокпар ВЭС",
+    region: "Жамбылская область",
+    lat: 43.08,
+    lon: 74.97,
+    units: [],
+    data: "none",
+  },
+  {
+    id: "badamsha",
+    kind: "wind",
+    name: "Бадамша ВЭС",
+    region: "Актюбинская область",
+    lat: 50.56,
+    lon: 58.2,
+    units: [],
+    data: "none",
+  },
+  {
+    id: "ereymentau-pv",
+    kind: "solar",
+    name: "СЭС у Ерейментау",
+    region: "Акмолинская область · виртуальная",
+    lat: SITE.lat - 0.004,
+    lon: SITE.lon + 0.012,
+    units: ["Б1", "Б2", "Б3", "Б4"].map((id, i) => ({
+      id,
+      name: `Блок ${i + 1}`,
+      lat: SITE.lat + 0.0021 - (i >> 1) * 0.0042,
+      lon: SITE.lon - 0.0048 + (i % 2) * 0.0096,
+      rated_mw: 1,
+    })),
+    data: "model",
+    note: "Расчёт по положению солнца и облачности, фактических данных нет",
+  },
+  {
+    id: "burnoe",
+    kind: "solar",
+    name: "Бурное Солар",
+    region: "Жамбылская область",
+    lat: 42.6,
+    lon: 70.9,
+    units: [],
+    data: "none",
+  },
+];
+
+const BLOCK_FACTOR: Record<string, number> = { Б1: 1, Б2: 0.97, Б3: 0.99, Б4: 0.94 };
+
+export function demoSolarRun(station: Station, originIso: string, horizon = 48): ForecastRun {
+  const origin = parseTs(originIso);
+  const points: ForecastPoint[] = [];
+  for (let h = 1; h <= horizon; h += 1) {
+    const t = origin + h * HOUR;
+    const trueCloud = cloudCover(t);
+    const err = (0.06 + (0.22 * h) / 48) * smoothNoise((t - EPOCH) / HOUR / 5, origin / HOUR + 11) * 2;
+    const cloud = Math.min(1, Math.max(0, trueCloud + err));
+    const p50 = solarPower(t, cloud);
+    const spread = p50 > 0 ? (0.04 + (0.12 * h) / 48) * (0.5 + cloud) : 0;
+    const known = t <= Date.UTC(2026, 2, 1);
+    points.push({
+      forecast_for: toIso(t),
+      horizon_h: h,
+      p10: clamp01(p50 - spread),
+      p50,
+      p90: clamp01(p50 + spread * 0.8),
+      baseline: solarPower(t - Math.ceil(h / 24) * 24 * HOUR),
+      actual: known ? solarPower(t) : null,
+      wind_speed: forecastWind(origin, t),
+      wind_dir: trueDir(t),
+      temperature: temperature(t),
+      cloud_cover: cloud,
+      per_turbine: Object.fromEntries(
+        station.units.map((u) => [u.id, clamp01(p50 * (BLOCK_FACTOR[u.id] ?? 1))]),
+      ),
+    });
+  }
+  return {
+    forecast_id: `demo-${station.id}-${originIso.slice(0, 10)}`,
+    forecast_origin: toIso(origin),
+    horizon,
+    model_version: "pv-physical-v1 (демо)",
+    weather_provider: "open-meteo historical-forecast",
+    weather_run: toIso(origin - 6 * HOUR),
+    created_at: toIso(origin + 3 * 60_000),
+    predictions: points,
+    agent_steps: agentSteps(origin),
+    explanation:
+      "Выработка СЭС повторяет ход солнца: пик около полудня, ночью ноль. " +
+      "Разброс прогноза задаёт облачность — чем дальше горизонт, тем он шире.",
+  };
+}
+
+/** Фактическая почасовая мощность агрегата (доля номинала) — для истории. */
+export function unitActual(station: Station, unitId: string, t: number): UnitSample {
+  if (station.kind === "solar") {
+    return { ts: toIso(t), power: clamp01(solarPower(t) * (BLOCK_FACTOR[unitId] ?? 1)) };
+  }
+  const wind = trueWind(t);
+  const base = clamp01(powerCurve(wind) * LOSSES + 0.03 * smoothNoise((t - EPOCH) / HOUR / 2, 77));
+  const wake = unitId === "T2" ? wakeFactor(trueDir(t)) : 1;
+  return { ts: toIso(t), power: clamp01(base * wake), wind_speed: wind * (unitId === "T2" ? wake ** 0.33 : 1) };
+}
+
+export function demoUnitHistory(station: Station, unitId: string, fromIso: string, toIsoStr: string): UnitSample[] {
+  const out: UnitSample[] = [];
+  for (let t = parseTs(fromIso); t <= parseTs(toIsoStr); t += HOUR) out.push(unitActual(station, unitId, t));
+  return out;
+}
+
+// ─── Подбор места ───────────────────────────────────────────────────────────
+// Синтетическая карта ресурса вокруг Ерейментау. В проде заменяется на
+// Global Wind Atlas / ERA5 для ветра и PVGIS / NASA POWER для солнца.
+
+export const REGION = { lat0: 50.8, lat1: 52.3, lon0: 71.2, lon1: 74.4 };
+
+function noise2(x: number, y: number, seed: number): number {
+  const xi = Math.floor(x);
+  const yi = Math.floor(y);
+  const u = (x - xi) ** 2 * (3 - 2 * (x - xi));
+  const w = (y - yi) ** 2 * (3 - 2 * (y - yi));
+  const h = (i: number, j: number) => hash(i * 57.3 + j * 131.9 + seed * 17.1);
+  return (
+    h(xi, yi) * (1 - u) * (1 - w) + h(xi + 1, yi) * u * (1 - w) +
+    h(xi, yi + 1) * (1 - u) * w + h(xi + 1, yi + 1) * u * w
+  );
+}
+
+function fbm2(x: number, y: number): number {
+  let v = 0;
+  let a = 0.5;
+  let f = 1;
+  for (let o = 0; o < 4; o += 1) {
+    v += a * noise2(x * f, y * f, o + 1);
+    a *= 0.5;
+    f *= 2.1;
+  }
+  return v / 0.9375;
+}
+
+/** Среднегодовая скорость ветра на высоте ступицы, м/с. */
+export function meanWindAt(lat: number, lon: number): number {
+  const ridge = Math.exp(-(((lat - SITE.lat) / 0.35) ** 2)) * 1.1;
+  return 5.2 + 3.2 * fbm2(lon * 2.2, lat * 2.6) + ridge;
+}
+
+/** Годовая сумма солнечной радиации на горизонтальную поверхность, кВт·ч/м². */
+export function ghiAt(lat: number, lon: number): number {
+  return 1180 + (52.4 - lat) * 95 + 140 * fbm2(lon * 1.8 + 5, lat * 2.2);
+}
+
+/**
+ * Коэффициент использования ВЭС при распределении Рэлея со средней
+ * скоростью `mean` — честный интеграл кривой мощности, а не константа.
+ */
+export function windCapacityFactor(mean: number): number {
+  const sigma = mean * Math.sqrt(2 / Math.PI);
+  let e = 0;
+  for (let v = 0.05; v < 30; v += 0.1) {
+    e += powerCurve(v) * (v / sigma ** 2) * Math.exp(-(v * v) / (2 * sigma ** 2)) * 0.1;
+  }
+  return e * LOSSES;
+}
+
+/** КИУМ СЭС: GHI × коэффициент производительности 0.8 / 8760 ч. */
+export function solarCapacityFactor(ghi: number): number {
+  return (ghi * 1.12 * 0.8) / 8760;
 }
