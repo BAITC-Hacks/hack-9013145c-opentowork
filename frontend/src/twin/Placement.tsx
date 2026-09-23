@@ -3,6 +3,7 @@ import type { SourceKind, Station } from "../api";
 import { StepBar } from "./Flow";
 import type { Route } from "./data";
 import { ghiAt, meanWindAt, REGION, solarCapacityFactor, windCapacityFactor } from "./demo";
+import WindPlacement from "./WindPlacement";
 
 const COLS = 96;
 const ROWS = 60;
@@ -44,7 +45,11 @@ function ramp(kind: SourceKind, f: number): string {
   return `rgb(${rampRgb(kind, f).join(",")})`;
 }
 
-export default function Placement({
+export default function Placement(props: { kind: SourceKind; stations: Station[]; go: (r: Route) => void }) {
+  return props.kind === "wind" ? <WindPlacement stations={props.stations} go={props.go} /> : <ResourcePlacement {...props} />;
+}
+
+function ResourcePlacement({
   kind,
   stations,
   go,

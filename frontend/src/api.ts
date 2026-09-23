@@ -249,6 +249,61 @@ export interface RooftopsResponse {
 
 const TOKEN_KEY = "hackalem.token";
 
+export interface WindTurbineModel {
+  id: string;
+  name: string;
+  manufacturer: string;
+  rated_power_kw: number;
+  rotor_diameter_m: number;
+  hub_heights_m: number[];
+  high_wind_zero_ms: number;
+  source_url: string;
+  metadata_source_url: string;
+  curve: [number, number][];
+  notes: string[];
+}
+
+export interface WindSimulationInput {
+  latitude: number;
+  longitude: number;
+  turbine_id: string;
+  hub_height_m: number;
+  horizon_hours: 24 | 48;
+  loss_percent: number;
+}
+
+export interface WindSimulation {
+  method: "engineering_power_curve_v1";
+  calibrated: false;
+  request: WindSimulationInput;
+  turbine: WindTurbineModel;
+  hub_height_m: number;
+  weather_provider: string;
+  weather_source_url: string;
+  weather_retrieved_at: string;
+  weather_run_issued_at: string | null;
+  weather_grid: { latitude: number; longitude: number; elevation_m: number };
+  forecast_start: string;
+  forecast_end: string;
+  generated_at: string;
+  gross_energy_kwh: number;
+  net_energy_kwh: number;
+  capacity_factor: number;
+  mean_wind_hub_ms: number;
+  peak_net_power_kw: number;
+  high_wind_shutdown_hours: number;
+  hours: {
+    time: string;
+    wind_hub_ms: number;
+    density_kg_m3: number;
+    gross_power_kw: number;
+    net_power_kw: number;
+    energy_kwh: number;
+    high_wind_shutdown: boolean;
+  }[];
+  assumptions: string[];
+}
+
 export const token = {
   get: () => localStorage.getItem(TOKEN_KEY),
   set: (value: string) => localStorage.setItem(TOKEN_KEY, value),
@@ -291,6 +346,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  windTurbineModels: () => request<WindTurbineModel[]>("/wind/turbine-models"),
+  simulateWind: (input: WindSimulationInput, signal?: AbortSignal) =>
+    request<WindSimulation>("/wind/simulate", {
+      method: "POST", body: JSON.stringify(input), signal,
+    }),
   login: (email: string, password: string) =>
     request<{ access_token: string }>("/auth/login", {
       method: "POST",

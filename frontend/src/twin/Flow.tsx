@@ -446,7 +446,7 @@ export function KindPick({
   const meta = (kind: SourceKind) => {
     if (mode === "place")
       return kind === "wind"
-        ? "Карта ветрового потенциала"
+        ? "Новая турбина · расчёт на 24–48 часов"
         : "Карта солнечной радиации";
     const ready = stations.filter(
       (s) => s.kind === kind && s.data !== "none",
@@ -473,7 +473,7 @@ export function KindPick({
           title="Ветровые станции"
           text={
             mode === "place"
-              ? "Найдите площадку с сильным и устойчивым ветром."
+              ? "Поставьте турбину на карту, выберите модель и рассчитайте выработку."
               : "Ветер, работа турбин и ожидаемая выработка."
           }
           meta={meta("wind")}

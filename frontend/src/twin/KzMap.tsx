@@ -40,7 +40,17 @@ function radius(s: Station): number {
   return 5 + Math.sqrt(Math.max(cap, 1)) * 1.1;
 }
 
-export default function KzMap({ stations, onOpen }: { stations: Station[]; onOpen: (s: Station) => void }) {
+interface PlacementMode {
+  point: { lat: number; lon: number } | null;
+  onPick: (lat: number, lon: number) => void;
+  markers?: { id: string; lat: number; lon: number; label: string; onSelect: () => void }[];
+}
+
+export default function KzMap({ stations, onOpen, placement }: {
+  stations: Station[];
+  onOpen: (s: Station) => void;
+  placement?: PlacementMode;
+}) {
   const mapped = useMemo(
     () =>
       stations
@@ -53,9 +63,19 @@ export default function KzMap({ stations, onOpen }: { stations: Station[]; onOpe
   const focus = stations.find((s) => s.id === focusId) ?? null;
 
   return (
-    <div className="kzmap">
+    <div className={`kzmap${placement ? " kzmap-placement" : ""}`}>
       <div className="kzmap-canvas">
-        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Карта ВЭС Казахстана: ${mapped.length} станций`}>
+        <svg viewBox={`0 0 ${W} ${H}`} role="img"
+          aria-label={placement ? "Карта Казахстана: выберите место новой турбины" : `Карта ВЭС Казахстана: ${mapped.length} станций`}
+          onClick={placement ? (event) => {
+            const svg = event.currentTarget;
+            const matrix = svg.getScreenCTM();
+            if (!matrix) return;
+            const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+            if (point.x < 0 || point.x > W || point.y < 0 || point.y > H) return;
+            placement.onPick(BOX.lat1 - point.y / H * (BOX.lat1 - BOX.lat0),
+              BOX.lon0 + point.x / W * (BOX.lon1 - BOX.lon0));
+          } : undefined}>
           <path className="kzmap-land" d={PATH} />
           {CITIES.map((c) => {
             const [x, y] = xy(c.lat, c.lon);
@@ -81,11 +101,16 @@ export default function KzMap({ stations, onOpen }: { stations: Station[]; onOpe
                 tabIndex={0}
                 role="button"
                 aria-label={`${s.name}, ${s.region}`}
-                onClick={() => setFocusId(s.id)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (placement) placement.onPick(s.lat, s.lon);
+                  else setFocusId(s.id);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    setFocusId(s.id);
+                    if (placement) placement.onPick(s.lat, s.lon);
+                    else setFocusId(s.id);
                   }
                 }}
               >
@@ -95,16 +120,32 @@ export default function KzMap({ stations, onOpen }: { stations: Station[]; onOpe
               </g>
             );
           })}
+          {placement?.markers?.map((m) => {
+            const [x, y] = xy(m.lat, m.lon);
+            return <g key={m.id} className="kzmap-draft" role="button" tabIndex={0}
+              aria-label={`Новая турбина: ${m.label}`} transform={`translate(${x},${y})`}
+              onClick={(event) => { event.stopPropagation(); m.onSelect(); }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") { event.preventDefault(); m.onSelect(); }
+              }}>
+              <title>{m.label}</title><circle r="10" /><path d="M0 5V-6M0-6V-15M0-6L-8-1M0-6L8-1" />
+            </g>;
+          })}
+          {placement?.point && Number.isFinite(placement.point.lat) && Number.isFinite(placement.point.lon) &&
+            <g className="kzmap-new-point" transform={`translate(${xy(placement.point.lat, placement.point.lon).join(",")})`}>
+              <circle r="19" /><path d="M0 10V-10M0-10V-24M0-10L-12-3M0-10L12-3" />
+            </g>}
         </svg>
         <ul className="kzmap-legend">
           <li><i className="lg history" />есть данные SCADA</li>
           <li><i className="lg" />координаты из OSM</li>
           <li><i className="lg approx" />известен только район</li>
           <li className="dim">размер — мощность</li>
+          {placement && <li>Зелёный ветряк — новая турбина</li>}
         </ul>
       </div>
 
-      <aside className="kzmap-card" aria-live="polite">
+      {!placement && <aside className="kzmap-card" aria-live="polite">
         {focus ? (
           <>
             <span className="kzmap-region">{focus.region}</span>
@@ -149,7 +190,7 @@ export default function KzMap({ stations, onOpen }: { stations: Station[]; onOpe
         ) : (
           <p className="kzmap-note">Нажмите на станцию на карте.</p>
         )}
-      </aside>
+      </aside>}
     </div>
   );
 }
