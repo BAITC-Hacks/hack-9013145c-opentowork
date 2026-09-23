@@ -14,7 +14,7 @@ type Sort = "mwh" | "wind" | "cf" | "name";
 
 const METHOD: Record<OverviewStation["method"], { short: string; long: string }> = {
   ml: { short: "ML-модель", long: "обученная модель windcast на истории турбин" },
-  curve: { short: "Кривая мощности", long: "ветер Open-Meteo на 100 м → кривая мощности, без ML" },
+  curve: { short: "Кривая мощности", long: "ветер Open-Meteo на 100 м → кривая мощности ВЭС Нурлы (доля номинала), без ML" },
 };
 
 function num(v: number | null | undefined): number {

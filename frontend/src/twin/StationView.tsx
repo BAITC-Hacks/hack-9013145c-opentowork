@@ -305,7 +305,7 @@ export default function StationView({
           <div className="float top-center demo-flag">Демонстрационный прогноз</div>
         )}
         {dataOrigin === "api" && run?.method === "curve" && (
-          <div className="float top-center demo-flag curve-flag">Реальная погода · кривая мощности, без ML</div>
+          <div className="float top-center demo-flag curve-flag">Реальная погода · кривая мощности Нурлы, без ML</div>
         )}
 
         {!selected && (
