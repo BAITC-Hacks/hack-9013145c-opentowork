@@ -17,6 +17,7 @@ function disposeScene(scene: THREE.Scene) {
   const materials = new Set<THREE.Material>();
   const textures = new Set<THREE.Texture>();
   scene.traverse((node) => {
+    if (node instanceof THREE.InstancedMesh) node.dispose();
     if (node instanceof THREE.Mesh || node instanceof THREE.Line || node instanceof THREE.Points) {
       geometries.add(node.geometry);
       for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
@@ -36,6 +37,7 @@ export default function Scene(props: Props) {
   const current = useRef(props);
   current.current = props;
   const actions = useRef<(action: CameraAction) => void>(() => undefined);
+  const invalidate = useRef<() => void>(() => undefined);
   const [ready, setReady] = useState(false);
   const [daylight, setDaylight] = useState(true);
   const daylightRef = useRef(daylight);
@@ -54,7 +56,7 @@ export default function Scene(props: Props) {
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -64,7 +66,7 @@ export default function Scene(props: Props) {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("#bdcbd2");
-    scene.fog = new THREE.FogExp2("#c5d0d5", 0.00017);
+    scene.fog = new THREE.FogExp2("#c5d0d5", 0.00031);
     const camera = new THREE.PerspectiveCamera(40, 1, 1, 12000);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -91,8 +93,8 @@ export default function Scene(props: Props) {
     );
     const span = Math.max(600, ...sites.map((s) => Math.hypot(s.x - center.x, s.z - center.z) * 2));
     const distance = Math.min(1900, span * 1.25);
-    const home = center.clone().add(new THREE.Vector3(-distance * 0.58, distance * 0.32, distance * 0.78));
-    camera.position.copy(home);
+    const home = center.clone().add(new THREE.Vector3(-distance * 0.5, distance * 0.22, distance * 0.66));
+    camera.position.copy(current.current.tilt ? home : center.clone().add(new THREE.Vector3(0, distance * 1.05, 0.1)));
     controls.target.copy(center);
     controls.update();
     const goalPosition = home.clone();
@@ -116,6 +118,7 @@ export default function Scene(props: Props) {
         offset.clampLength(controls.minDistance, controls.maxDistance);
         fly(controls.target.clone().add(offset), controls.target.clone());
       }
+      invalidate.current();
     };
 
     const environment = new RoomEnvironment();
@@ -126,7 +129,7 @@ export default function Scene(props: Props) {
     environment.dispose();
     pmrem.dispose();
 
-    const hemisphere = new THREE.HemisphereLight("#dcebf4", "#747164", 2.15);
+    const hemisphere = new THREE.HemisphereLight("#dcebf4", "#747164", 1.35);
     scene.add(hemisphere);
     const sunlight = new THREE.DirectionalLight("#fff2db", 3.1);
     sunlight.position.set(-700, 750, 500);
@@ -146,7 +149,12 @@ export default function Scene(props: Props) {
       side: THREE.BackSide, depthWrite: false,
       uniforms: { zenith: { value: new THREE.Color("#7eabc8") }, horizon: { value: new THREE.Color("#dce1df") } },
       vertexShader: "varying vec3 vDirection; void main(){vDirection=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
-      fragmentShader: "uniform vec3 zenith;uniform vec3 horizon;varying vec3 vDirection;void main(){float h=max(normalize(vDirection).y,0.0);gl_FragColor=vec4(mix(horizon,zenith,pow(h,0.55)),1.0);}",
+      fragmentShader: `uniform vec3 zenith;uniform vec3 horizon;varying vec3 vDirection;
+        void main(){float h=max(normalize(vDirection).y,0.0);
+          gl_FragColor=vec4(mix(horizon,zenith,pow(h,0.55)),1.0);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`,
     });
     const sky = new THREE.Mesh(new THREE.SphereGeometry(5500, 32, 16), skyMaterial);
     scene.add(sky);
@@ -156,7 +164,11 @@ export default function Scene(props: Props) {
       const group = asset?.group ?? createSolarArray(180, 110);
       group.position.set(site.x, terrainHeight(site.x, site.z), site.z);
       group.traverse((node) => { node.userData.unitId = site.id; });
-      if (asset) asset.rotor.rotation.z = i * 1.7 + 0.5;
+      if (asset) {
+        asset.rotor.rotation.z = i * 1.7 + 0.5;
+        const direction = (current.current.point?.wind_dir ?? 290) * DEG;
+        asset.yaw.rotation.y = Math.atan2(Math.sin(direction), -Math.cos(direction));
+      }
       scene.add(group);
       return { ...site, group, asset };
     });
@@ -181,7 +193,7 @@ export default function Scene(props: Props) {
     scene.add(field);
 
     const wakes = sites.map((site) => {
-      const geometry = new THREE.PlaneGeometry(160, 700, 1, 1);
+      const geometry = new THREE.PlaneGeometry(160, 700, 6, 40);
       // Tapered ribbon broadens downwind; rests on ground.
       const a = geometry.attributes.position;
       for (let i = 0; i < a.count; i++) {
@@ -192,7 +204,7 @@ export default function Scene(props: Props) {
       const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: "#729dae", transparent: true, opacity: 0.13, side: THREE.DoubleSide, depthWrite: false }));
       mesh.position.set(site.x, terrainHeight(site.x, site.z) + 1.8, site.z);
       scene.add(mesh);
-      return mesh;
+      return { mesh, local: new Float32Array(a.array), site };
     });
     const count = 160;
     const flowPositions = new Float32Array(count * 6);
@@ -243,15 +255,15 @@ export default function Scene(props: Props) {
     let frame = 0, previous = 0, elapsed = 0;
     let lastPoint: Props["point"] = null;
     let lastLight = "";
-    let inView = true;
+    let inView = true, rendered = false;
     const visibility = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; });
     visibility.observe(container);
     const vector = new THREE.Vector3();
-    const render = (now: number) => {
-      frame = requestAnimationFrame(render);
+    const render = (now: number, scheduled = true) => {
+      if (scheduled) frame = requestAnimationFrame(render);
       const dt = Math.min(0.05, (now - (previous || now)) / 1000);
       previous = now;
-      if (document.hidden || !inView) return;
+      if (scheduled && rendered && (document.hidden || !inView)) return;
       const p = current.current;
       if (!reduced.matches) elapsed += dt;
       if (p.tilt !== lastTilt) {
@@ -267,7 +279,7 @@ export default function Scene(props: Props) {
         }
       }
       if (flying) {
-        const k = 1 - Math.exp(-dt * 4);
+        const k = !scheduled && document.hidden ? 1 : 1 - Math.exp(-dt * 4);
         camera.position.lerp(goalPosition, k);
         controls.target.lerp(goalTarget, k);
         if (camera.position.distanceTo(goalPosition) < 0.3) flying = false;
@@ -285,7 +297,7 @@ export default function Scene(props: Props) {
         sunlight.target.position.copy(center);
         sunlight.intensity = night ? 0.65 : 3.1;
         sunlight.color.set(night ? "#bdcfe9" : "#fff2db");
-        hemisphere.intensity = night ? 0.7 : 2.15;
+        hemisphere.intensity = night ? 0.7 : 1.35;
         renderer.toneMappingExposure = night ? 0.85 : 1.05;
         (scene.fog as THREE.FogExp2).color.set(night ? "#263a50" : "#c5d0d5");
         skyMaterial.uniforms.zenith.value.set(night ? "#101d34" : "#7eabc8");
@@ -293,12 +305,23 @@ export default function Scene(props: Props) {
       }
       field.visible = p.layers.speed && p.kind === "wind";
       flow.visible = p.layers.direction && p.kind === "wind";
-      landscape.visible = true;
+      landscape.children.forEach((child) => { if (child.userData.terrainDetail) child.visible = p.layers.terrain; });
       extraSolar.visible = p.layers.solar && p.kind === "wind";
       const windDirection = (p.point?.wind_dir ?? 290) * DEG;
-      wakes.forEach((wake) => { wake.visible = p.layers.wake && p.kind === "wind"; wake.rotation.y = -windDirection; });
+      wakes.forEach(({ mesh }) => { mesh.visible = p.layers.wake && p.kind === "wind"; });
       if (lastPoint !== p.point) {
         lastPoint = p.point;
+        wakes.forEach(({ mesh, local, site }) => {
+          const positions = mesh.geometry.attributes.position;
+          for (let i = 0; i < positions.count; i++) {
+            const x = local[i * 3], z = local[i * 3 + 2];
+            const wx = x * Math.cos(windDirection) - z * Math.sin(windDirection);
+            const wz = x * Math.sin(windDirection) + z * Math.cos(windDirection);
+            positions.setXYZ(i, wx, terrainHeight(site.x + wx, site.z + wz) - mesh.position.y + 1.1, wz);
+          }
+          positions.needsUpdate = true;
+          mesh.geometry.computeBoundingSphere();
+        });
         for (let i = 0; i < vertices.count; i++) {
           const variation = 1 + 0.07 * Math.sin(vertices.getX(i) / 240) * Math.cos(vertices.getZ(i) / 310);
           const [r, g, b] = speedColor((p.point?.wind_speed ?? 0) * variation);
@@ -340,8 +363,10 @@ export default function Scene(props: Props) {
         }
       }
       renderer.render(scene, camera);
+      rendered = true;
     };
-    frame = requestAnimationFrame(render);
+    invalidate.current = () => render(performance.now(), false);
+    render(performance.now());
     setReady(true);
     return () => {
       cancelAnimationFrame(frame);
@@ -354,8 +379,13 @@ export default function Scene(props: Props) {
       disposeScene(scene); envTarget.dispose(); sunlight.shadow.dispose();
       renderer.dispose(); renderer.domElement.remove();
       actions.current = () => undefined;
+      invalidate.current = () => undefined;
     };
   }, [siteKey, props.kind]);
+
+  // Browsers can suspend animation in background tabs; discrete data/UI changes
+  // still render one complete frame and respect reduced-motion preferences.
+  useEffect(() => { invalidate.current(); }, [props.point, props.selected, props.tilt, props.layers, daylight]);
 
   return (
     <div className="map map-realistic">

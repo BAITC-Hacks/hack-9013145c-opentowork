@@ -161,6 +161,49 @@ export interface SimulationResult {
   points: { forecast_for: string; p50: number }[];
 }
 
+// ─── Солнечный потенциал крыш ──────────────────────────────────────────────
+// Расчёт по физике (PVGIS + тени от соседей по OSM), не обучаемая модель.
+
+export interface Rooftop {
+  id: string; // way/<osm id>
+  rank: number;
+  name: string | null;
+  type: string | null;
+  height_m: number;
+  height_source: "osm_height" | "osm_levels" | "assumed";
+  pitched: boolean;
+  roof_m2: number;
+  usable_m2: number;
+  kwp: number;
+  kwh_year: number;
+  kwh_per_kwp: number; // «качество места»: сколько даёт 1 кВт панелей с учётом теней
+  shading_loss: number; // доля годовой выработки, которую съедают тени
+  monthly_kwh: number[];
+  monthly_shading: number[]; // доля прямого света в тени, по месяцам
+  notes: string[];
+  polygon: [number, number][]; // [lat, lon]
+}
+
+export interface RooftopsResponse {
+  district: string;
+  bbox: [number, number, number, number]; // south, west, north, east
+  sources: { buildings: string; irradiance: string; fetched: string };
+  irradiance: {
+    tilt_deg: number;
+    kwh_per_kwp_year: number;
+    months: { month: number; kwh_per_kwp: number; diffuse_share: number }[];
+  };
+  assumptions: Record<string, number>;
+  summary: {
+    buildings: number;
+    height_known_share: number;
+    total_kwp: number;
+    total_mwh_year: number;
+    top10_mwh_year: number;
+  };
+  buildings: Rooftop[];
+}
+
 const TOKEN_KEY = "hackalem.token";
 
 export const token = {
@@ -257,6 +300,8 @@ export const api = {
     ),
 
   backtest: () => request<BacktestSummary>("/metrics"),
+
+  rooftops: () => request<RooftopsResponse>("/solar/rooftops"),
 
   simulate: (forecastId: string, windChangePct: number) =>
     request<SimulationResult>("/simulation", {

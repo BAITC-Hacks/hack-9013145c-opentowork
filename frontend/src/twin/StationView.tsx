@@ -12,10 +12,10 @@ const WIND_LAYERS: [keyof Layers, string][] = [
   ["speed", "Сила ветра"],
   ["direction", "Направление ветра"],
   ["wake", "Тень от турбин"],
-  ["terrain", "Рельеф"],
+  ["terrain", "Детали поверхности"],
   ["solar", "Солнечная станция рядом"],
 ];
-const SOLAR_LAYERS: [keyof Layers, string][] = [["terrain", "Рельеф"]];
+const SOLAR_LAYERS: [keyof Layers, string][] = [["terrain", "Детали поверхности"]];
 
 const RUMBS = ["С", "ССВ", "СВ", "ВСВ", "В", "ВЮВ", "ЮВ", "ЮЮВ", "Ю", "ЮЮЗ", "ЮЗ", "ЗЮЗ", "З", "ЗСЗ", "СЗ", "ССЗ"];
 
