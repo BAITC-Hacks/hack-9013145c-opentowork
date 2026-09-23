@@ -139,7 +139,7 @@ def run(
     pred["horizon_h"] = ((pred.index - r.origin) / pd.Timedelta(hours=1)).astype(int)
     r.step(
         "Прогнозист",
-        f"каскад + прямая модель, веса {fc.state.weights}"
+        "каскад (поправка ветра → кривая мощности) + калибровка интервала по сложности часа"
         + (f"; погода из выпуска на {shift_h} ч раньше" if shift_h else ""),
         "warn" if shift_h else "ok",
         t0,

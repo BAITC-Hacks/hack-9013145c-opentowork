@@ -28,7 +28,7 @@ MODELS = {
     "climatology": "climatology",
 }
 LABELS = {
-    "ensemble": "Ансамбль (каскад + прямая)",
+    "ensemble": "Итоговая: каскад + калибровка",
     "cascade": "Каскад: поправка ветра → кривая",
     "direct": "Прямая LightGBM",
     "raw_nwp_curve": "Сырой прогноз ветра + кривая",
@@ -63,7 +63,7 @@ def run(first_month: str = "2025-02", last_month: str = "2026-01", log=print) ->
         mae = np.nanmean(np.abs(month_pred["actual"] - month_pred["q50"]))
         log(
             f"{month}: обучение {fc.fit_seconds:.0f} с, выпусков {len(origins)}, "
-            f"веса {fc.state.weights}, MAE ансамбля {mae:.4f}, всего {time.time() - t0:.0f} с"
+            f"MAE итога {mae:.4f}, всего {time.time() - t0:.0f} с"
         )
     return pd.concat(all_preds)
 
@@ -110,6 +110,22 @@ def summarize_backtest(pred: pd.DataFrame) -> dict:
         station.append(st)
     st = pd.concat(station)
     station_rows = [{"model": k, **summarize(st, c)} for k, c in MODELS.items()]
+    # Заявка в РФЦ идёт по станции: покрытие проверяем и на её уровне, а не только по турбинам.
+    station_rows[0].update(summarize_probabilistic(st, ""))
+    daily_loss = (
+        d.assign(day=d["origin"])
+        .groupby("day")
+        .apply(
+            lambda g: pd.Series(
+                {k: np.mean(np.abs(g["actual"] - g[c])) for k, c in MODELS.items()}
+            ),
+            include_groups=False,
+        )
+    )
+    significance = {
+        k: diebold_mariano(daily_loss["ensemble"], daily_loss[k])
+        for k in ("raw_nwp_curve", "persistence", "direct")
+    }
     return {
         "period": f"{pred['month'].min()} — {pred['month'].max()}",
         "n_origins": int(pred["origin"].nunique()),
@@ -119,6 +135,7 @@ def summarize_backtest(pred: pd.DataFrame) -> dict:
         "by_nwp_day": by_day.reset_index().to_dict("records"),
         "by_month": by_month.reset_index().to_dict("records"),
         "reliability": reliability,
+        "significance": significance,
         "daily": [
             {
                 "date": str(o.date()),
@@ -126,6 +143,29 @@ def summarize_backtest(pred: pd.DataFrame) -> dict:
             }
             for o, g in d.groupby("origin")
         ],
+    }
+
+
+def diebold_mariano(loss_a: pd.Series, loss_b: pd.Series, lag: int = 2) -> dict:
+    """Тест Diebold–Mariano: значимо ли модель A точнее модели B.
+    На суточных ошибках, дисперсия с поправкой Ньюи–Уэста на автокорреляцию соседних дней
+    (прогнозы на 48 ч перекрываются). p — односторонний: «A лучше B»."""
+    import math
+
+    diff = (loss_a - loss_b).dropna().to_numpy()
+    n = len(diff)
+    mean = diff.mean()
+    c = diff - mean
+    var = c @ c / n
+    for k in range(1, lag + 1):
+        var += 2 * (1 - k / (lag + 1)) * (c[k:] @ c[:-k]) / n
+    stat = mean / math.sqrt(var / n)
+    p = 0.5 * (1 + math.erf(stat / math.sqrt(2)))
+    return {
+        "days": int(n),
+        "mean_diff": round(float(mean), 5),
+        "dm_stat": round(float(stat), 2),
+        "p_value": float(f"{p:.2g}"),
     }
 
 

@@ -1,8 +1,15 @@
-"""Ансамбль каскада и прямой модели + конформная калибровка интервалов.
+"""Итоговый прогноз: каскад + конформная калибровка интервалов (CQR).
 
-Веса и поправки интервалов подбираются только на прогнозах прошлых месяцев бэктеста
-(out-of-sample), отдельно для каждого дня выпуска N — точность погоды падает с N.
-Квантили смешиваются усреднением квантилей (Vincentization).
+Раньше итог был смесью каскада и прямой модели. Бэктест показал, что смесь не даёт
+выигрыша ни по MAE (0.1566 против 0.1566), ни по интервалам: покрытие давала калибровка,
+а прямая модель учится на тех же признаках и ошибается так же. Поэтому итог — каскад,
+а прямая модель осталась у Критика агента как независимое второе мнение. Механизм весов
+сохранён (веса = 1.0), чтобы смесь можно было вернуть, если появится разнородная модель.
+
+Калибровка — отдельно по дню выпуска N и по «сложности часа» (четверть ширины интервала
+каскада до калибровки). Одна поправка на всё давала 89% покрытия в лёгких часах и 78%
+в сложных; по корзинам интервал честен в каждом режиме. Поправки считаются только на
+прогнозах прошлых месяцев бэктеста (out-of-sample).
 """
 
 from __future__ import annotations
@@ -15,26 +22,45 @@ import pandas as pd
 
 from windcast.metrics import QCOLS
 
-WEIGHT_GRID = np.round(np.arange(0, 1.0001, 0.05), 2)
 MIN_CALIB_ROWS = 300
+MIN_BIN_ROWS = 200
+FINAL_WEIGHT = 1.0  # доля каскада в итоге; см. докстринг
 
 
 @dataclass
 class EnsembleState:
-    weights: dict[int, float] = field(default_factory=lambda: {1: 0.5, 2: 0.5, 3: 0.5})
-    # Аддитивное расширение (CQR) для 80% и 90% интервалов по дню выпуска.
-    widen80: dict[int, float] = field(default_factory=dict)
-    widen90: dict[int, float] = field(default_factory=dict)
+    weights: dict[int, float] = field(
+        default_factory=lambda: {1: FINAL_WEIGHT, 2: FINAL_WEIGHT, 3: FINAL_WEIGHT}
+    )
+    # Аддитивное расширение (CQR) для 80% и 90% интервалов: ключ «N|корзина» или «N».
+    widen80: dict = field(default_factory=dict)
+    widen90: dict = field(default_factory=dict)
+    # Границы четвертей ширины интервала каскада до калибровки — «сложность часа».
+    width_edges: list[float] = field(default_factory=list)
     calibrated_on: int = 0
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), ensure_ascii=False)
 
 
+def difficulty_bin(cascade: pd.DataFrame, state: EnsembleState) -> np.ndarray:
+    edges = getattr(state, "width_edges", None) or []
+    width = (cascade["q90"] - cascade["q10"]).to_numpy()
+    return np.digitize(width, edges) if edges else np.zeros(len(width), dtype=int)
+
+
+def _widen(table: dict, day: int, b: int) -> float:
+    # Совместимость с моделями старого формата: там ключи — int(N).
+    for key in (f"{day}|{b}", str(day), day):
+        if key in table:
+            return table[key]
+    return 0.0
+
+
 def blend(
     cascade: pd.DataFrame, direct: pd.DataFrame, nwp_day: np.ndarray, state: EnsembleState
 ) -> pd.DataFrame:
-    w = np.array([state.weights.get(int(d), 0.5) for d in nwp_day])[:, None]
+    w = np.array([state.weights.get(int(d), FINAL_WEIGHT) for d in nwp_day])[:, None]
     cols = list(QCOLS) + ["mean"]
     out = pd.DataFrame(
         w * cascade[cols].to_numpy() + (1 - w) * direct[cols].to_numpy(),
@@ -42,21 +68,33 @@ def blend(
         columns=cols,
     )
     q = np.sort(out[list(QCOLS)].to_numpy(), axis=1)
-    for d in np.unique(nwp_day):
-        m = nwp_day == d
-        a80 = state.widen80.get(int(d), 0.0)
-        a90 = state.widen90.get(int(d), 0.0)
+    bins = difficulty_bin(cascade, state)
+    for d, b in set(zip(nwp_day.astype(int).tolist(), bins.tolist(), strict=True)):
+        m = (nwp_day == d) & (bins == b)
+        a80 = _widen(state.widen80, d, b)
+        a90 = _widen(state.widen90, d, b)
         q[m, 1] -= a80
         q[m, 5] += a80
         q[m, 0] -= a90
         q[m, 6] += a90
-    q = np.clip(np.sort(q, axis=1), 0, 1)
-    out[list(QCOLS)] = q
+    out[list(QCOLS)] = np.clip(np.sort(q, axis=1), 0, 1)
     return out
 
 
+def _cqr(y: np.ndarray, q: pd.DataFrame) -> tuple[float, float]:
+    """Conformalized Quantile Regression: на сколько сдвинуть границы, чтобы покрыть 80/90%.
+    Поправка может быть и отрицательной — тогда интервал сужается."""
+    n = len(y)
+    e80 = np.maximum(q["q10"] - y, y - q["q90"])
+    e90 = np.maximum(q["q05"] - y, y - q["q95"])
+    return (
+        float(np.quantile(e80, min(1, 0.8 * (n + 1) / n))),
+        float(np.quantile(e90, min(1, 0.9 * (n + 1) / n))),
+    )
+
+
 def calibrate(history: pd.DataFrame, before: pd.Timestamp | None = None) -> EnsembleState:
-    """history — прогнозы прошлых выпусков с колонками cas_*, dir_*, actual, nwp_day."""
+    """history — прогнозы прошлых выпусков с колонками cas_*, actual, nwp_day."""
     if before is not None:
         history = history[history.index < before]
     state = EnsembleState()
@@ -64,26 +102,16 @@ def calibrate(history: pd.DataFrame, before: pd.Timestamp | None = None) -> Ense
     state.calibrated_on = len(h)
     if len(h) < MIN_CALIB_ROWS:
         return state
-    for d, g in h.groupby("nwp_day"):
-        y = g["actual"].to_numpy()
-        maes = [
-            np.mean(np.abs(y - (w * g["cas_q50"] + (1 - w) * g["dir_q50"]))) for w in WEIGHT_GRID
-        ]
-        state.weights[int(d)] = float(WEIGHT_GRID[int(np.argmin(maes))])
-    blended = blend(
-        history[[f"cas_{c}" for c in [*QCOLS, "mean"]]].set_axis([*QCOLS, "mean"], axis=1),
-        history[[f"dir_{c}" for c in [*QCOLS, "mean"]]].set_axis([*QCOLS, "mean"], axis=1),
-        history["nwp_day"].to_numpy(),
-        EnsembleState(weights=state.weights),
-    )
-    blended["actual"] = history["actual"].to_numpy()
-    blended["nwp_day"] = history["nwp_day"].to_numpy()
-    for d, g in blended.dropna(subset=["actual"]).groupby("nwp_day"):
-        y = g["actual"].to_numpy()
-        n = len(y)
-        # Conformalized Quantile Regression: насколько расширить интервал, чтобы покрыть 80/90%.
-        e80 = np.maximum(g["q10"] - y, y - g["q90"])
-        e90 = np.maximum(g["q05"] - y, y - g["q95"])
-        state.widen80[int(d)] = float(np.quantile(e80, min(1, 0.8 * (n + 1) / n)))
-        state.widen90[int(d)] = float(np.quantile(e90, min(1, 0.9 * (n + 1) / n)))
+    cas = h[[f"cas_{c}" for c in QCOLS]].set_axis(list(QCOLS), axis=1)
+    state.width_edges = [float(v) for v in np.quantile(cas["q90"] - cas["q10"], [0.25, 0.5, 0.75])]
+    bins = difficulty_bin(cas, state)
+    y = h["actual"].to_numpy()
+    days = h["nwp_day"].to_numpy().astype(int)
+    for d in np.unique(days):
+        m = days == d
+        state.widen80[str(d)], state.widen90[str(d)] = _cqr(y[m], cas[m])
+        for b in np.unique(bins[m]):
+            mb = m & (bins == b)
+            if mb.sum() >= MIN_BIN_ROWS:
+                state.widen80[f"{d}|{b}"], state.widen90[f"{d}|{b}"] = _cqr(y[mb], cas[mb])
     return state

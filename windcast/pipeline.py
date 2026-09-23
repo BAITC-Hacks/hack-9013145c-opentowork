@@ -23,7 +23,7 @@ from windcast.models.direct import Direct
 from windcast.models.ensemble import EnsembleState, blend
 from windcast.scada import load_all
 
-MODEL_VERSION = f"windcast-{__version__}-cascade+direct"
+MODEL_VERSION = f"windcast-{__version__}-cascade+cqr"
 
 
 def scada_rows(until: pd.Timestamp) -> pd.DataFrame:

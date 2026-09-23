@@ -3,56 +3,56 @@
   "day": "2026-01-31",
   "versions": 4,
   "revisions_published": 1,
-  "mean_p50": 0.269,
-  "ramps": 2
+  "mean_p50": 0.266,
+  "ramps": 1
  },
  {
   "day": "2026-02-01",
   "versions": 4,
   "revisions_published": 3,
-  "mean_p50": 0.514,
+  "mean_p50": 0.512,
   "ramps": 3
  },
  {
   "day": "2026-02-02",
   "versions": 4,
   "revisions_published": 2,
-  "mean_p50": 0.232,
+  "mean_p50": 0.233,
   "ramps": 2
  },
  {
   "day": "2026-02-03",
   "versions": 4,
   "revisions_published": 2,
-  "mean_p50": 0.436,
+  "mean_p50": 0.439,
   "ramps": 1
  },
  {
   "day": "2026-02-04",
   "versions": 4,
   "revisions_published": 1,
-  "mean_p50": 0.676,
+  "mean_p50": 0.675,
   "ramps": 3
  },
  {
   "day": "2026-02-05",
   "versions": 4,
   "revisions_published": 3,
-  "mean_p50": 0.603,
+  "mean_p50": 0.602,
   "ramps": 3
  },
  {
   "day": "2026-02-06",
   "versions": 4,
   "revisions_published": 3,
-  "mean_p50": 0.393,
+  "mean_p50": 0.395,
   "ramps": 3
  },
  {
   "day": "2026-02-07",
   "versions": 4,
   "revisions_published": 2,
-  "mean_p50": 0.71,
+  "mean_p50": 0.709,
   "ramps": 2
  },
  {
@@ -73,14 +73,14 @@
   "day": "2026-02-10",
   "versions": 4,
   "revisions_published": 2,
-  "mean_p50": 0.569,
+  "mean_p50": 0.57,
   "ramps": 2
  },
  {
   "day": "2026-02-11",
   "versions": 4,
   "revisions_published": 2,
-  "mean_p50": 0.269,
+  "mean_p50": 0.267,
   "ramps": 2
  },
  {
@@ -94,98 +94,98 @@
   "day": "2026-02-13",
   "versions": 4,
   "revisions_published": 2,
-  "mean_p50": 0.244,
+  "mean_p50": 0.243,
   "ramps": 1
  },
  {
   "day": "2026-02-14",
   "versions": 4,
   "revisions_published": 2,
-  "mean_p50": 0.544,
+  "mean_p50": 0.546,
   "ramps": 1
  },
  {
   "day": "2026-02-15",
   "versions": 4,
   "revisions_published": 3,
-  "mean_p50": 0.683,
-  "ramps": 0
+  "mean_p50": 0.685,
+  "ramps": 1
  },
  {
   "day": "2026-02-16",
   "versions": 4,
   "revisions_published": 2,
-  "mean_p50": 0.462,
+  "mean_p50": 0.461,
   "ramps": 1
  },
  {
   "day": "2026-02-17",
   "versions": 4,
   "revisions_published": 1,
-  "mean_p50": 0.734,
+  "mean_p50": 0.735,
   "ramps": 1
  },
  {
   "day": "2026-02-18",
   "versions": 4,
   "revisions_published": 3,
-  "mean_p50": 0.34,
+  "mean_p50": 0.338,
   "ramps": 0
  },
  {
   "day": "2026-02-19",
   "versions": 4,
   "revisions_published": 3,
-  "mean_p50": 0.424,
+  "mean_p50": 0.425,
   "ramps": 2
  },
  {
   "day": "2026-02-20",
   "versions": 4,
   "revisions_published": 3,
-  "mean_p50": 0.498,
-  "ramps": 3
+  "mean_p50": 0.497,
+  "ramps": 4
  },
  {
   "day": "2026-02-21",
   "versions": 4,
   "revisions_published": 3,
-  "mean_p50": 0.411,
+  "mean_p50": 0.413,
   "ramps": 2
  },
  {
   "day": "2026-02-22",
   "versions": 4,
   "revisions_published": 1,
-  "mean_p50": 0.521,
+  "mean_p50": 0.524,
   "ramps": 2
  },
  {
   "day": "2026-02-23",
   "versions": 4,
   "revisions_published": 1,
-  "mean_p50": 0.482,
+  "mean_p50": 0.479,
   "ramps": 1
  },
  {
   "day": "2026-02-24",
   "versions": 4,
   "revisions_published": 2,
-  "mean_p50": 0.259,
+  "mean_p50": 0.267,
   "ramps": 1
  },
  {
   "day": "2026-02-25",
   "versions": 4,
   "revisions_published": 3,
-  "mean_p50": 0.634,
+  "mean_p50": 0.633,
   "ramps": 2
  },
  {
   "day": "2026-02-26",
   "versions": 4,
   "revisions_published": 3,
-  "mean_p50": 0.536,
+  "mean_p50": 0.538,
   "ramps": 2
  },
  {
