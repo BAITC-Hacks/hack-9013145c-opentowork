@@ -27,7 +27,7 @@ export function MetaBadge({ meta, liveBaseline }: { meta: AIMeta; liveBaseline: 
 
   return (
     <div className={`badge ${kind}`}>
-      <span className="tag">{SOURCE_LABEL[meta.source]}</span>
+      <span className="tag">{meta.model === "windcast-tools-v1" ? "Расчёт по прогнозу" : SOURCE_LABEL[meta.source]}</span>
       <span className="item">
         задержка <b>{meta.latency_ms} мс</b>
       </span>

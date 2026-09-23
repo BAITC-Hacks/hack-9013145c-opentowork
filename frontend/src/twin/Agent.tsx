@@ -40,6 +40,7 @@ export default function Agent({ run, onRerun, loading }: { run: ForecastRun | nu
       const response = await api.chat(text, {
         forecast_id: run?.forecast_id ?? "",
         forecast_origin: run?.forecast_origin ?? "",
+        horizon: run?.horizon ?? 48,
       });
       if (response.meta.source === "live") setLiveBaseline(response.meta.latency_ms);
       setMessages((m) => [...m, { role: "ai", text: response.answer.summary, response }]);
@@ -57,8 +58,8 @@ export default function Agent({ run, onRerun, loading }: { run: ForecastRun | nu
         <div>
           <h1>Агент прогнозирования</h1>
           <p className="dim">
-            LLM управляет пайплайном и объясняет результат, но выработку не считает: числа приходят
-            из Forecast и Simulation Engine.
+            Агент проверяет погоду и прогноз. Copilot анализирует выбранный выпуск и вызывает
+            расчёт сценария; без API-ключа ответ формируется по проверенным числам.
           </p>
         </div>
         <button className="primary" onClick={onRerun} disabled={loading}>
@@ -129,6 +130,8 @@ export default function Agent({ run, onRerun, loading }: { run: ForecastRun | nu
               <div key={i} className={`msg ${m.role}`}>
                 {m.response && <MetaBadge meta={m.response.meta} liveBaseline={liveBaseline} />}
                 <div>{m.text}</div>
+                {m.response?.meta.tools?.length ? <div className="hint">Выполнено: {m.response.meta.tools.join(" → ")}</div> : null}
+                {m.response?.answer.sources.map((s) => <div className="hint" key={s.doc_id}>Источник: {s.title} · {s.doc_id}</div>)}
               </div>
             ))}
             {busy && (
@@ -139,7 +142,7 @@ export default function Agent({ run, onRerun, loading }: { run: ForecastRun | nu
           </div>
           <div className="suggest">
             {SUGGESTIONS.map((s) => (
-              <button key={s} className="ghost" onClick={() => ask(s)} disabled={busy}>
+              <button key={s} className="ghost" onClick={() => ask(s)} disabled={busy || !run}>
                 {s}
               </button>
             ))}

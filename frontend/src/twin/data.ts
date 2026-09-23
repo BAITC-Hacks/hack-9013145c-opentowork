@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import type { BacktestSummary, ForecastRun, SourceKind, Station, UnitSample } from "../api";
+import type { BacktestSummary, ForecastRun, SourceKind, Station, StationWind, UnitSample } from "../api";
 import { demoBacktest, demoRun, demoSolarRun, DEMO_SOLAR_STATIONS, DEMO_STATIONS } from "./demo";
 
 export type Origin = "api" | "demo";
@@ -57,7 +57,7 @@ export function useForecast(station: Station | null, originIso: string, horizon:
       station.data === "history" && ORIGINS.includes(originIso)
         ? nonce > 0
           ? api.runForecast(station.id, originIso, horizon)
-          : api.forecastAt(station.id, originIso)
+          : api.forecastAt(station.id, originIso, horizon)
         : api.predictRun(station, originIso, horizon);
     withFallback(live, () => demoFor(station, originIso, horizon)).then(([run, origin]) => {
       if (alive) setState({ run, origin, loading: false });
@@ -77,6 +77,7 @@ export function useUnitHistory(station: Station, unitId: string | null, fromIso:
   useEffect(() => {
     if (!unitId) return;
     let alive = true;
+    setSamples(null);
     if (station.data !== "history") {
       setSamples(null);
       return;
@@ -90,6 +91,27 @@ export function useUnitHistory(station: Station, unitId: string | null, fromIso:
     };
   }, [station, unitId, fromIso, toIso]);
   return samples;
+}
+
+/** Ветер у ВЭС из Open-Meteo. null — нет данных (СЭС, нет сети): панель просто не рисуется. */
+export function useStationWind(station: Station, originIso: string, horizon: number) {
+  const [wind, setWind] = useState<StationWind | null>(null);
+  useEffect(() => {
+    if (station.kind !== "wind" || station.lat == null) {
+      setWind(null);
+      return;
+    }
+    let alive = true;
+    setWind(null);
+    api.stationWind(station.id, originIso, horizon).then(
+      (w) => alive && setWind(w),
+      () => alive && setWind(null),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [station, originIso, horizon]);
+  return wind;
 }
 
 export function useBacktest() {

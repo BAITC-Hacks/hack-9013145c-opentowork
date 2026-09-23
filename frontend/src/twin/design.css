@@ -64,6 +64,8 @@ input[type="range"] { padding: 0; }
 .seg { border-color: #e6e9ee; padding: 3px; gap: 3px; background: #f1f3f6; border-radius: 9px; }
 .seg button { border-radius: 6px; color: #657084; padding: 7px 12px; font-size: 12px; white-space: nowrap; }
 .seg button + button { border: 0; }
+.whatif-card .seg.wide { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.whatif-card .seg.wide button { min-width: 0; white-space: normal; padding: 7px 5px; }
 .seg button.on { color: #233144; background: white; box-shadow: 0 1px 4px #1a29331a; font-weight: 600; }
 
 .dash { max-width: 1600px; margin: auto; padding: 0 32px 28px; background: transparent; gap: 18px; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr) 310px; grid-template-rows: auto minmax(490px, 58vh) auto; }
@@ -129,6 +131,60 @@ input[type="range"] { padding: 0; }
 .map-realistic .turbine-label.active { background: #fff; border-left-color: var(--sodium); box-shadow: 0 0 0 2px #a7b9b733, 0 4px 18px #12232e25; }
 .tl-head { font: 10px var(--font); }
 .tl-wind { font: 600 19px var(--font); letter-spacing: -.5px; }
+/* Compact wind markers: Scene owns the anchor and transform. The transparent
+   hit area is 44px tall while the visible marker stays clear of the rotor. */
+.map-realistic .scene-unit-label.wind-unit-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: max-content;
+  min-width: 0;
+  max-width: none;
+  height: 30px;
+  min-height: 30px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  overflow: visible;
+  border: 1px solid #cbdad5;
+  border-radius: 7px;
+  background: #fffffff5;
+  color: #283d36;
+  font: 500 11px/1 var(--font);
+  letter-spacing: 0;
+  white-space: nowrap;
+  box-shadow: 0 2px 7px #183c2826;
+  touch-action: manipulation;
+  transition: background .16s, border-color .16s, box-shadow .16s;
+}
+.map-realistic .wind-unit-label::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 14px;
+}
+.map-realistic .wind-unit-label .unit-label-id { color: #096a59; font-weight: 700; }
+.map-realistic .wind-unit-label .unit-label-power { font-weight: 550; font-variant-numeric: tabular-nums; }
+.map-realistic .wind-unit-label .unit-label-arrow { color: #55766a; font-size: 12px; line-height: 1; }
+.map-realistic .scene-unit-label.wind-unit-label:hover:not(:disabled),
+.map-realistic .scene-unit-label.wind-unit-label.is-hovered {
+  background: #fff;
+  border-color: #087f72;
+  box-shadow: 0 3px 10px #123d302f;
+}
+.map-realistic .scene-unit-label.wind-unit-label.active {
+  background: #e8f5ef;
+  border-color: #087f72;
+  color: #133e30;
+  box-shadow: 0 0 0 2px #ffffffd9, 0 3px 9px #123d3029;
+}
+.map-realistic .scene-unit-label.wind-unit-label:focus-visible {
+  z-index: 4;
+  outline: 3px solid #087f72;
+  outline-offset: 3px;
+  background: #fff;
+  border-color: #087f72;
+}
 .demo-flag { color: #946414; background: #fffaeced; border-color: #fff1cb; border-radius: 7px; padding: 6px 10px; font: 10px var(--font); }
 .top-center { top: 17px; }
 .map-hint { background: #ffffffe6; color: #586676; bottom: 99px; font-size: 10px; padding: 6px 10px; }

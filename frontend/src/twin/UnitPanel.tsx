@@ -35,10 +35,11 @@ function status(station: Station, p: ForecastPoint | undefined, power: number) {
 export default function UnitPanel({ station, unit, points, cursor, originIso, onClose }: Props) {
   const rated = unit.rated_mw ?? RATED_ASSUMPTION_MW;
   const origin = parseTs(originIso);
-  const monthStart = toIso(Date.UTC(new Date(origin).getUTCFullYear(), new Date(origin).getUTCMonth(), 1));
-  const facts = useUnitHistory(station, unit.id, monthStart, toIso(origin));
-  const history = facts ?? [];
-  const last24 = history.slice(-24);
+  const localOrigin = new Date(origin + SITE.utcOffset * HOUR);
+  const monthStart = Date.UTC(localOrigin.getUTCFullYear(), localOrigin.getUTCMonth(), 1) - SITE.utcOffset * HOUR;
+  const facts = useUnitHistory(station, unit.id, toIso(Math.min(monthStart, origin - 24 * HOUR)), toIso(origin));
+  const history = (facts ?? []).filter((s) => parseTs(s.ts) >= monthStart);
+  const last24 = (facts ?? []).filter((s) => parseTs(s.ts) >= origin - 24 * HOUR);
 
   const p = points[Math.min(cursor, points.length - 1)];
   const share = p ? unitShare(p, unit.id) : 0;
@@ -110,19 +111,19 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
           <span className="kpi-label">Выработала за сутки</span>
           <b>{facts && last24.length ? <>{mw(done24)}<small>МВт·ч</small></> : "—"}</b>
           <span className="energy-sub">
-            {facts && last24.length ? `работала ${workedHours} из ${last24.length} ч` : "нет фактических данных"}
+            {last24.length === 24 ? `работала ${workedHours} из 24 ч` : `неполные данные: ${last24.length} из 24 ч`}
           </span>
         </div>
         <div>
           <span className="kpi-label">С начала месяца</span>
           <b>{facts && history.length ? <>{mw(doneMonth)}<small>МВт·ч</small></> : "—"}</b>
-          <span className="energy-sub">{facts ? `${history.length} ч данных SCADA` : "SCADA нет"}</span>
+          <span className="energy-sub">{history.length} из {Math.round((origin - monthStart) / HOUR)} ч · сумма известных часов</span>
         </div>
         <div className="accent">
           <span className="kpi-label">Прогноз на сутки</span>
           <b>{mw(forecast24)}<small>МВт·ч</small></b>
           <span className="energy-sub">
-            {done24 > 0 ? `${forecast24 >= done24 ? "+" : "−"}${Math.abs(((forecast24 - done24) / done24) * 100).toFixed(0)}% к прошлым суткам` : "—"}
+            {last24.length === 24 && done24 > 0 ? `${forecast24 >= done24 ? "+" : "−"}${Math.abs(((forecast24 - done24) / done24) * 100).toFixed(0)}% к прошлым суткам` : "Нет полных суток для сравнения"}
           </span>
         </div>
       </div>

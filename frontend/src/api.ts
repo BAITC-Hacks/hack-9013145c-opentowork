@@ -23,6 +23,7 @@ export interface AIAnswer {
 }
 
 export interface AIMeta {
+  tools?: string[];
   source: "live" | "exact_cache" | "semantic_cache" | "degraded";
   similarity: number | null;
   model: string;
@@ -104,6 +105,29 @@ export interface Station {
   commissioned?: string | null;
   in_registry?: boolean;
   osm?: string | null;
+}
+
+// Ветер у станции по часам: /stations/{id}/wind. Open-Meteo, скорость в м/с,
+// направление — откуда дует, в градусах.
+export interface WindHour {
+  time: string;
+  speed_10m: number | null;
+  speed_100m: number;
+  dir_10m: number | null;
+  dir_100m: number | null;
+  gust_10m: number | null;
+  temperature: number | null;
+  beaufort: number;
+  shear_alpha: number | null; // показатель профиля v ∝ h^α
+}
+
+export interface StationWind {
+  station_id: string;
+  lat: number;
+  lon: number;
+  source: "snapshot" | "archive" | "forecast";
+  provider: string;
+  hours: WindHour[];
 }
 
 export interface UnitSample {
@@ -299,7 +323,7 @@ export const api = {
 
   me: () => request<{ email: string; role: string }>("/users/me"),
 
-  chat: (query: string, context: Record<string, string>) =>
+  chat: (query: string, context: Record<string, unknown>) =>
     request<ChatResponse>("/ai/chat", {
       method: "POST",
       body: JSON.stringify({ query, context }),
@@ -326,9 +350,9 @@ export const api = {
 
   stations: () => request<Station[]>("/stations"),
 
-  forecastAt: (stationId: string, origin: string) =>
+  forecastAt: (stationId: string, origin: string, horizon = 48) =>
     request<ForecastRun>(
-      `/forecast/latest?station_id=${encodeURIComponent(stationId)}&origin=${encodeURIComponent(origin)}`,
+      `/forecast/latest?station_id=${encodeURIComponent(stationId)}&origin=${encodeURIComponent(origin)}&horizon=${horizon}`,
     ),
 
   runForecast: (stationId: string, origin: string, horizon: number) =>
@@ -343,6 +367,11 @@ export const api = {
     ),
 
   backtest: () => request<BacktestSummary>("/metrics"),
+
+  stationWind: (stationId: string, origin: string, horizon: number) =>
+    request<StationWind>(
+      `/stations/${encodeURIComponent(stationId)}/wind?origin=${encodeURIComponent(origin)}&horizon=${horizon}`,
+    ),
 
   // Прогноз на реальной погоде Open-Meteo для любой станции и момента (origin = ISO или "now").
   predictRun: (station: Station, origin: string, horizon: number) => {
@@ -359,9 +388,9 @@ export const api = {
 
   rooftops: () => request<RooftopsResponse>("/solar/rooftops"),
 
-  simulate: (forecastId: string, windChangePct: number) =>
+  simulate: (forecastId: string, windChangePct: number, horizon = 48) =>
     request<SimulationResult>("/simulation", {
       method: "POST",
-      body: JSON.stringify({ forecast_id: forecastId, wind_change_pct: windChangePct }),
+      body: JSON.stringify({ forecast_id: forecastId, wind_change_pct: windChangePct, horizon }),
     }),
 };

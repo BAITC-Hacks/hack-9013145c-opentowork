@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { api } from "../api";
 import type { ForecastPoint, ForecastRun, Station } from "../api";
 import { ForecastChart, Sparkline } from "./charts";
-import { fmtDayTime, mw, originLabel, stationRated, STATION_ORIGINS } from "./data";
+import { fmtDayTime, mw, originLabel, stationRated, STATION_ORIGINS, useStationWind } from "./data";
 import type { Origin } from "./data";
 import { parseTs, powerCurve, RATED_ASSUMPTION_MW, SITE, solarPower, sunPosition } from "./demo";
 import UnitPanel from "./UnitPanel";
+import WindPanel from "./WindPanel";
 import WindMap, { LEGEND_GRADIENT, SPEED_MARKS } from "./WindMap";
 import type { Layers } from "./WindMap";
 
@@ -105,6 +107,23 @@ export default function StationView({
   });
   const [show, setShow] = useState({ actual: true, baseline: false, band: true });
   const [change, setChange] = useState(0);
+  const [remoteScenario, setRemoteScenario] = useState<{ key: string; values: number[] | null; error: boolean }>({ key: "", values: null, error: false });
+  const scenarioKey = `${run?.forecast_id}:${horizon}:${change}`;
+  const serverScenario = wind && dataOrigin === "api";
+  useEffect(() => {
+    if (!serverScenario || !change || !run) return;
+    let alive = true;
+    const timer = window.setTimeout(() => {
+      api.simulate(run.forecast_id, change, horizon).then((result) => {
+        if (alive) setRemoteScenario({ key: scenarioKey, values: result.points.map((p) => p.p50), error: false });
+      }).catch(() => {
+        if (alive) setRemoteScenario({ key: scenarioKey, values: null, error: true });
+      });
+    }, 180);
+    return () => { alive = false; window.clearTimeout(timer); };
+  }, [run, change, horizon, serverScenario, scenarioKey]);
+  const scenarioPending = serverScenario && change !== 0 && remoteScenario.key !== scenarioKey;
+  const scenarioFailed = serverScenario && change !== 0 && remoteScenario.key === scenarioKey && remoteScenario.error;
   // На телефоне панель слоёв закрывала бы карту — там она свёрнута.
   const [compact] = useState(() => window.matchMedia("(max-width: 720px)").matches);
 
@@ -125,15 +144,15 @@ export default function StationView({
   }, [playing, points.length]);
 
   const point = points[Math.min(cursor, points.length - 1)] ?? null;
+  const stationWind = useStationWind(station, originIso, horizon);
   const tMs = point ? parseTs(point.forecast_for) : parseTs(originIso);
   const sun = sunPosition(tMs - SITE.utcOffset * 3_600_000, SITE.lat, SITE.lon);
   const solarNow = solarPower(tMs);
 
-  // Сценарий пересчитывает P50 через физику источника: отношение
-  // P(изменённое)/P(базовое) сохраняет поправки модели. Когда появится
-  // POST /simulation, сюда придёт ответ Simulation Engine.
+  // Для ВЭС API и Copilot используют один серверный расчёт сценария.
   const scenario = useMemo(() => {
     if (!change || !run) return null;
+    if (serverScenario) return remoteScenario.key === scenarioKey ? remoteScenario.values : null;
     const k = 1 + change / 100;
     return run.predictions.map((p) => {
       if (wind) {
@@ -147,7 +166,7 @@ export default function StationView({
       const next = solarPower(t, Math.min(1, cloud * k));
       return base > 0.001 ? (p.p50 * next) / base : 0;
     });
-  }, [change, run, wind]);
+  }, [change, run, wind, serverScenario, remoteScenario, scenarioKey]);
 
   const day = points.slice(0, 24);
   const energy24 = sum(day.map((p) => p.p50)) * rated;
@@ -157,7 +176,7 @@ export default function StationView({
   const avgCloud = day.length ? sum(day.map((p) => p.cloud_cover ?? 0)) / day.length : 0;
   // Наибольший разброс за последние сутки горизонта: у СЭС последний час
   // может прийтись на ночь, где разброс нулевой и ничего не говорит.
-  const spreadMw = Math.max(0, ...points.slice(-24).map((p) => (p.p90 - p.p10) / 2)) * rated;
+  const spreadMw = Math.max(0, ...points.map((p) => p.p90 - p.p10)) * rated;
   const storm = wind ? points.find((p) => p.wind_speed >= 18) : undefined;
   const perUnit = units.map((u) => ({
     unit: u,
@@ -376,9 +395,9 @@ export default function StationView({
                 </div>
               </div>
               <div>
-                <div className="kpi-label">Точность к {points.length} ч</div>
+                <div className="kpi-label">Макс. ширина P10–P90</div>
                 <div className="kpi-mid">
-                  до ±{mw(spreadMw)}
+                  {mw(spreadMw)}
                   <small>МВт</small>
                 </div>
               </div>
@@ -441,7 +460,7 @@ export default function StationView({
                 checked={show.baseline}
                 onChange={() => setShow((s) => ({ ...s, baseline: !s.baseline }))}
               />
-              «Как вчера»
+              Погода + кривая
             </label>
             {scenario && (
               <label className="chip scenario">
@@ -487,8 +506,9 @@ export default function StationView({
         </div>
         {wind && perUnit.length > 1 && (
           <div className="hint">
-            T2 стоит за T1 и при западном ветре попадает в её «тень»: за сутки это{" "}
-            <b>−{((1 - perUnit[1].day / Math.max(1e-6, perUnit[0].day)) * 100).toFixed(1)}%</b>.
+            Прогноз {perUnit[1].unit.id} относительно {perUnit[0].unit.id}:{" "}
+            <b>{((perUnit[1].day / Math.max(1e-6, perUnit[0].day) - 1) * 100).toFixed(1)}%</b>.
+            Разница прогнозов не является измерением аэродинамического следа.
           </div>
         )}
       </section>
@@ -539,12 +559,12 @@ export default function StationView({
           <div>
             <div className="kpi-label">Выработка за сутки</div>
             <div className="kpi-mid">
-              {mw(scenario24)}
+              {scenarioPending ? "…" : scenarioFailed ? "—" : mw(scenario24)}
               <small>МВт·ч</small>
             </div>
           </div>
           <div className={`delta ${!change ? "flat" : scenario24 >= energy24 ? "up" : "down"}`}>
-            {!change || !energy24 ? (
+            {!change || !energy24 || scenarioPending || scenarioFailed ? (
               "—"
             ) : (
               <>
@@ -557,10 +577,12 @@ export default function StationView({
         </div>
         <div className="hint">
           {wind
-            ? "Мощность турбины растёт как куб скорости ветра: −15% ветра дают намного больше −15% энергии."
+            ? scenarioFailed ? "Не удалось рассчитать сценарий. Обновите прогноз и повторите." : "Сценарий по кривой мощности: сохраняем поправку ML-модели и меняем скорость ветра."
             : "Облака сильнее всего режут выработку в полдень, когда солнце выше всего."}
         </div>
       </section>
+
+      {wind && <WindPanel wind={stationWind} atIso={point?.forecast_for ?? null} />}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { SITE } from "../demo";
 import { createLandscape, terrainHeight } from "./terrain";
 import { createSolarArray, createTurbine } from "./turbines";
 import { createStationInfrastructure } from "./infrastructure";
+import { pickWindUnit, type WindPickRegion } from "./picking";
 
 type Props = WindMapProps & { onUnavailable: () => void };
 type CameraAction = "in" | "out" | "reset" | "facility";
@@ -94,13 +95,50 @@ export default function Scene(props: Props) {
     }));
     const center = new THREE.Vector3(
       sites.reduce((a, s) => a + s.x, 0) / Math.max(1, sites.length),
-      38,
+      current.current.kind === "wind" ? 65 : 38,
       sites.reduce((a, s) => a + s.z, 0) / Math.max(1, sites.length),
     );
-    const span = Math.max(600, ...sites.map((s) => Math.hypot(s.x - center.x, s.z - center.z) * 2));
+    const wind = current.current.kind === "wind";
+    const span = Math.max(wind ? 420 : 600, ...sites.map((s) => Math.hypot(s.x - center.x, s.z - center.z) * 2));
+    const maxFitDistance = Math.max(2700, span * 10);
+    camera.far = Math.max(12000, maxFitDistance * 2);
     const viewportAspect = Math.max(0.6, container.clientWidth / Math.max(1, container.clientHeight));
-    const distance = Math.min(2300, span * 1.12 * Math.max(1, 1.25 / viewportAspect));
+    const distance = Math.min(2300, span * (wind ? 1.06 : 1.12) * Math.max(1, 1.25 / viewportAspect));
     const home = center.clone().add(new THREE.Vector3(-distance * 0.46, distance * 0.17, distance * 0.7));
+    let overview = true;
+    let focusedId: string | null = null;
+    const fitPoints = sites.flatMap((site) => {
+      const ground = terrainHeight(site.x, site.z);
+      const points = [new THREE.Vector3(site.x, ground, site.z)];
+      for (const x of [-63, 63]) for (const y of [44, 156]) for (const z of [-63, 63]) {
+        points.push(new THREE.Vector3(site.x + x, ground + y, site.z + z));
+      }
+      return points;
+    });
+    const fitView = (target: THREE.Vector3, points: THREE.Vector3[], w: number, h: number) => {
+      const preview = camera.clone();
+      const direction = new THREE.Vector3(-.46, .17, .7).normalize();
+      const projected = new THREE.Vector3();
+      const left = Math.min(32, w * .08), right = Math.min(58, w * .14);
+      const top = Math.min(62, h * .14), bottom = Math.min(142, h * .28);
+      const fits = (range: number) => {
+        preview.position.copy(target).addScaledVector(direction, range);
+        preview.lookAt(target); preview.updateMatrixWorld(true);
+        return points.every((point) => {
+          projected.copy(point).project(preview);
+          const x = (projected.x * .5 + .5) * w, y = (-projected.y * .5 + .5) * h;
+          return projected.z > -1 && projected.z < 1 && x > left && x < w - right && y > top && y < h - bottom;
+        });
+      };
+      let low = 110, high = Math.max(500, span * 2);
+      while (!fits(high) && high < maxFitDistance) high = Math.min(maxFitDistance, high * 1.4);
+      for (let i = 0; i < 20; i++) {
+        const middle = (low + high) / 2;
+        if (fits(middle)) high = middle; else low = middle;
+      }
+      controls.maxDistance = Math.max(controls.maxDistance, high * 1.6);
+      return target.clone().addScaledVector(direction, high);
+    };
     camera.position.copy(current.current.tilt ? home : center.clone().add(new THREE.Vector3(0, distance * 1.05, 0.1)));
     controls.target.copy(center);
     controls.update();
@@ -109,21 +147,25 @@ export default function Scene(props: Props) {
     const facilityTarget = center.clone();
     let flying = false;
     let lastTilt = current.current.tilt;
-    let lastSelected = current.current.selected;
+    let lastSelected: Props["selected"] | undefined;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const fly = (position: THREE.Vector3, target: THREE.Vector3) => {
       goalPosition.copy(position); goalTarget.copy(target);
       flying = true;
       if (reduced.matches) { camera.position.copy(position); controls.target.copy(target); flying = false; }
     };
-    const cancelFlight = () => { flying = false; };
+    const cancelFlight = () => { flying = false; overview = false; focusedId = null; };
     controls.addEventListener("start", cancelFlight);
     actions.current = (action) => {
+      focusedId = null;
       if (action === "reset") {
+        overview = true;
         fly(current.current.tilt ? home : center.clone().add(new THREE.Vector3(0, distance * 1.05, 0.1)), center);
       } else if (action === "facility") {
+        overview = false;
         fly(facilityTarget.clone().add(new THREE.Vector3(-100, 65, 135)), facilityTarget);
       } else {
+        overview = false;
         const offset = camera.position.clone().sub(controls.target).multiplyScalar(action === "in" ? 0.75 : 1.33);
         offset.clampLength(controls.minDistance, controls.maxDistance);
         fly(controls.target.clone().add(offset), controls.target.clone());
@@ -217,6 +259,10 @@ export default function Scene(props: Props) {
       scene.add(group);
       return { ...site, group, asset };
     });
+    const regionsById = new Map(objects.filter((object) => object.asset).map((object) => [object.id, {
+      id: object.id, base: { x: 0, y: 0 }, hub: { x: 0, y: 0 }, depth: 0,
+      rotor: Array.from({ length: 16 }, () => ({ x: 0, y: 0 })),
+    }]));
     const extraSolar = createSolarArray(150, 95);
     extraSolar.position.set(640, terrainHeight(640, -160), -160);
     scene.add(extraSolar);
@@ -233,7 +279,7 @@ export default function Scene(props: Props) {
     fieldGeometry.computeVertexNormals();
     const colors = new Float32Array(vertices.count * 3);
     fieldGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    const field = new THREE.Mesh(fieldGeometry, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.22, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 }));
+    const field = new THREE.Mesh(fieldGeometry, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.4, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 }));
     field.renderOrder = 1;
     scene.add(field);
 
@@ -246,30 +292,49 @@ export default function Scene(props: Props) {
         a.setXYZ(i, a.getX(i) * (0.7 + along / 360), 0, along);
       }
       geometry.computeVertexNormals();
-      const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: "#729dae", transparent: true, opacity: 0.13, side: THREE.DoubleSide, depthWrite: false }));
+      const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: "#4f7f93", transparent: true, opacity: 0.26, side: THREE.DoubleSide, depthWrite: false }));
       mesh.position.set(site.x, terrainHeight(site.x, site.z) + 1.8, site.z);
       scene.add(mesh);
       return { mesh, local: new Float32Array(a.array), site };
     });
-    const count = 160;
-    const flowPositions = new Float32Array(count * 6);
+    // Каждая частица потока — стрелка из трёх отрезков: древко и два пера.
+    // Линии в WebGL толщиной 1 px, поэтому видимость дают длина, наконечник и контраст.
+    const count = 260;
+    const flowPositions = new Float32Array(count * 18);
     const flowSeeds = Array.from({ length: count }, (_, i) => ({
       x: Math.sin(i * 93.13) * 1500, z: Math.cos(i * 39.7) * 1500, y: 18 + (i % 8) * 7,
     }));
     const flowGeometry = new THREE.BufferGeometry();
     flowGeometry.setAttribute("position", new THREE.BufferAttribute(flowPositions, 3));
-    const flow = new THREE.LineSegments(flowGeometry, new THREE.LineBasicMaterial({ color: "#e7f8ff", transparent: true, opacity: 0.4, depthWrite: false }));
+    const flow = new THREE.LineSegments(flowGeometry, new THREE.LineBasicMaterial({ color: "#0d5566", transparent: true, opacity: 0.85, depthWrite: false }));
     flow.frustumCulled = false;
     scene.add(flow);
 
     let width = 1, height = 1;
     const resize = () => {
+      if (!container.clientWidth || !container.clientHeight) return;
       width = Math.max(1, container.clientWidth); height = Math.max(1, container.clientHeight);
       renderer.setSize(width, height);
       camera.aspect = width / height;
       // Raise the visual centre slightly so the forecast timeline does not cover the foreground.
       camera.setViewOffset(width, height, 0, height * 0.035, width, height);
       camera.updateProjectionMatrix();
+      if (wind && fitPoints.length) {
+        home.copy(fitView(center, fitPoints, width, height));
+        if (overview && current.current.tilt) {
+          camera.position.copy(home); controls.target.copy(center);
+          goalPosition.copy(home); goalTarget.copy(center); controls.update();
+        } else if (focusedId && current.current.tilt) {
+          const index = objects.findIndex((object) => object.id === focusedId);
+          if (index >= 0) {
+            const target = objects[index].group.position.clone().add(new THREE.Vector3(0, 65, 0));
+            const position = fitView(target, fitPoints.slice(index * 9, index * 9 + 9), width, height);
+            camera.position.copy(position); controls.target.copy(target);
+            goalPosition.copy(position); goalTarget.copy(target); controls.update();
+          }
+        }
+      }
+      invalidate.current();
     };
     const observer = new ResizeObserver(resize);
     observer.observe(container);
@@ -278,17 +343,62 @@ export default function Scene(props: Props) {
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const down = new THREE.Vector2();
-    const pointerDown = (event: PointerEvent) => { down.set(event.clientX, event.clientY); };
-    const pointerUp = (event: PointerEvent) => {
-      if (down.distanceTo(new THREE.Vector2(event.clientX, event.clientY)) > 6) return;
+    let press: { id: number; moved: boolean } | null = null;
+    let hovered: string | null = null;
+    const pickRegions: WindPickRegion[] = [];
+    const pick = (event: PointerEvent, exact = false) => {
       const rect = renderer.domElement.getBoundingClientRect();
-      pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1);
+      const x = event.clientX - rect.left, y = event.clientY - rect.top;
+      if (x < 0 || y < 0 || x > rect.width || y > rect.height) return null;
+      const padding = event.pointerType === "touch" ? 26 : 18;
+      const nearby = wind ? pickWindUnit({ x, y }, pickRegions, padding) : null;
+      if (wind && (!exact || !nearby)) return nearby;
+      pointer.set(x / rect.width * 2 - 1, -(y / rect.height) * 2 + 1);
       raycaster.setFromCamera(pointer, camera);
-      const hit = raycaster.intersectObjects(objects.map((o) => o.group), true)[0];
-      if (hit?.object.userData.unitId) current.current.onSelect(hit.object.userData.unitId);
+      // Real geometry wins when the generous rotor regions overlap.
+      const candidates = wind
+        ? objects.filter((object) => pickRegions.some((region) => region.id === object.id && pickWindUnit({ x, y }, [region], padding)))
+        : objects;
+      const hit = raycaster.intersectObjects(candidates.map((o) => o.group), true)[0];
+      return (hit?.object.userData.unitId as string | undefined) ?? nearby;
     };
+    const setHovered = (id: string | null) => {
+      renderer.domElement.style.cursor = id ? "pointer" : "grab";
+      if (id === hovered) return;
+      if (hovered) labels.current[hovered]?.classList.remove("is-hovered");
+      hovered = id;
+      if (id) labels.current[id]?.classList.add("is-hovered");
+    };
+    renderer.domElement.style.cursor = "grab";
+    const pointerDown = (event: PointerEvent) => {
+      if (!event.isPrimary || event.button !== 0) { if (press) press.moved = true; return; }
+      down.set(event.clientX, event.clientY); press = { id: event.pointerId, moved: false };
+    };
+    const pointerMove = (event: PointerEvent) => {
+      if (press) {
+        if (down.distanceTo(new THREE.Vector2(event.clientX, event.clientY)) > 6) press.moved = true;
+        if (press.moved) { setHovered(null); renderer.domElement.style.cursor = "grabbing"; }
+        return;
+      }
+      if (event.pointerType !== "touch") setHovered(pick(event));
+    };
+    const pointerUp = (event: PointerEvent) => {
+      if (!press || press.id !== event.pointerId) return;
+      const moved = press.moved || down.distanceTo(new THREE.Vector2(event.clientX, event.clientY)) > 6;
+      press = null;
+      renderer.domElement.style.cursor = "grab";
+      if (moved) return;
+      const id = pick(event, true);
+      if (event.pointerType !== "touch") setHovered(id);
+      if (id) current.current.onSelect(id);
+    };
+    const pointerCancel = () => { press = null; setHovered(null); renderer.domElement.style.cursor = "grab"; };
+    const pointerLeave = () => { setHovered(null); };
     renderer.domElement.addEventListener("pointerdown", pointerDown);
+    renderer.domElement.addEventListener("pointermove", pointerMove);
     renderer.domElement.addEventListener("pointerup", pointerUp);
+    renderer.domElement.addEventListener("pointercancel", pointerCancel);
+    renderer.domElement.addEventListener("pointerleave", pointerLeave);
     const contextLost = (event: Event) => { event.preventDefault(); current.current.onUnavailable(); };
     renderer.domElement.addEventListener("webglcontextlost", contextLost);
     const keyboard = (event: KeyboardEvent) => {
@@ -315,14 +425,24 @@ export default function Scene(props: Props) {
       if (!reduced.matches) elapsed += dt;
       if (p.tilt !== lastTilt) {
         lastTilt = p.tilt;
+        overview = true; focusedId = null;
         fly(p.tilt ? home : center.clone().add(new THREE.Vector3(0, distance * 1.05, 0.1)), center);
       }
       if (p.selected !== lastSelected) {
         lastSelected = p.selected;
         const object = objects.find((o) => o.id === p.selected);
         if (object && p.tilt) {
+          overview = false;
+          focusedId = object.id;
           const target = object.group.position.clone().add(new THREE.Vector3(0, p.kind === "wind" ? 65 : 8, 0));
-          fly(target.clone().add(new THREE.Vector3(-220, 85, 320)), target);
+          const close = p.kind === "wind" ? new THREE.Vector3(-165, 55, 240) : new THREE.Vector3(-220, 85, 320);
+          const position = p.kind === "wind"
+            ? fitView(target, fitPoints.slice(objects.indexOf(object) * 9, objects.indexOf(object) * 9 + 9), width, height)
+            : target.clone().add(close);
+          fly(position, target);
+        } else if (!p.selected && focusedId && p.tilt) {
+          focusedId = null; overview = true;
+          fly(home, center);
         }
       }
       if (flying) {
@@ -334,6 +454,7 @@ export default function Scene(props: Props) {
       controls.update();
       // Keep camera above terrain when panning on low elevation views.
       camera.position.y = Math.max(camera.position.y, terrainHeight(camera.position.x, camera.position.z) + 8);
+      camera.updateMatrixWorld(true);
       const azimuth = (daylightRef.current ? 120 : p.sun.azimuth) * DEG;
       const elevation = daylightRef.current ? 28 : Math.max(6, p.sun.elevation);
       const lightKey = `${daylightRef.current}:${Math.round(p.sun.elevation)}:${Math.round(p.sun.azimuth)}`;
@@ -390,6 +511,7 @@ export default function Scene(props: Props) {
         fieldGeometry.attributes.color.needsUpdate = true;
       }
       const dx = -Math.sin(windDirection), dz = Math.cos(windDirection);
+      const cosBarb = Math.cos(0.45), sinBarb = Math.sin(0.45);
       if (flow.visible) {
         for (let i = 0; i < count; i++) {
           const seed = flowSeeds[i];
@@ -397,11 +519,21 @@ export default function Scene(props: Props) {
           const x = ((seed.x + dx * shift + 30000) % 3000) - 1500;
           const z = ((seed.z + dz * shift + 30000) % 3000) - 1500;
           const y = terrainHeight(x, z) + seed.y;
-          flowPositions.set([x, y, z, x + dx * 20, y, z + dz * 20], i * 6);
+          const len = 28 + Math.min(25, p.point?.wind_speed ?? 8) * 5;
+          const hx = x + dx * len, hz = z + dz * len, barb = len * 0.32;
+          const bx1 = -dx * cosBarb + dz * sinBarb, bz1 = -dz * cosBarb - dx * sinBarb;
+          const bx2 = -dx * cosBarb - dz * sinBarb, bz2 = -dz * cosBarb + dx * sinBarb;
+          flowPositions.set([
+            x, y, z, hx, y, hz,
+            hx, y, hz, hx + bx1 * barb, y, hz + bz1 * barb,
+            hx, y, hz, hx + bx2 * barb, y, hz + bz2 * barb,
+          ], i * 18);
         }
         flowGeometry.attributes.position.needsUpdate = true;
       }
-      ring.visible = !!p.selected;
+      ring.visible = !!p.selected || !!hovered;
+      (ring.material as THREE.MeshBasicMaterial).color.set(p.selected ? "#dca459" : "#087f72");
+      pickRegions.length = 0;
       for (const object of objects) {
         if (object.asset) {
           const yaw = Math.atan2(Math.sin(windDirection), -Math.cos(windDirection));
@@ -411,14 +543,34 @@ export default function Scene(props: Props) {
           const speed = p.point?.wind_speed ?? 0;
           if (!reduced.matches && power > 0.01 && speed < 25 && speed >= 3) object.asset.rotor.rotation.z -= dt * (5 + power * 11) / 60 * Math.PI * 2;
         }
-        if (object.id === p.selected) ring.position.copy(object.group.position).add(new THREE.Vector3(0, 0.5, 0));
+        if (object.id === (p.selected ?? hovered)) ring.position.copy(object.group.position).add(new THREE.Vector3(0, 0.5, 0));
+        if (object.asset) {
+          object.group.updateMatrixWorld(true);
+          const region = regionsById.get(object.id)!;
+          vector.copy(object.group.position).project(camera);
+          const baseVisible = vector.z > -1 && vector.z < 1;
+          region.base.x = (vector.x * .5 + .5) * width; region.base.y = (-vector.y * .5 + .5) * height;
+          vector.setFromMatrixPosition(object.asset.rotor.matrixWorld).project(camera);
+          if (baseVisible && vector.z > -1 && vector.z < 1) {
+            region.hub.x = (vector.x * .5 + .5) * width; region.hub.y = (-vector.y * .5 + .5) * height;
+            region.depth = vector.z;
+            for (let index = 0; index < 16; index++) {
+              const angle = index / 16 * Math.PI * 2;
+              vector.set(Math.cos(angle) * 55, Math.sin(angle) * 55, 0).applyMatrix4(object.asset.rotor.matrixWorld).project(camera);
+              region.rotor[index].x = (vector.x * .5 + .5) * width; region.rotor[index].y = (-vector.y * .5 + .5) * height;
+            }
+            pickRegions.push(region);
+          }
+        }
         const label = labels.current[object.id];
         if (label) {
-          vector.copy(object.group.position).add(new THREE.Vector3(0, p.kind === "wind" ? 111 : 14, 0)).project(camera);
+          vector.copy(object.group.position).add(new THREE.Vector3(0, p.kind === "wind" ? 2 : 14, 0)).project(camera);
           const x = (vector.x * 0.5 + 0.5) * width, y = (-vector.y * 0.5 + 0.5) * height;
-          const visible = vector.z > -1 && vector.z < 1 && x > 5 && x < width - 5 && y > 10 && y < height - 60;
+          const visible = vector.z > -1 && vector.z < 1 && x > 5 && x < width - 5 && y > 10 && y < height - (wind ? 120 : 60);
           label.style.visibility = visible ? "visible" : "hidden";
-          label.style.transform = `translate(${Math.min(width - 125, Math.max(8, x + 18))}px, ${Math.max(8, y - 24)}px)`;
+          label.style.transform = wind
+            ? `translate(${Math.min(width - 62, Math.max(62, x))}px, ${Math.max(8, y + 9)}px) translateX(-50%)`
+            : `translate(${Math.min(width - 125, Math.max(8, x + 18))}px, ${Math.max(8, y - 24)}px)`;
         }
       }
       renderer.render(scene, camera);
@@ -432,7 +584,10 @@ export default function Scene(props: Props) {
       observer.disconnect(); visibility.disconnect();
       controls.removeEventListener("start", cancelFlight); controls.dispose();
       renderer.domElement.removeEventListener("pointerdown", pointerDown);
+      renderer.domElement.removeEventListener("pointermove", pointerMove);
       renderer.domElement.removeEventListener("pointerup", pointerUp);
+      renderer.domElement.removeEventListener("pointercancel", pointerCancel);
+      renderer.domElement.removeEventListener("pointerleave", pointerLeave);
       renderer.domElement.removeEventListener("webglcontextlost", contextLost);
       renderer.domElement.removeEventListener("keydown", keyboard);
       disposeScene(scene); envTarget.dispose(); sunlight.shadow.dispose();
@@ -467,12 +622,18 @@ export default function Scene(props: Props) {
       {props.units.map((unit) => <button
         type="button" key={unit.id}
         ref={(element) => { labels.current[unit.id] = element; }}
-        className={`turbine-label ${props.selected === unit.id ? "active" : ""}`}
+        className={`turbine-label scene-unit-label ${props.kind === "wind" ? "wind-unit-label" : "solar-unit-label"} ${props.selected === unit.id ? "active" : ""}`}
         onClick={() => props.onSelect(unit.id)} aria-pressed={props.selected === unit.id}
         aria-label={`${unit.name}: ${props.labels[unit.id]?.main ?? ""}. Открыть показатели`}
       >
-        <div className="tl-head"><b>{unit.id}</b><span>{props.labels[unit.id]?.sub}</span></div>
-        <div className="tl-wind">{props.labels[unit.id]?.main ?? "—"}</div>
+        {props.kind === "wind" ? <>
+          <span className="unit-label-id">{unit.id}</span>
+          <span className="unit-label-power">{props.labels[unit.id]?.main ?? "—"}</span>
+          <span className="unit-label-arrow" aria-hidden="true">↗</span>
+        </> : <>
+          <div className="tl-head"><b>{unit.id}</b><span>{props.labels[unit.id]?.sub}</span></div>
+          <div className="tl-wind">{props.labels[unit.id]?.main ?? "—"}</div>
+        </>}
       </button>)}
     </div>
   );

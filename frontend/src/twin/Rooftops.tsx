@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError } from "../api";
 import type { Rooftop, RooftopsResponse } from "../api";
 import type { Route } from "./data";
+import SceneBoundary from "./SceneBoundary";
 import "./rooftops.css";
 
 const RooftopScene = lazy(() => import("./scene/RooftopScene"));
@@ -244,9 +245,9 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
             <button aria-pressed={sceneMetric === "energy"} onClick={() => setSceneMetric("energy")}>Выработка за год</button>
             <button aria-pressed={sceneMetric === "quality"} onClick={() => setSceneMetric("quality")}>Влияние теней</button>
           </div>
-          {show3D && sceneAvailable ? <Suspense fallback={<div className="roof-scene roof-scene-loading"><span className="spin" /> Загружаем 3D-сцену…</div>}>
+          {show3D && sceneAvailable ? <SceneBoundary onUnavailable={() => setSceneAvailable(false)}><Suspense fallback={<div className="roof-scene roof-scene-loading"><span className="spin" /> Загружаем 3D-сцену…</div>}>
             <RooftopScene data={data} selected={picked} metric={sceneMetric} onSelect={setPicked} onUnavailable={() => setSceneAvailable(false)} />
-          </Suspense> : <>
+          </Suspense></SceneBoundary> : <>
           <div className="roof-zoom">
             <button className="ghost" onClick={() => zoom(1 / 1.5)} aria-label="Приблизить">+</button>
             <button className="ghost" onClick={() => zoom(1.5)} aria-label="Отдалить">−</button>

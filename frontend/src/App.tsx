@@ -463,7 +463,7 @@ export default function App() {
       {route.page === "station" && station && (
         <div className="station-heading">
         <div className="station-title"><span className="eyebrow">{station.kind === "wind" ? "Ветровая электростанция" : "Солнечная электростанция"}</span><h1>{station.name}</h1><p>{station.region} <span>·</span> Почасовой прогноз на {horizon} часов</p></div>
-        <div className="station-heading-right"><div className="forecast-date">{originIso === LIVE_ORIGIN ? <>Живой прогноз от {fmtDayTime(originIso)} <span>UTC · погода Open-Meteo</span></> : <>Прогноз от {fmtDay(originIso)} 2026 <span>00:00 · UTC+5</span></>}</div>
+        <div className="station-heading-right"><div className="forecast-date">{originIso === LIVE_ORIGIN ? <>Живой прогноз от {fmtDayTime(originIso)} <span>UTC · погода Open-Meteo</span></> : <>Прогноз от {fmtDay(originIso)} 2026 <span>00:00 · UTC</span></>}</div>
         <nav className="station-tabs" aria-label="Разделы станции">
           {TAB_LABEL.filter(([t]) => t === "map" || station.data === "history").map(([t, label]) => (
             <button
