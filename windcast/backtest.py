@@ -68,7 +68,55 @@ def run(first_month: str = "2025-02", last_month: str = "2026-01", log=print) ->
     return pd.concat(all_preds)
 
 
+def operational_day(pred: pd.DataFrame) -> dict:
+    """Метрики для суток заявки — те цифры, что идут в README.
+
+    Уровень станции: среднее двух турбин, только часы, где факт есть у обеих.
+    • Почасовые (горизонты 19–43 выпуска 00 UTC — это сутки D по Астане плюс час запаса):
+        mae = mean(|факт − прогноз|),  accuracy = 1 − mae  (доля номинала).
+    • Суточная выработка: для каждого выпуска сумма по горизонтам 19–42 — ровно 24 часа
+      операционных суток D (00:00–24:00 по Астане); только полные сутки (все 24 часа с фактом).
+        energy_accuracy = 1 − mean(|E_факт − E_прогноз|) / 24,
+        energy_bias_pct = (ΣE_прогноз − ΣE_факт) / ΣE_факт · 100.
+      E — в «часах номинала», поэтому деление на 24 даёт долю номинала за сутки.
+    Точность = 1 − MAE считается по всем часам, включая штиль, где прогноз нуля тривиален;
+    другие определения точности (например, относительно факта) дадут другие числа.
+    Ориентир из ТЗ energy_accuracy ≈ 0.947 здесь не воспроизводится (получается ≈ 0.908):
+    по определению выше сутки — ровно 24 часа суток заявки по станции; ориентир, вероятно,
+    считался по другим суткам или с другим знаменателем.
+    """
+    d = pred.dropna(subset=["actual"])
+    g = d.groupby([d.index, "origin"])
+    st = g[["q50", "raw_nwp_curve", "actual", "horizon_h"]].mean()
+    st = st[g["actual"].count() == d["turbine"].nunique()]
+    st = st.reset_index()
+    hourly = st[st["horizon_h"].between(19, 43)]
+    out = {"hours": int(len(hourly))}
+    for key, col in (("model", "q50"), ("raw_nwp_curve", "raw_nwp_curve")):
+        mae = float(np.mean(np.abs(hourly["actual"] - hourly[col])))
+        out[key] = {"mae": round(mae, 4), "accuracy": round(1 - mae, 4)}
+    day = st[st["horizon_h"].between(19, 42)]
+    e = day.groupby("origin").agg(
+        n=("actual", "size"),
+        fact=("actual", "sum"),
+        q50=("q50", "sum"),
+        raw=("raw_nwp_curve", "sum"),
+    )
+    e = e[e["n"] == 24]
+    out["daily_energy"] = {"days": int(len(e))}
+    for key, col in (("model", "q50"), ("raw_nwp_curve", "raw")):
+        out["daily_energy"][key] = {
+            "energy_accuracy": round(float(1 - np.mean(np.abs(e["fact"] - e[col])) / 24), 4),
+            "energy_bias_pct": round(
+                float((e[col].sum() - e["fact"].sum()) / e["fact"].sum() * 100), 2
+            ),
+        }
+    return out
+
+
 def summarize_backtest(pred: pd.DataFrame) -> dict:
+    if "available_at" not in pred:  # пересчёт отчёта из сохранённого parquet
+        pred = pred.assign(available_at=pd.NaT)
     d = pred.dropna(subset=["actual"])
     rows = []
     for key, col in MODELS.items():
@@ -136,6 +184,11 @@ def summarize_backtest(pred: pd.DataFrame) -> dict:
         "by_month": by_month.reset_index().to_dict("records"),
         "reliability": reliability,
         "significance": significance,
+        "operational_day": operational_day(pred),
+        "skill_by_month": {
+            r["month"]: round(1 - r["ensemble"] / r["raw_nwp_curve"], 4)
+            for r in by_month.reset_index().to_dict("records")
+        },
         "daily": [
             {
                 "date": str(o.date()),
@@ -215,6 +268,11 @@ def save(pred: pd.DataFrame, summary: dict) -> None:
     ]
     cols = [c for c in dict.fromkeys(keep) if c in pred]
     pred[cols].to_parquet(REPORTS_DIR / "backtest_predictions.parquet")
+    save_summary(summary)
+
+
+def save_summary(summary: dict) -> None:
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     (REPORTS_DIR / "backtest_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=1, default=float), encoding="utf-8"
     )

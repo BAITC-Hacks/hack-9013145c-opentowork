@@ -28,6 +28,7 @@ def main() -> None:
     b = sub.add_parser("backtest")
     b.add_argument("--first", default="2025-02")
     b.add_argument("--last", default="2026-01")
+    sub.add_parser("summarize", help="пересчитать отчёт бэктеста из сохранённых прогнозов")
     sub.add_parser("train")
     a = sub.add_parser("agent")
     a.add_argument("--origin", required=True)
@@ -58,6 +59,15 @@ def main() -> None:
         backtest.save(pred, summary)
         backtest.export_runs(pred)
         backtest.print_summary(summary)
+    elif args.cmd == "summarize":
+        from windcast import backtest
+        from windcast.config import REPORTS_DIR
+
+        pred = pd.read_parquet(REPORTS_DIR / "backtest_predictions.parquet")
+        summary = backtest.summarize_backtest(pred)
+        backtest.save_summary(summary)
+        backtest.print_summary(summary)
+        print(summary["operational_day"])
     elif args.cmd == "train":
         from windcast.agent.runner import train_final
 
