@@ -220,7 +220,8 @@ export default function WindPlacement({ go, stations }: {
     {storageMessage && <p role="status" className="hint">{storageMessage}</p>}
     {drafts.length > 0 && <section className="card wind-drafts">
       <h2>Мои новые турбины</h2>
-      <p className="hint">Конфигурации хранятся в этом браузере. Выберите турбину, чтобы обновить расчёт по текущей погоде.</p>
+      <p className="hint">Конфигурации хранятся в этом браузере. Выберите турбину, чтобы обновить расчёт по текущей погоде.
+        {" "}<button type="button" className="link" onClick={() => go({ page: "predictions" })}>Прогноз всех моих турбин на 48 ч →</button></p>
       <div className="wind-draft-list">{drafts.map((draft) => <article key={draft.id}>
         <b>{draft.name}</b><span>{draft.input.hub_height_m} м · {draft.input.latitude.toFixed(4)}°, {draft.input.longitude.toFixed(4)}°</span>
         <div><button type="button" onClick={() => selectDraft(draft)}>Выбрать турбину</button>

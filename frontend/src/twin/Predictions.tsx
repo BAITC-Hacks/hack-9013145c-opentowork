@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
-import type { ForecastRun, Overview, OverviewStation, Station } from "../api";
+import type { ForecastRun, Overview, OverviewStation, Station, WindSimulation } from "../api";
 import { ForecastChart, Sparkline } from "./charts";
 import { fmtDayTime, mw, pct } from "./data";
+import { loadDraftTurbines } from "./wind-drafts";
+import type { DraftTurbine } from "./wind-drafts";
 
 // Раздел «Прогнозы»: живой прогноз выработки всех ВЭС на реальной погоде.
 // Нурлы считается обученной моделью, остальные — ветром Open-Meteo через кривую мощности.
@@ -24,9 +26,13 @@ function num(v: number | null | undefined): number {
 export default function Predictions({
   stations,
   onOpen,
+  onExplain,
+  onPlace,
 }: {
   stations: Station[];
   onOpen: (s: Station) => void;
+  onExplain: (s: Station, origin: string) => void;
+  onPlace: () => void;
 }) {
   const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -142,7 +148,7 @@ export default function Predictions({
           </div>
 
           {selected && (
-            <SelectedForecast summary={selected} station={selectedStation} onOpen={onOpen} explanation={selected.method === "ml" ? data.ml_explanation : null} />
+            <SelectedForecast summary={selected} station={selectedStation} onOpen={onOpen} onExplain={onExplain} explanation={selected.method === "ml" ? data.ml_explanation : null} />
           )}
 
           <div className="card pred-table-card">
@@ -249,6 +255,8 @@ export default function Predictions({
           </div>
         </>
       )}
+
+      <DraftForecasts onPlace={onPlace} />
     </div>
   );
 }
@@ -257,11 +265,13 @@ function SelectedForecast({
   summary,
   station,
   onOpen,
+  onExplain,
   explanation,
 }: {
   summary: OverviewStation;
   station: Station | null;
   onOpen: (s: Station) => void;
+  onExplain: (s: Station, origin: string) => void;
   explanation: string | null;
 }) {
   const [run, setRun] = useState<ForecastRun | null>(null);
@@ -299,11 +309,16 @@ function SelectedForecast({
             {rated ? ` · ${mw(rated)} МВт` : " · мощность не опубликована, график в % номинала"}
           </span>
         </div>
-        {station && summary.can_open && (
-          <button className="primary" onClick={() => onOpen(station)}>
-            Открыть станцию →
-          </button>
-        )}
+        <div className="pred-actions">
+          {station && run && summary.method === "ml" && (
+            <button onClick={() => onExplain(station, run.forecast_origin)}>Почему такой прогноз</button>
+          )}
+          {station && summary.can_open && (
+            <button className="primary" onClick={() => onOpen(station)}>
+              Открыть станцию →
+            </button>
+          )}
+        </div>
       </div>
       {!run && !error && (
         <div className="pred-loading">
@@ -347,6 +362,103 @@ function SelectedForecast({
           )}
         </>
       )}
+    </div>
+  );
+}
+
+// Турбины, сохранённые на экране «Новая площадка → Ветер» (localStorage этого браузера):
+// тот же расчёт /wind/simulate по свежей погоде, что и при размещении.
+function DraftForecasts({ onPlace }: { onPlace: () => void }) {
+  const [drafts] = useState<DraftTurbine[]>(loadDraftTurbines);
+  const [results, setResults] = useState<Record<string, WindSimulation | string>>({});
+
+  useEffect(() => {
+    const abort = new AbortController();
+    for (const d of drafts) {
+      api.simulateWind({ ...d.input, horizon_hours: 48 }, abort.signal).then(
+        (r) => setResults((cur) => ({ ...cur, [d.id]: r })),
+        (e: Error) => !abort.signal.aborted && setResults((cur) => ({ ...cur, [d.id]: e.message })),
+      );
+    }
+    return () => abort.abort();
+  }, [drafts]);
+
+  return (
+    <div className="card pred-table-card">
+      <div className="pred-table-head">
+        <h2>Мои проектные турбины</h2>
+        <button className="ghost" onClick={onPlace}>
+          {drafts.length ? "Добавить ещё" : "Разместить турбину"} →
+        </button>
+      </div>
+      {drafts.length === 0 ? (
+        <p className="hint">
+          Поставьте турбину на карте в разделе «Новая площадка → Ветер» и нажмите «Добавить турбину на карту» —
+          её прогноз на 48 ч появится здесь.
+        </p>
+      ) : (
+        <div className="pred-table-wrap">
+          <table className="pred-table">
+            <thead>
+              <tr>
+                <th>Турбина</th>
+                <th>Модель</th>
+                <th className="num">Ветер на ступице</th>
+                <th className="num">За 48 ч</th>
+                <th className="num">Загрузка</th>
+                <th className="num">Пик</th>
+                <th>48 ч</th>
+              </tr>
+            </thead>
+            <tbody>
+              {drafts.map((d) => {
+                const r = results[d.id];
+                const sim = typeof r === "object" ? r : null;
+                return (
+                  <tr key={d.id}>
+                    <td>
+                      <b>{d.name}</b>
+                      <span className="dim">
+                        {d.input.latitude.toFixed(3)}°, {d.input.longitude.toFixed(3)}° · {d.input.hub_height_m} м
+                      </span>
+                    </td>
+                    {sim ? (
+                      <>
+                        <td>
+                          <span className="method-badge curve" title={sim.assumptions.join(" ")}>
+                            {sim.turbine.name}
+                          </span>
+                        </td>
+                        <td className="num">
+                          {sim.mean_wind_hub_ms.toFixed(1)} <small>м/с</small>
+                        </td>
+                        <td className="num">
+                          {mw(sim.net_energy_kwh / 1000)} <small>МВт·ч</small>
+                        </td>
+                        <td className="num">{pct(sim.capacity_factor)}</td>
+                        <td className="num">
+                          {mw(sim.peak_net_power_kw / 1000)} <small>МВт</small>
+                        </td>
+                        <td>
+                          <Sparkline
+                            values={sim.hours.map((h) => h.net_power_kw / sim.turbine.rated_power_kw)}
+                            color="var(--steppe)"
+                          />
+                        </td>
+                      </>
+                    ) : (
+                      <td colSpan={6} className="dim">
+                        {typeof r === "string" ? `Расчёт недоступен: ${r}` : "Считаем по свежей погоде…"}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="hint">Инженерный расчёт по кривой мощности выбранной модели, без калибровки на фактах.</p>
     </div>
   );
 }

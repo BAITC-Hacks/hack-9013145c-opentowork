@@ -4,6 +4,7 @@ import type { ChatResponse, JobStatus, SearchHit, Stats } from "./api";
 import { AnswerView, MetaBadge, StatsPanel } from "./components";
 import Agent from "./twin/Agent";
 import Backtest from "./twin/Backtest";
+import Bids from "./twin/Bids";
 import Explain from "./twin/Explain";
 import Predictions from "./twin/Predictions";
 import { canOpen, fmtDay, fmtDayTime, LIVE_ORIGIN, ORIGINS, stationRated, useForecast, useRoute, useStations } from "./twin/data";
@@ -360,6 +361,7 @@ const TAB_LABEL: [StationTab, string][] = [
   ["map", "Обзор станции"],
   ["accuracy", "Точность прогноза"],
   ["agent", "Как считается"],
+  ["bid", "Заявка РФЦ"],
 ];
 
 /** Хлебные крошки повторяют шаги мастера — по ним можно вернуться на любой. */
@@ -430,7 +432,10 @@ export default function App() {
   if (!authed) return <div className="app"><Login onDone={() => setAuthed(true)} /></div>;
 
   const rerun = () => setNonce((n) => n + 1);
-  const path = crumbs(route, station?.name ?? null);
+  // На экране объяснения station не выбран (он только для вкладок станции) — имя берём из справочника.
+  const crumbStation =
+    station ?? ("stationId" in route ? stations.find((s) => s.id === route.stationId) ?? null : null);
+  const path = crumbs(route, crumbStation?.name ?? null);
   const lastStation = stations.find((s) => s.id === lastId && canOpen(s)) ?? null;
   const activeSection = route.page === "roofs" ? "roofs" : "kind" in route ? route.kind : route.page;
   const primaryNav: { id: string; label: string; to: Route }[] = [
@@ -508,6 +513,8 @@ export default function App() {
             setOriginIso(LIVE_ORIGIN);
             go({ page: "station", kind: s.kind, stationId: s.id, tab: "map" });
           }}
+          onExplain={(s, origin) => go({ page: "explain", kind: s.kind, stationId: s.id, origin })}
+          onPlace={() => go({ page: "place", kind: "wind" })}
         />
       )}
       {route.page === "station" && !station && stationsLoading && <PageLoader label="Открываем станцию…" />}
@@ -559,6 +566,13 @@ export default function App() {
       )}
       {route.page === "station" && station && route.tab === "accuracy" && (
         <Backtest run={forecast.run} originIso={originIso} onOrigin={setOriginIso} dataOrigin={forecast.origin} />
+      )}
+      {route.page === "station" && station && route.tab === "bid" && (
+        <Bids
+          originIso={originIso}
+          onOrigin={setOriginIso}
+          onExplain={(origin) => go({ page: "explain", kind: station.kind, stationId: station.id, origin })}
+        />
       )}
       {route.page === "station" && station && route.tab === "agent" && (
         <Agent run={forecast.run} onRerun={rerun} loading={forecast.loading} />

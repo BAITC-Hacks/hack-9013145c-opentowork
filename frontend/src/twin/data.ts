@@ -132,7 +132,7 @@ export function useBacktest() {
 // назад, а после перезагрузки открывается тот же экран.
 
 export type Mode = "forecast" | "place";
-export type StationTab = "map" | "accuracy" | "agent";
+export type StationTab = "map" | "accuracy" | "agent" | "bid";
 
 export type Route =
   | { page: "home" }
@@ -158,7 +158,7 @@ export function parseRoute(hash: string): Route {
     if (!k) return { page: "kind", mode };
     if (mode === "place") return { page: "place", kind: k };
     if (!stationId) return { page: "stations", kind: k };
-    const t: StationTab = tab === "accuracy" || tab === "agent" ? tab : "map";
+    const t: StationTab = tab === "accuracy" || tab === "agent" || tab === "bid" ? tab : "map";
     return { page: "station", kind: k, stationId, tab: t };
   }
   return { page: "home" };
