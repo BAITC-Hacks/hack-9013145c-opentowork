@@ -15,8 +15,15 @@ import pandas as pd
 from windcast.metrics import QCOLS, QUANTILES
 
 LGB_PARAMS = dict(
-    n_estimators=400, learning_rate=0.04, num_leaves=31, min_child_samples=40,
-    subsample=0.8, subsample_freq=1, colsample_bytree=0.8, reg_lambda=1.0, verbose=-1,
+    n_estimators=400,
+    learning_rate=0.04,
+    num_leaves=31,
+    min_child_samples=40,
+    subsample=0.8,
+    subsample_freq=1,
+    colsample_bytree=0.8,
+    reg_lambda=1.0,
+    verbose=-1,
 )
 
 
@@ -71,7 +78,9 @@ class PowerCurve:
 
     def fit(self, scada: pd.DataFrame) -> PowerCurve:
         d = scada[scada["usable"].astype(bool)].dropna(subset=["obs_ws", "obs_power"])
-        x = pd.DataFrame({"ws": d["obs_ws"], "temp": d["obs_temp"], "turbine_code": d["turbine_code"]})
+        x = pd.DataFrame(
+            {"ws": d["obs_ws"], "temp": d["obs_temp"], "turbine_code": d["turbine_code"]}
+        )
         self.model = lgb.LGBMRegressor(
             objective="l2", monotone_constraints=[1, 0, 0], **{**LGB_PARAMS, "n_estimators": 300}
         )
@@ -121,11 +130,15 @@ class Cascade:
         flat = ws.ravel()
         power = self.curve.predict(flat, temp, code) + self.curve.sample_residuals(flat, rng)
         power = np.clip(power, 0, 1).reshape(n, k)
-        out = pd.DataFrame(np.quantile(power, QUANTILES, axis=1).T, index=x.index, columns=list(QCOLS))
+        out = pd.DataFrame(
+            np.quantile(power, QUANTILES, axis=1).T, index=x.index, columns=list(QCOLS)
+        )
         out["mean"] = power.mean(axis=1)
         out["wind_q50"] = wq[:, 3]
         out["wind_q10"] = wq[:, 1]
         out["wind_q90"] = wq[:, 5]
         # Для сравнения: наивная подстановка медианы ветра в кривую — видно смещение Йенсена.
-        out["naive_curve"] = self.curve.predict(wq[:, 3], x["temp"].to_numpy(float), x["turbine_code"].to_numpy(float))
+        out["naive_curve"] = self.curve.predict(
+            wq[:, 3], x["temp"].to_numpy(float), x["turbine_code"].to_numpy(float)
+        )
         return out

@@ -31,11 +31,16 @@ class EnsembleState:
         return json.dumps(asdict(self), ensure_ascii=False)
 
 
-def blend(cascade: pd.DataFrame, direct: pd.DataFrame, nwp_day: np.ndarray, state: EnsembleState) -> pd.DataFrame:
+def blend(
+    cascade: pd.DataFrame, direct: pd.DataFrame, nwp_day: np.ndarray, state: EnsembleState
+) -> pd.DataFrame:
     w = np.array([state.weights.get(int(d), 0.5) for d in nwp_day])[:, None]
     cols = list(QCOLS) + ["mean"]
-    out = pd.DataFrame(w * cascade[cols].to_numpy() + (1 - w) * direct[cols].to_numpy(),
-                       index=cascade.index, columns=cols)
+    out = pd.DataFrame(
+        w * cascade[cols].to_numpy() + (1 - w) * direct[cols].to_numpy(),
+        index=cascade.index,
+        columns=cols,
+    )
     q = np.sort(out[list(QCOLS)].to_numpy(), axis=1)
     for d in np.unique(nwp_day):
         m = nwp_day == d
@@ -59,12 +64,15 @@ def calibrate(history: pd.DataFrame) -> EnsembleState:
         return state
     for d, g in h.groupby("nwp_day"):
         y = g["actual"].to_numpy()
-        maes = [np.mean(np.abs(y - (w * g["cas_q50"] + (1 - w) * g["dir_q50"]))) for w in WEIGHT_GRID]
+        maes = [
+            np.mean(np.abs(y - (w * g["cas_q50"] + (1 - w) * g["dir_q50"]))) for w in WEIGHT_GRID
+        ]
         state.weights[int(d)] = float(WEIGHT_GRID[int(np.argmin(maes))])
     blended = blend(
         history[[f"cas_{c}" for c in [*QCOLS, "mean"]]].set_axis([*QCOLS, "mean"], axis=1),
         history[[f"dir_{c}" for c in [*QCOLS, "mean"]]].set_axis([*QCOLS, "mean"], axis=1),
-        history["nwp_day"].to_numpy(), EnsembleState(weights=state.weights),
+        history["nwp_day"].to_numpy(),
+        EnsembleState(weights=state.weights),
     )
     blended["actual"] = history["actual"].to_numpy()
     blended["nwp_day"] = history["nwp_day"].to_numpy()
