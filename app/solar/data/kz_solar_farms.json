@@ -1,0 +1,1104 @@
+{
+ "generated": "2026-09-23",
+ "sources": {
+  "osm": "© участники OpenStreetMap, ODbL — https://www.openstreetmap.org/copyright"
+ },
+ "farms": [
+  {
+   "id": "pv-way-1245780378",
+   "name": "СЭС у Шу",
+   "region": "Жамбылская область",
+   "osm": "way/1245780378",
+   "operators": [],
+   "capacity_mw": 100.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 43.58747,
+   "lon": 73.70662,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 43.594152,
+     "lon": 73.70304,
+     "rated_kw": 17045
+    },
+    {
+     "id": "Б2",
+     "lat": 43.59845,
+     "lon": 73.708843,
+     "rated_kw": 33988
+    },
+    {
+     "id": "Б3",
+     "lat": 43.579888,
+     "lon": 73.701971,
+     "rated_kw": 30372
+    },
+    {
+     "id": "Б4",
+     "lat": 43.581691,
+     "lon": 73.707706,
+     "rated_kw": 18595
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 316.5 га, 100 МВт по OSM; ближайший пункт — Шу. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1377329701",
+   "name": "СЭС у Конырат",
+   "region": "Карагандинская область",
+   "osm": "way/1377329701",
+   "operators": [],
+   "capacity_mw": 100.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 46.94349,
+   "lon": 75.00451,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 46.942482,
+     "lon": 74.999838,
+     "rated_kw": 25120
+    },
+    {
+     "id": "Б2",
+     "lat": 46.942383,
+     "lon": 75.009556,
+     "rated_kw": 26493
+    },
+    {
+     "id": "Б3",
+     "lat": 46.938202,
+     "lon": 74.999825,
+     "rated_kw": 22443
+    },
+    {
+     "id": "Б4",
+     "lat": 46.93811,
+     "lon": 75.009653,
+     "rated_kw": 25944
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 140 га, 100 МВт по OSM; ближайший пункт — Конырат. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1021212318",
+   "name": "Капшагайская солнечная электростанция",
+   "region": "Алматинская область",
+   "osm": "way/1021212318",
+   "operators": [],
+   "capacity_mw": 100.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 43.96519,
+   "lon": 77.10965,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 43.971114,
+     "lon": 77.108231,
+     "rated_kw": 23047
+    },
+    {
+     "id": "Б2",
+     "lat": 43.971913,
+     "lon": 77.117937,
+     "rated_kw": 28930
+    },
+    {
+     "id": "Б3",
+     "lat": 43.963797,
+     "lon": 77.108564,
+     "rated_kw": 25362
+    },
+    {
+     "id": "Б4",
+     "lat": 43.964766,
+     "lon": 77.118094,
+     "rated_kw": 22662
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 261.4 га, 100 МВт по OSM; ближайший пункт — Боктер. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-731775244",
+   "name": "СЭС Сарань",
+   "region": "Карагандинская область",
+   "osm": "way/731775244",
+   "operators": [
+    "SES Saran LLP"
+   ],
+   "capacity_mw": 100.0,
+   "capacity_source": "osm",
+   "commissioned": "2019",
+   "lat": 49.80829,
+   "lon": 72.87056,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 49.814223,
+     "lon": 72.867052,
+     "rated_kw": 25991
+    },
+    {
+     "id": "Б2",
+     "lat": 49.813711,
+     "lon": 72.875276,
+     "rated_kw": 26690
+    },
+    {
+     "id": "Б3",
+     "lat": 49.807253,
+     "lon": 72.868688,
+     "rated_kw": 19930
+    },
+    {
+     "id": "Б4",
+     "lat": 49.807385,
+     "lon": 72.874374,
+     "rated_kw": 27389
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 149.1 га, 100 МВт по OSM; ближайший пункт — Сарань. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1244505020",
+   "name": "Солнечная электростанция «Нура»",
+   "region": "Акмолинская область",
+   "osm": "way/1244505020",
+   "operators": [],
+   "capacity_mw": 100.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 50.79437,
+   "lon": 71.45305,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 50.796198,
+     "lon": 71.44813,
+     "rated_kw": 19644
+    },
+    {
+     "id": "Б2",
+     "lat": 50.797077,
+     "lon": 71.457974,
+     "rated_kw": 31168
+    },
+    {
+     "id": "Б3",
+     "lat": 50.789887,
+     "lon": 71.447261,
+     "rated_kw": 27920
+    },
+    {
+     "id": "Б4",
+     "lat": 50.7908,
+     "lon": 71.457103,
+     "rated_kw": 21268
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 202.8 га, 100 МВт по OSM; ближайший пункт — Кабанбай батыра. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1073944078",
+   "name": "СЭС «Кентау»",
+   "region": "Туркестанская область",
+   "osm": "way/1073944078",
+   "operators": [],
+   "capacity_mw": 50.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 43.47181,
+   "lon": 68.53032,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 43.472602,
+     "lon": 68.527507,
+     "rated_kw": 7709
+    },
+    {
+     "id": "Б2",
+     "lat": 43.474919,
+     "lon": 68.53136,
+     "rated_kw": 17952
+    },
+    {
+     "id": "Б3",
+     "lat": 43.467706,
+     "lon": 68.525799,
+     "rated_kw": 16410
+    },
+    {
+     "id": "Б4",
+     "lat": 43.468156,
+     "lon": 68.530657,
+     "rated_kw": 7930
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 88 га, 50 МВт по OSM; ближайший пункт — Кентау. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-864295614",
+   "name": "СЭС Акадыр",
+   "region": "Карагандинская область",
+   "osm": "way/864295614",
+   "operators": [
+    "Goldbeck Solar"
+   ],
+   "capacity_mw": 50.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 48.28521,
+   "lon": 72.91276,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 48.289136,
+     "lon": 72.904721,
+     "rated_kw": 12525
+    },
+    {
+     "id": "Б2",
+     "lat": 48.289199,
+     "lon": 72.913195,
+     "rated_kw": 13777
+    },
+    {
+     "id": "Б3",
+     "lat": 48.284702,
+     "lon": 72.904865,
+     "rated_kw": 11239
+    },
+    {
+     "id": "Б4",
+     "lat": 48.284776,
+     "lon": 72.913324,
+     "rated_kw": 12459
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 122.3 га, 50 МВт по OSM; ближайший пункт — Агадырь. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-575047049",
+   "name": "СЭС Бурное",
+   "region": "Жамбылская область",
+   "osm": "way/575047049",
+   "operators": [],
+   "capacity_mw": 50.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 42.7144,
+   "lon": 70.82118,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 42.716195,
+     "lon": 70.815999,
+     "rated_kw": 13058
+    },
+    {
+     "id": "Б2",
+     "lat": 42.716058,
+     "lon": 70.826411,
+     "rated_kw": 12855
+    },
+    {
+     "id": "Б3",
+     "lat": 42.71223,
+     "lon": 70.816106,
+     "rated_kw": 11299
+    },
+    {
+     "id": "Б4",
+     "lat": 42.712146,
+     "lon": 70.826636,
+     "rated_kw": 12788
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 148.5 га, 50 МВт по OSM; ближайший пункт — Нурлыкент. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-864295615",
+   "name": "Солнечная электростанция Гульшат",
+   "region": "Карагандинская область",
+   "osm": "way/864295615",
+   "operators": [],
+   "capacity_mw": 40.0,
+   "capacity_source": "osm",
+   "commissioned": "2019",
+   "lat": 46.63896,
+   "lon": 74.32221,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 46.639581,
+     "lon": 74.31993,
+     "rated_kw": 10827
+    },
+    {
+     "id": "Б2",
+     "lat": 46.639728,
+     "lon": 74.326316,
+     "rated_kw": 11028
+    },
+    {
+     "id": "Б3",
+     "lat": 46.635317,
+     "lon": 74.320392,
+     "rated_kw": 9073
+    },
+    {
+     "id": "Б4",
+     "lat": 46.635476,
+     "lon": 74.326247,
+     "rated_kw": 9073
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 99 га, 40 МВт по OSM; ближайший пункт — Шубартубек. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1086404483",
+   "name": "Nomad Solar Plant",
+   "region": "Кызылординская область",
+   "osm": "way/1086404483",
+   "operators": [],
+   "capacity_mw": 30.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 45.09908,
+   "lon": 64.68854,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 45.099005,
+     "lon": 64.688281,
+     "rated_kw": 7469
+    },
+    {
+     "id": "Б2",
+     "lat": 45.099014,
+     "lon": 64.693857,
+     "rated_kw": 7734
+    },
+    {
+     "id": "Б3",
+     "lat": 45.095204,
+     "lon": 64.688198,
+     "rated_kw": 7449
+    },
+    {
+     "id": "Б4",
+     "lat": 45.095133,
+     "lon": 64.693715,
+     "rated_kw": 7347
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 74.1 га, 30 МВт по OSM; ближайший пункт — Жалагаш. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1021212310",
+   "name": "солнечная электростанция Жалгыз Тобе",
+   "region": "Абайская область",
+   "osm": "way/1021212310",
+   "operators": [],
+   "capacity_mw": 30.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 49.22481,
+   "lon": 81.18638,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 49.227135,
+     "lon": 81.184478,
+     "rated_kw": 8582
+    },
+    {
+     "id": "Б2",
+     "lat": 49.226205,
+     "lon": 81.189738,
+     "rated_kw": 6765
+    },
+    {
+     "id": "Б3",
+     "lat": 49.223003,
+     "lon": 81.184625,
+     "rated_kw": 5857
+    },
+    {
+     "id": "Б4",
+     "lat": 49.222928,
+     "lon": 81.190366,
+     "rated_kw": 8797
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 65.7 га, 30 МВт по OSM; ближайший пункт — Шуак. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-976557690",
+   "name": "Задарья-1",
+   "region": "Туркестанская область",
+   "osm": "way/976557690",
+   "operators": [],
+   "capacity_mw": 14.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 42.40651,
+   "lon": 68.76049,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 42.407709,
+     "lon": 68.75791,
+     "rated_kw": 228
+    },
+    {
+     "id": "Б2",
+     "lat": 42.408775,
+     "lon": 68.76258,
+     "rated_kw": 6861
+    },
+    {
+     "id": "Б3",
+     "lat": 42.405465,
+     "lon": 68.756372,
+     "rated_kw": 6329
+    },
+    {
+     "id": "Б4",
+     "lat": 42.406001,
+     "lon": 68.759284,
+     "rated_kw": 582
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 28.3 га, 14 МВт по OSM; ближайший пункт — Арысь. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-815433221",
+   "name": "СЭС у Нурлыкент",
+   "region": "Жамбылская область",
+   "osm": "way/815433221",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 42.72138,
+   "lon": 70.81083,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 42.723778,
+     "lon": 70.809377,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 42.723709,
+     "lon": 70.814699,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 42.720173,
+     "lon": 70.8082,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 42.72019,
+     "lon": 70.814697,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 73.3 га, мощность в OSM не указана; ближайший пункт — Нурлыкент. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1024500421",
+   "name": "СЭС у Акбулак",
+   "region": "Туркестанская область",
+   "osm": "way/1024500421",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 42.39845,
+   "lon": 69.35786,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 42.398978,
+     "lon": 69.35653,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 42.39902,
+     "lon": 69.358088,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 42.398044,
+     "lon": 69.35658,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 42.398118,
+     "lon": 69.35813,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 5.3 га, мощность в OSM не указана; ближайший пункт — Акбулак. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1074847202",
+   "name": "СЭС у Кербулак",
+   "region": "Алматинская область",
+   "osm": "way/1074847202",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.90688,
+   "lon": 77.70106,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 43.907207,
+     "lon": 77.700177,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 43.90697,
+     "lon": 77.702699,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 43.906165,
+     "lon": 77.70028,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 43.905923,
+     "lon": 77.702808,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 9.5 га, мощность в OSM не указана; ближайший пункт — Кербулак. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1085846654",
+   "name": "СЭС у Кушата",
+   "region": "Туркестанская область",
+   "osm": "way/1085846654",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.44143,
+   "lon": 68.52952,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 43.440203,
+     "lon": 68.524755,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 43.442536,
+     "lon": 68.532079,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 43.436692,
+     "lon": 68.524203,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 43.436762,
+     "lon": 68.531177,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 110.2 га, мощность в OSM не указана; ближайший пункт — Кушата. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1209497429",
+   "name": "СЭС у Арысь",
+   "region": "Туркестанская область",
+   "osm": "way/1209497429",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 42.40577,
+   "lon": 68.76175,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 42.406584,
+     "lon": 68.760797,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 42.406584,
+     "lon": 68.763961,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 42.405426,
+     "lon": 68.760797,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 42.405426,
+     "lon": 68.763961,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 13.1 га, мощность в OSM не указана; ближайший пункт — Арысь. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1209498650",
+   "name": "СЭС у Кенгир",
+   "region": "Улутауская область",
+   "osm": "way/1209498650",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 47.86292,
+   "lon": 67.62444,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 47.863311,
+     "lon": 67.623095,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 47.863311,
+     "lon": 67.627585,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 47.862012,
+     "lon": 67.623095,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 47.862012,
+     "lon": 67.627585,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 19.3 га, мощность в OSM не указана; ближайший пункт — Кенгир. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1209499369",
+   "name": "СЭС у Бирлик",
+   "region": "Кызылординская область",
+   "osm": "way/1209499369",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.87381,
+   "lon": 67.3593,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 43.875077,
+     "lon": 67.358518,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 43.875188,
+     "lon": 67.361341,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 43.873186,
+     "lon": 67.358409,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 43.87323,
+     "lon": 67.361342,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 20 га, мощность в OSM не указана; ближайший пункт — Бирлик. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1254172211",
+   "name": "СЭС у Косозен",
+   "region": "Алматинская область",
+   "osm": "way/1254172211",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.62116,
+   "lon": 76.97133,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 43.622736,
+     "lon": 76.970214,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 43.623019,
+     "lon": 76.9761,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 43.618261,
+     "lon": 76.968879,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 43.618013,
+     "lon": 76.974885,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 107.2 га, мощность в OSM не указана; ближайший пункт — Косозен. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1301843861",
+   "name": "СЭС у Сулутюбе",
+   "region": "Кызылординская область",
+   "osm": "way/1301843861",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 44.72313,
+   "lon": 65.89797,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 44.726851,
+     "lon": 65.896502,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 44.725065,
+     "lon": 65.902777,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 44.721352,
+     "lon": 65.899043,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 44.720772,
+     "lon": 65.904375,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 102.6 га, мощность в OSM не указана; ближайший пункт — Сулутюбе. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1377302827",
+   "name": "СЭС у Айша-Биби",
+   "region": "Жамбылская область",
+   "osm": "way/1377302827",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 42.86578,
+   "lon": 71.09736,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 42.869102,
+     "lon": 71.095185,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 42.870778,
+     "lon": 71.101983,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 42.864697,
+     "lon": 71.094766,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 42.865641,
+     "lon": 71.100671,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 114.6 га, мощность в OSM не указана; ближайший пункт — Айша-Биби. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1377467413",
+   "name": "СЭС у Шолаккорган",
+   "region": "Туркестанская область",
+   "osm": "way/1377467413",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.74785,
+   "lon": 69.23136,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 43.748767,
+     "lon": 69.230091,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 43.750097,
+     "lon": 69.240774,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 43.745641,
+     "lon": 69.227139,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 43.746847,
+     "lon": 69.237317,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 123.8 га, мощность в OSM не указана; ближайший пункт — Шолаккорган. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1381925064",
+   "name": "СЭС у Новопавловка",
+   "region": "Костанайская область",
+   "osm": "way/1381925064",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 52.54163,
+   "lon": 64.81446,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 52.542836,
+     "lon": 64.81197,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 52.542211,
+     "lon": 64.816551,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 52.540355,
+     "lon": 64.812492,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 52.539522,
+     "lon": 64.817028,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 36.4 га, мощность в OSM не указана; ближайший пункт — Новопавловка. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1383310986",
+   "name": "СЭС у Отар",
+   "region": "Жамбылская область",
+   "osm": "way/1383310986",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.54653,
+   "lon": 75.18973,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 43.547171,
+     "lon": 75.18873,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 43.547101,
+     "lon": 75.190274,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 43.546641,
+     "lon": 75.189003,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 43.54643,
+     "lon": 75.190181,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 3 га, мощность в OSM не указана; ближайший пункт — Отар. Блоки — условное деление контура на четыре части"
+  },
+  {
+   "id": "pv-way-1228010114",
+   "name": "Гелиостанция",
+   "region": "Жетысуская область",
+   "osm": "way/1228010114",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": "2010",
+   "lat": 44.42831,
+   "lon": 77.46914,
+   "units": [
+    {
+     "id": "Б1",
+     "lat": 44.428376,
+     "lon": 77.469022,
+     "rated_kw": null
+    },
+    {
+     "id": "Б2",
+     "lat": 44.428367,
+     "lon": 77.469361,
+     "rated_kw": null
+    },
+    {
+     "id": "Б3",
+     "lat": 44.428103,
+     "lon": 77.468996,
+     "rated_kw": null
+    },
+    {
+     "id": "Б4",
+     "lat": 44.428086,
+     "lon": 77.469347,
+     "rated_kw": null
+    }
+   ],
+   "location": "plant",
+   "in_registry": false,
+   "data": "model",
+   "note": "Контур OSM 0.3 га, мощность в OSM не указана; ближайший пункт — Сарыбулак. Блоки — условное деление контура на четыре части"
+  }
+ ]
+}
