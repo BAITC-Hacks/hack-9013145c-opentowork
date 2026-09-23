@@ -10,6 +10,36 @@
   position: absolute;
   inset: 0;
 }
+.city-selected-marker {
+  pointer-events: none;
+  padding: 7px 9px;
+  border: 1px solid #fff;
+  border-radius: 7px;
+  background: #78551d;
+  color: white;
+  box-shadow: 0 2px 9px #1d342c45;
+  font: 600 10px/1.2 var(--font, sans-serif);
+}
+.city-selected-marker > span {
+  display: block;
+  max-width: 160px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.city-selected-marker::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 4px);
+  bottom: -9px;
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #a97823;
+  box-shadow: 0 1px 4px #1d342c55;
+}
 .city-map .maplibregl-map {
   font-family: var(--font, sans-serif);
 }

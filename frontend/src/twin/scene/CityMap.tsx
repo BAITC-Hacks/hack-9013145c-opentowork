@@ -6,6 +6,7 @@ import type {
   FilterSpecification,
   GeoJSONSource,
   Map as LibreMap,
+  Marker,
   Popup,
   StyleSpecification,
 } from "maplibre-gl";
@@ -319,6 +320,7 @@ export default function CityMap(props: CityMapProps) {
   const host = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LibreMap | null>(null);
   const popupRef = useRef<Popup | null>(null);
+  const selectionMarkerRef = useRef<Marker | null>(null);
   const latest = useRef(props);
   latest.current = props;
   const [phase, setPhase] = useState<Phase>("loading");
@@ -419,6 +421,21 @@ export default function CityMap(props: CityMapProps) {
           }),
           "bottom-right",
         );
+        // A DOM annotation stays readable when a roof's estimated solar height
+        // differs from the vector building height. City geometry is unchanged.
+        const markerElement = document.createElement("div");
+        markerElement.className = "city-selected-marker";
+        markerElement.style.display = "none";
+        markerElement.setAttribute("role", "img");
+        markerElement.appendChild(document.createElement("span"));
+        selectionMarkerRef.current = new module.Marker({
+          element: markerElement,
+          anchor: "bottom",
+          offset: [0, -9],
+          opacityWhenCovered: 1,
+        })
+          .setLngLat(config.center)
+          .addTo(map);
         const canvas = map.getCanvas();
         canvas.setAttribute(
           "aria-label",
@@ -698,6 +715,8 @@ export default function CityMap(props: CityMapProps) {
       resize?.disconnect();
       popupRef.current?.remove();
       popupRef.current = null;
+      selectionMarkerRef.current?.remove();
+      selectionMarkerRef.current = null;
       map?.remove();
       if (mapRef.current === map) mapRef.current = null;
     };
@@ -755,12 +774,21 @@ export default function CityMap(props: CityMapProps) {
       type: "FeatureCollection",
       features: selected,
     });
-    if (!selected.length) return;
-    const points = selected[0].geometry.coordinates[0];
-    const center: [number, number] = [
-      points.reduce((s, p) => s + p[0], 0) / points.length,
-      points.reduce((s, p) => s + p[1], 0) / points.length,
-    ];
+    const marker = selectionMarkerRef.current;
+    if (!selected.length) {
+      if (marker) marker.getElement().style.display = "none";
+      return;
+    }
+    const center = interiorPoint(selected[0].geometry);
+    if (!center) return;
+    if (marker) {
+      const title = props.selected?.name || "Выбранная крыша";
+      const element = marker.setLngLat(center).getElement();
+      element.style.display = "";
+      element.title = title;
+      element.setAttribute("aria-label", `Выбрана крыша: ${title}`);
+      element.firstElementChild!.textContent = title;
+    }
     map.easeTo({
       center,
       zoom: Math.max(map.getZoom(), 17),
@@ -797,6 +825,7 @@ export default function CityMap(props: CityMapProps) {
       setWarning("Рельеф недоступен. Карта продолжает работать без него.");
     }
     const timeout = window.setTimeout(() => {
+      if (mapRef.current !== map) return;
       // A successful first load ends the busy state even when no source event
       // reported the final tile. Later panning must not turn that success into
       // a timeout merely because additional terrain tiles are in flight.
