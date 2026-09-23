@@ -30,10 +30,11 @@ dist/
 *.db
 *.sqlite3
 uploads/
-data/
+/data/
 # Исходные данные расчёта крыш — часть кода: без них проект не поднимется у проверяющего.
 !app/solar/data/
-models/
+# Только в корне: иначе игнорировался бы пакет windcast/models.
+/models/
 *.log
 
 # IDE / OS

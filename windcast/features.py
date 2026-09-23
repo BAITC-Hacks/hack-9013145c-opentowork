@@ -57,8 +57,12 @@ def weather_features(nwp: pd.DataFrame) -> pd.DataFrame:
     f["ens_ws10_std"] = surf.std(axis=1)
     f["ens_ws100_cube"] = f["ens_ws100_mean"] ** 3
 
-    u = pd.concat([hub[m] * -np.sin(np.deg2rad(col(m, "wind_direction_100m"))) for m in HUB_MODELS], axis=1).mean(axis=1)
-    v = pd.concat([hub[m] * -np.cos(np.deg2rad(col(m, "wind_direction_100m"))) for m in HUB_MODELS], axis=1).mean(axis=1)
+    u = pd.concat(
+        [hub[m] * -np.sin(np.deg2rad(col(m, "wind_direction_100m"))) for m in HUB_MODELS], axis=1
+    ).mean(axis=1)
+    v = pd.concat(
+        [hub[m] * -np.cos(np.deg2rad(col(m, "wind_direction_100m"))) for m in HUB_MODELS], axis=1
+    ).mean(axis=1)
     ens_dir = (np.rad2deg(np.arctan2(-u, -v)) + 360) % 360
     f["ens_dir"] = ens_dir
     f["ens_dir_sin"] = np.sin(np.deg2rad(ens_dir))
@@ -66,7 +70,9 @@ def weather_features(nwp: pd.DataFrame) -> pd.DataFrame:
 
     # Сдвиг ветра по высоте — прокси устойчивости атмосферы (ночная инверсия зимой).
     ws10 = col("ecmwf_ifs025", "wind_speed_10m").clip(lower=0.3)
-    f["shear_alpha"] = np.log(col("ecmwf_ifs025", "wind_speed_100m").clip(lower=0.3) / ws10) / np.log(10)
+    f["shear_alpha"] = np.log(
+        col("ecmwf_ifs025", "wind_speed_100m").clip(lower=0.3) / ws10
+    ) / np.log(10)
 
     temp = pd.concat([col(m, "temperature_2m") for m in HUB_MODELS], axis=1).mean(axis=1)
     press = pd.concat([col(m, "surface_pressure") for m in HUB_MODELS], axis=1).mean(axis=1)
@@ -120,6 +126,8 @@ def training_frame(archive: pd.DataFrame | None = None) -> pd.DataFrame:
     x = pd.concat(frames)
     x.index.name = "time"
     x = x.reset_index().merge(scada.reset_index(), on=["time", "turbine"], how="left")
+    for flag in ("usable", "downtime", "curtailed"):
+        x[flag] = x[flag].astype("boolean").fillna(False).astype(bool)
     return x.set_index("time").sort_index()
 
 
@@ -149,8 +157,16 @@ def inference_frame(
 
 
 FEATURE_EXCLUDE = {
-    "turbine", "available_at", "horizon_h", "obs_ws", "obs_power", "obs_temp", "usable",
-    "downtime", "curtailed", "expected_power",
+    "turbine",
+    "available_at",
+    "horizon_h",
+    "obs_ws",
+    "obs_power",
+    "obs_temp",
+    "usable",
+    "downtime",
+    "curtailed",
+    "expected_power",
 }
 
 

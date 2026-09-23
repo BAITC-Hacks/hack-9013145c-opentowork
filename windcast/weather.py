@@ -170,7 +170,13 @@ def coverage() -> pd.DataFrame:
                 continue
             s = archive[use].dropna()
             rows.append(
-                {"model": model, "day": day, "var": use.split("|")[1], "first": s.index.min(),
-                 "last": s.index.max(), "hours": len(s)}
+                {
+                    "model": model,
+                    "day": day,
+                    "var": use.split("|")[1],
+                    "first": s.index.min(),
+                    "last": s.index.max(),
+                    "hours": len(s),
+                }
             )
     return pd.DataFrame(rows)
