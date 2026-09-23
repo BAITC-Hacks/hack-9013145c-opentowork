@@ -177,6 +177,25 @@ def test_api_catalog_and_simulate(client):
     assert len(result.json()["hours"]) == 24
 
 
+def test_reference_turbines_have_passport_and_sources_but_no_curve(client):
+    response = client.get("/api/v1/wind/reference-turbines")
+    assert response.status_code == 200
+    items = {t["id"]: t for t in response.json()}
+    assert set(items) == {"goldwind-gw130-2500", "fuhrlaender-fwt-2050", "goldwind-gw109-2500"}
+    assert items["fuhrlaender-fwt-2050"]["sites"][0]["units"] == 22
+    assert all(t["sources"] and "curve" not in t for t in items.values())
+    # Справочные модели не пересекаются с расчётным каталогом.
+    calculable = {t["id"] for t in client.get("/api/v1/wind/turbine-models").json()}
+    assert not calculable & set(items)
+
+
+def test_simulate_refuses_model_without_power_curve(client):
+    body = request().model_dump() | {"turbine_id": "goldwind-gw130-2500", "hub_height_m": None}
+    response = client.post("/api/v1/wind/simulate", json=body)
+    assert response.status_code == 422
+    assert "кривой мощности" in response.json()["error"]["message"]
+
+
 @pytest.mark.parametrize("changes,status", [
     ({"latitude": 91}, 422), ({"longitude": -181}, 422),
     ({"loss_percent": 101}, 422), ({"hub_height_m": 100}, 422),
