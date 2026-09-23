@@ -8,7 +8,7 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from app.ai.embedder import build_embedder
 from app.ai.orchestrator import AIOrchestrator
@@ -32,6 +32,24 @@ _shutdown = asyncio.Event()
 RETRYABLE = (AIProviderError, TimeoutError, ConnectionError, OSError)
 
 
+TERMINAL = {"COMPLETED", "FAILED", "CANCELLED"}
+
+# Захват задачи одним UPDATE: два воркера с одним сообщением (reclaim при долгой
+# обработке) не могут оба перевести её в PROCESSING. Зависшую PROCESSING после
+# падения воркера можно забрать, когда аренда старше таймаута видимости.
+CLAIM_SQL = text(
+    """
+    UPDATE jobs
+    SET status = 'PROCESSING', progress = 10, attempts = attempts + 1, updated_at = now()
+    WHERE id = :id
+      AND (status = 'PENDING'
+           OR (status = 'PROCESSING'
+               AND updated_at < now() - make_interval(secs => :lease)))
+    RETURNING attempts
+    """
+)
+
+
 def _handle_signal(*_):
     log.info("worker_shutdown_requested")
     _shutdown.set()
@@ -46,19 +64,27 @@ async def handle_job(job_id: str, job_type: str, payload: dict) -> bool:
     started = time.perf_counter()
 
     async with SessionLocal() as session:
-        job = await session.get(Job, uuid.UUID(job_id))
-        if job is None:
-            log.warning("job_not_found", job_id=job_id)
-            return True
-        if job.status == "CANCELLED":
-            log.info("job_cancelled_skip", job_id=job_id)
-            return True
-
-        job.status = "PROCESSING"
-        job.progress = 10
-        job.attempts = (job.attempts or 0) + 1
-        attempts = job.attempts
+        attempts = await session.scalar(
+            CLAIM_SQL,
+            {"id": uuid.UUID(job_id), "lease": settings.QUEUE_VISIBILITY_TIMEOUT * 0.9},
+        )
         await session.commit()
+        if attempts is None:
+            status = await session.scalar(
+                select(Job.status).where(Job.id == uuid.UUID(job_id))
+            )
+            if status is None:
+                log.warning("job_not_found", job_id=job_id)
+                return True
+            if status in TERMINAL:
+                # Повторная доставка после сохранения результата, но до XACK:
+                # модель второй раз не зовём, Analysis не дублируем.
+                log.info("job_already_final_skip", job_id=job_id, status=status)
+                return True
+            # Задачу держит другой воркер. Не подтверждаем: он сам сделает XACK
+            # по этому же сообщению, а если умрёт — аренда истечёт.
+            log.info("job_claimed_elsewhere_skip", job_id=job_id)
+            return False
 
     try:
         async with SessionLocal() as session:
@@ -82,11 +108,11 @@ async def handle_job(job_id: str, job_type: str, payload: dict) -> bool:
                 )
             )
 
-            job = await session.get(Job, uuid.UUID(job_id))
+            job = await session.get(Job, uuid.UUID(job_id), with_for_update=True)
             # Задачу могли отменить, пока работала модель. Раньше статус
             # проверялся только в начале, и отмена молча перетиралась.
-            if job.status == "CANCELLED":
-                log.info("job_cancelled_during_processing", job_id=job_id)
+            if job.status != "PROCESSING":
+                log.info("job_left_processing_skip", job_id=job_id, status=job.status)
                 await session.commit()
                 return True
 
@@ -127,7 +153,7 @@ async def handle_job(job_id: str, job_type: str, payload: dict) -> bool:
             )
             async with SessionLocal() as session:
                 job = await session.get(Job, uuid.UUID(job_id))
-                if job:
+                if job and job.status == "PROCESSING":
                     job.status = "PENDING"
                     job.error = f"попытка {attempts}: {str(exc)[:500]}"
                     await session.commit()
@@ -150,7 +176,8 @@ async def handle_job(job_id: str, job_type: str, payload: dict) -> bool:
 async def _mark_failed(job_id: str, error: str) -> None:
     async with SessionLocal() as session:
         job = await session.get(Job, uuid.UUID(job_id))
-        if job:
+        # Отмену и уже сохранённый результат не перетираем ошибкой.
+        if job and job.status not in TERMINAL:
             job.status = "FAILED"
             job.error = error[:2000]
             job.finished_at = datetime.now(UTC)
