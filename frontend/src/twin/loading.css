@@ -16,6 +16,7 @@
   padding: 16px 22px; border-radius: 12px;
   background: var(--surface, #fff); border: 1px solid var(--border, #e5e9ef);
   box-shadow: 0 10px 30px #17263818;
+  max-width: calc(100% - 32px);
 }
 .loading-text { display: flex; flex-direction: column; gap: 2px; }
 .loading-text b { font-size: 14px; font-weight: 600; color: var(--text, #18212f); }
