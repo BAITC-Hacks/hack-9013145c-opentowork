@@ -1,0 +1,70 @@
+{
+  "note": "Оборудование действующих ВЭС Казахстана (проекты группы Самрук-Энерго). Производители не публикуют кривые мощности этих моделей, в открытой базе OEDB/windpowerlib их нет — поэтому выработка по ним не рассчитывается. Факты сверены с первоисточниками 23.09.2026.",
+  "turbines": [
+    {
+      "id": "goldwind-gw130-2500",
+      "name": "Goldwind GW130-2.5MW",
+      "manufacturer": "Goldwind",
+      "rated_power_kw": 2500,
+      "rotor_diameter_m": 130,
+      "hub_height_m": null,
+      "sites": [
+        {"name": "Шелекская ВЭС, Алматинская область", "units": 24, "capacity_mw": 60,
+         "owner": "Самрук-Энерго и POWERCHINA"}
+      ],
+      "specs": [
+        "Прямой привод на постоянных магнитах (PMDD), платформа Goldwind 2.5 МВт",
+        "Исполнение для низких температур Центральной Азии"
+      ],
+      "sources": [
+        {"title": "Пресс-релиз Goldwind: 24 турбины GW130-2.5MW на Шелекской ВЭС",
+         "url": "https://w3.windfair.net/wind-energy/pr/32244-goldwind-kazakhstan-powerchina-turbine-wind-energy-wind-farm-smart-wind-turbine-power-supply-china"},
+        {"title": "Самрук-Қазына: запуск ВЭС 60 МВт, 24 установки по 2,5 МВт",
+         "url": "https://sk.kz/press-center/news/73475/?lang=ru"}
+      ]
+    },
+    {
+      "id": "fuhrlaender-fwt-2050",
+      "name": "Fuhrländer Wind Technology 2,05 МВт",
+      "manufacturer": "Fuhrländer Wind Technology",
+      "rated_power_kw": 2050,
+      "rotor_diameter_m": 93,
+      "hub_height_m": 85,
+      "sites": [
+        {"name": "Ерейментауская ВЭС, Акмолинская область", "units": 22, "capacity_mw": 45,
+         "owner": "ТОО «Первая ветровая электрическая станция» (Самрук-Энерго)"}
+      ],
+      "specs": [
+        "Ветер: включение 3 м/с, номинал 12 м/с, остановка 25 м/с",
+        "Рабочая температура от −40 до +40 °C",
+        "Точный заводской индекс модели в официальных материалах не указан"
+      ],
+      "sources": [
+        {"title": "Самрук-Энерго: 22 ветротурбины по 2,05 МВт, ротор 93 м, башня 85 м",
+         "url": "https://samruk-energy.kz/ru/company/group-of-companies/pves"},
+        {"title": "Оператор ПВЭС: обслуживание по требованиям Fuhrländer Wind Technology",
+         "url": "https://pves.kz/en/i30"}
+      ]
+    },
+    {
+      "id": "goldwind-gw109-2500",
+      "name": "Goldwind GW109-2.5MW",
+      "manufacturer": "Goldwind",
+      "rated_power_kw": 2500,
+      "rotor_diameter_m": 109,
+      "hub_height_m": null,
+      "sites": [
+        {"name": "Шелек, Алматинская область — межправительственный проект Казахстана и Китая",
+         "units": null, "capacity_mw": null, "owner": null}
+      ],
+      "specs": [
+        "Прямой привод на постоянных магнитах (PMDD), платформа Goldwind 2.5 МВт",
+        "Первая модель Goldwind, введённая в Шелеке; связь с турбинами ВЭС Нурлы из данных кейса не подтверждена"
+      ],
+      "sources": [
+        {"title": "Пресс-релиз Goldwind: GW109-2.5MW первой введена в Шелеке",
+         "url": "https://w3.windfair.net/wind-energy/pr/32244-goldwind-kazakhstan-powerchina-turbine-wind-energy-wind-farm-smart-wind-turbine-power-supply-china"}
+      ]
+    }
+  ]
+}

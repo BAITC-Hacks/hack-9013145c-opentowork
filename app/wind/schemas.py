@@ -30,6 +30,32 @@ class TurbineSpec(BaseModel):
     notes: list[str]
 
 
+class ReferenceSite(BaseModel):
+    name: str
+    units: int | None
+    capacity_mw: float | None
+    owner: str | None
+
+
+class ReferenceSource(BaseModel):
+    title: str
+    url: str
+
+
+class ReferenceTurbine(BaseModel):
+    """Оборудование казахстанских ВЭС без опубликованной кривой мощности — только паспорт."""
+
+    id: str
+    name: str
+    manufacturer: str
+    rated_power_kw: float
+    rotor_diameter_m: float
+    hub_height_m: float | None
+    sites: list[ReferenceSite]
+    specs: list[str]
+    sources: list[ReferenceSource]
+
+
 class WeatherHour(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)
 
