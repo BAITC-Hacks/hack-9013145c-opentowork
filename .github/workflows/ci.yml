@@ -1,129 +1,110 @@
-name: CI
+name: CI/CD
+
+# Быстрый путь на каждый пуш: линтер + юнит-тесты (~1 мин), а на main ещё
+# и деплой на демо-сервер. Долгие проверки (интеграционные, безопасность,
+# сборка образов в раннере) вынесены в checks.yml и на пуш не запускаются.
 
 on:
   push:
     branches: ["**"]
-  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LLM_MODE: mock
+      # Приложение на старте создаёт бакет в S3. В раннере MinIO нет, а
+      # boto3 по умолчанию ретраит с бэкоффом: +24 с на тестах старта.
+      S3_ENDPOINT: http://127.0.0.1:9
+      AWS_MAX_ATTEMPTS: "1"
+      AWS_RETRY_MODE: standard
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
+
+      # uv вместо pip: ML-стек (lightgbm, pandas, pyarrow) ставится за секунды
+      # из кэша, а не за минуты.
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev,ml]"
+        run: uv pip install --system -e ".[dev,ml]"
 
       - name: Lint
         run: ruff check .
 
       - name: Tests
-        run: pytest -q
+        run: pytest -q -x -p no:cacheprovider
 
-  # Интеграционные проверки границ доступа: пользователь A не читает данные
-  # пользователя B, кэш не течёт между пользователями. Требуют настоящей базы,
-  # поэтому вынесены в отдельную задачу.
-  integration:
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: app
-          POSTGRES_PASSWORD: app
-          POSTGRES_DB: app
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U app -d app"
-          --health-interval 5s --health-timeout 3s --health-retries 10
-      redis:
-        image: redis:7-alpine
-        ports: ["6379:6379"]
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s --health-timeout 3s --health-retries 10
+    timeout-minutes: 20
+    # Деплой не отменяется новым пушем посреди `compose up`, а встаёт в очередь.
+    concurrency:
+      group: deploy-demo
+      cancel-in-progress: false
+    environment:
+      name: demo
+      url: http://89.126.192.240:3000
     env:
-      DATABASE_URL: postgresql+asyncpg://app:app@localhost:5432/app
-      REDIS_URL: redis://localhost:6379/0
-      APP_ENV: dev
-      LLM_MODE: mock
-      SEED_ON_START: "false"
+      DEPLOY_HOST: 89.126.192.240
+      DEPLOY_DIR: /opt/opentowork
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - run: pip install -e ".[dev]"
-      - name: Migrations
-        run: alembic upgrade head
-      - name: Authz and isolation tests
-        run: pytest -q -m integration
 
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      # Секреты в истории: дешевле поймать здесь, чем отзывать ключ потом.
-      - name: Secret scan
-        uses: gitleaks/gitleaks-action@v2
+      - name: SSH setup
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - run: pip install pip-audit bandit
-
-      # Известные уязвимости в зависимостях.
-      - name: Dependency audit
-        run: pip-audit --strict --desc
-
-      # Типовые ошибки безопасности в коде: небезопасные вызовы, слабые
-      # алгоритмы, захардкоженные секреты.
-      - name: Static analysis
-        run: bandit -q -r app -x app/scripts
-
-      # Уязвимости в базовом образе и системных пакетах.
-      - name: Build image for scan
-        run: docker build -f infra/docker/backend.Dockerfile -t hackalem-api:scan .
-      - name: Image vulnerability scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: hackalem-api:scan
-          severity: HIGH,CRITICAL
-          exit-code: "0" # пока не блокируем сборку, но результат виден в логе
-          format: table
-
-  build:
-    needs: [test, integration]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build backend image
-        run: docker build -f infra/docker/backend.Dockerfile -t hackalem-api:${{ github.sha }} .
-
-      # Фронтенд раньше не собирался в CI вообще — поломка вёрстки доезжала
-      # до развёртывания незамеченной.
-      - name: Build frontend image
-        run: docker build -f infra/docker/frontend.Dockerfile -t hackalem-frontend:${{ github.sha }} .
-
-      - name: Smoke test container
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
-          docker run -d --name api -p 8000:8000 \
-            -e RUN_MIGRATIONS=false -e SEED_ON_START=false \
-            hackalem-api:${{ github.sha }}
-          for i in $(seq 1 30); do
-            curl -sf http://localhost:8000/health && exit 0
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # Ключ хоста закреплён, а не берётся ssh-keyscan: иначе подменённый
+          # сервер молча получил бы код и доступ по ключу деплоя.
+          echo "$DEPLOY_HOST ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHRN1X5XNVoj2wDZEQZwFmT7yvU3JPz9cBHi+m5+esdI" > ~/.ssh/known_hosts
+
+      # .env и docker-compose.override.yml живут только на сервере:
+      # первый — конфигурация стенда, второй закрывает БД/Redis/MinIO на localhost.
+      - name: Sync code
+        run: |
+          rsync -az --delete \
+            --exclude .git --exclude .github --exclude .env \
+            --exclude docker-compose.override.yml \
+            --exclude node_modules --exclude frontend/dist \
+            --exclude artifacts/models/forecaster.pkl \
+            ./ root@$DEPLOY_HOST:$DEPLOY_DIR/
+
+      - name: Build and restart
+        run: |
+          ssh root@$DEPLOY_HOST bash -s <<EOF
+          set -euo pipefail
+          cd $DEPLOY_DIR
+          docker compose up -d --build --remove-orphans
+          for i in \$(seq 1 60); do
+            api=\$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/health || true)
+            web=\$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/ || true)
+            if [ "\$api" = 200 ] && [ "\$web" = 200 ]; then
+              echo "healthy: api=\$api web=\$web"
+              docker image prune -f >/dev/null
+              exit 0
+            fi
             sleep 2
           done
-          echo "health check failed"; docker logs api; exit 1
+          echo "health check failed: api=\$api web=\$web"
+          docker compose ps
+          docker compose logs --tail=80 api
+          exit 1
+          EOF
