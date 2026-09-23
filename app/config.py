@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     APP_ENV: Literal["dev", "staging", "prod"] = "dev"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = True
+    WIND_WEATHER_URL: str = "https://api.open-meteo.com/v1/forecast"
+    WIND_WEATHER_TIMEOUT_S: float = 20.0
+    WIND_WEATHER_CACHE_TTL_S: int = 900
+    WIND_WEATHER_CACHE_SIZE: int = 128
     # По умолчанию ВЫКЛЮЧЕН. Сид создаёт учётку с паролем из README — включать
     # только там, где это осознанно нужно (docker-compose, локальный кластер).
     SEED_ON_START: bool = False
