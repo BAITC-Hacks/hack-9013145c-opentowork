@@ -100,6 +100,27 @@ button:hover:not(:disabled) { border-color: var(--glacier); }
 .map-plane canvas, .map-over { position: absolute; left: 0; top: 0; }
 .map-over { pointer-events: none; }
 
+.scene-host, .scene-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.scene-canvas { display: block; touch-action: none; cursor: grab; }
+.scene-canvas:active { cursor: grabbing; }
+.scene-canvas:focus-visible { outline: 2px solid var(--glacier); outline-offset: -3px; }
+.scene-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--frost); background: #526572; font-size: 14px; }
+.scene-toolbar { position: absolute; z-index: 4; right: 15px; top: 194px; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,.2); border-radius: 6px; overflow: hidden; box-shadow: 0 4px 15px #13202b25; }
+.scene-toolbar button { width: 36px; height: 34px; padding: 0; border: 0; border-radius: 0; background: #15272cd9; color: #eff5f3; font-size: 22px; }
+.scene-toolbar button + button { border-top: 1px solid #ffffff20; }
+.scene-toolbar button:hover:not(:disabled) { background: #304952; }
+.scene-light { position: absolute; z-index: 4; left: 14px; bottom: 110px; display: flex; align-items: center; gap: 7px; background: #15272cdb; color: #eff5f3; border: 1px solid #ffffff25; border-radius: 5px; padding: 7px 10px; font-size: 11px; }
+.scene-light span { color: #eac68c; font-size: 16px; }
+.scene-caption { position: absolute; left: 15px; bottom: 86px; pointer-events: none; color: #283a44; text-shadow: 0 1px 4px #ffffffc0; font-size: 10px; font-family: var(--mono); }
+.scene-caption span { margin: 0 4px; }
+.map-realistic .turbine-label { background: #13242bed; border-color: #ffffff30; border-left-color: var(--glacier); border-radius: 4px; padding: 7px 10px; backdrop-filter: blur(8px); transition: background .2s; }
+.map-realistic .turbine-label.active { border-left-color: var(--sodium); background: #13242b; }
+@media (max-width: 720px) {
+  .scene-toolbar { right: 12px; top: 185px; }
+  .scene-light { bottom: 100px; font-size: 10px; }
+  .scene-caption { bottom: 80px; font-size: 8px; }
+}
+
 .turbine-label {
   position: absolute; left: 0; top: 0; z-index: 3; user-select: none;
   background: var(--ink); color: var(--frost); border: 1px solid var(--ink);

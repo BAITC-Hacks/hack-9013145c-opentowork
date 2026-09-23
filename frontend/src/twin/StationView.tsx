@@ -90,9 +90,9 @@ export default function StationView({
   const [tilt, setTilt] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
   const [layers, setLayers] = useState<Layers>({
-    speed: wind,
-    direction: wind,
-    wake: wind,
+    speed: false,
+    direction: false,
+    wake: false,
     terrain: true,
     solar: false,
   });
@@ -270,7 +270,7 @@ export default function StationView({
 
         {!selected && (
           <div className="float map-hint">
-            Нажмите на {wind ? "турбину" : "блок панелей"}, чтобы увидеть её показатели
+            Вращайте сцену мышью · Колесо — масштаб · Нажмите на {wind ? "турбину" : "блок панелей"}
           </div>
         )}
 
