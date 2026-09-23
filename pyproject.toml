@@ -26,6 +26,14 @@ dependencies = [
 
 [project.optional-dependencies]
 llm = ["anthropic>=0.40", "openai>=1.57"]
+# ML-контур прогноза ВЭС (windcast): python -m pip install -e ".[ml]"
+ml = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "pyarrow>=16",
+    "scikit-learn>=1.5",
+    "lightgbm>=4.3",
+]
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
