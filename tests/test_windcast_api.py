@@ -101,3 +101,19 @@ def test_bid_download(client):
     assert r.status_code == 200 and r.content[:4] == b"%PDF"
     assert client.get("/api/v1/bids/2026-02-07/file", params={"format": "exe"}).status_code == 422
     assert client.get("/api/v1/bids/..%2F..%2Fetc/file").status_code == 404
+
+
+EXPLAIN = FORECASTS_DIR.parent / "explain"
+
+
+@pytest.mark.skipif(not (EXPLAIN / "2026-02-07.json").exists(), reason="нет объяснений")
+def test_explain_endpoint(client):
+    body = client.get("/api/v1/explain", params={"origin": "2026-02-07T06:00:00"}).json()
+    assert body["origin"] == "2026-02-07T06:00:00Z"
+    assert len(body["hours"]) == 42 and body["summary"]
+    assert body["revision"]["summary"]
+    assert [v["origin"][11:16] for v in body["versions"]][0] == "00:00"
+    g = client.get("/api/v1/explain/global").json()
+    assert g["weather_models"] and g["power_curve"]["curves"]
+    other = client.get("/api/v1/explain", params={"origin": "2026-02-07", "station_id": "x"})
+    assert other.status_code == 404

@@ -50,6 +50,13 @@ def template_report(facts: dict) -> str:
         f"Поправка погоды: модель скорректировала прогноз ветра в среднем на "
         f"{a['wind_bias_correction_ms']:+.2f} м/с."
     )
+    top = (facts.get("explain") or {}).get("top_factors") or []
+    if top:
+        parts.append(
+            "Главные факторы поправки: "
+            + ", ".join(f"{t['label'].lower()} (±{t['mean_abs_wind_ms']:.2f} м/с)" for t in top)
+            + "."
+        )
     rev = facts.get("revision") or {}
     if rev.get("is_revision"):
         if rev["material"]:

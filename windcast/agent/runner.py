@@ -22,6 +22,7 @@ from windcast.config import (
     TEST_FIRST_ORIGIN,
     TEST_LAST_ORIGIN,
 )
+from windcast.explain import EXPLAIN_DIR, global_explain
 from windcast.models.ensemble import calibrate
 from windcast.pipeline import MODEL_VERSION, Forecaster, station_view
 
@@ -40,8 +41,12 @@ def train_final(until: str = TEST_FIRST_ORIGIN) -> dict:
     path = fc.save()
     # Кривая мощности станции для what-if в API — без ML-стека в образе API.
     (MODELS_DIR / "power_curve.json").write_text(
-        json.dumps({"ws": [float(v) for v in fc.raw_curve.ws],
-                    "power": [float(v) for v in fc.raw_curve.pw]}),
+        json.dumps(
+            {
+                "ws": [float(v) for v in fc.raw_curve.ws],
+                "power": [float(v) for v in fc.raw_curve.pw],
+            }
+        ),
         encoding="utf-8",
     )
     return {
@@ -123,6 +128,7 @@ def run_agent_day(
     day = pd.Timestamp(day).normalize()
     end = day + pd.Timedelta(hours=48)
     versions, published_pred, prev_origin = [], None, None
+    explained, prev_explain = [], None
     for h in runs:
         origin = day + pd.Timedelta(hours=h)
         horizon = int((end - origin) / pd.Timedelta(hours=1))
@@ -143,6 +149,15 @@ def run_agent_day(
         run = graph.run(fc, origin, horizon, previous=published_pred, reason=reason)
         doc = forecast_run_json(run, horizon)
         versions.append(doc)
+        if run.explanation is not None:
+            e = {**run.explanation, "forecast_id": run.run_id, "published": run.published}
+            if prev_explain is not None:
+                from windcast.explain import explain_revision
+
+                e["revision"] = explain_revision(prev_explain, e)
+            explained.append(e)
+            if run.published:
+                prev_explain = e
         if run.published:
             published_pred = run.prediction
         prev_origin = origin
@@ -153,7 +168,7 @@ def run_agent_day(
             for s in run.steps:
                 print(f"  [{s['status']:>4}] {s['agent']}: {s['action']}")
             print("  Отчёт:", run.report)
-    return {"day": str(day.date()), "versions": versions}
+    return {"day": str(day.date()), "versions": versions, "explanations": explained}
 
 
 def _submission_rows(day_doc: dict) -> list[dict]:
@@ -192,6 +207,12 @@ def run_test_period(
     index, rows = [], []
     for day in pd.date_range(first, last, freq="D"):
         doc = run_agent_day(day, fc=fc)
+        explanations = doc.pop("explanations", [])
+        EXPLAIN_DIR.mkdir(parents=True, exist_ok=True)
+        (EXPLAIN_DIR / f"{day.date()}.json").write_text(
+            json.dumps({"day": doc["day"], "versions": explanations}, ensure_ascii=False),
+            encoding="utf-8",
+        )
         (FORECASTS_DIR / f"{day.date()}.json").write_text(
             json.dumps(doc, ensure_ascii=False), encoding="utf-8"
         )
@@ -217,5 +238,8 @@ def run_test_period(
     official.to_csv(FORECASTS_DIR / "test_period_forecast.csv", index=False)
     (FORECASTS_DIR / "index.json").write_text(
         json.dumps(index, ensure_ascii=False, indent=1), encoding="utf-8"
+    )
+    (EXPLAIN_DIR / "global.json").write_text(
+        json.dumps(global_explain(fc), ensure_ascii=False), encoding="utf-8"
     )
     return {"days": len(index), "rows": len(sub), "official_rows": len(official)}

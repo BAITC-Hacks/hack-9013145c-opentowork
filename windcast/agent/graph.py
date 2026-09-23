@@ -11,8 +11,8 @@
 
 from __future__ import annotations
 
+import hashlib
 import time
-import uuid
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -21,7 +21,7 @@ import pandas as pd
 from windcast.agent import tools
 from windcast.agent.report import llm_report
 from windcast.metrics import QCOLS
-from windcast.pipeline import Forecaster
+from windcast.pipeline import MODEL_VERSION, Forecaster
 
 MAX_WEATHER_RETRIES = 2
 # Множители климатологии для P5…P95: интервал намеренно широкий, погоды нет.
@@ -43,7 +43,7 @@ def _climatology_fill(pred: pd.DataFrame, mask) -> None:
 class AgentRun:
     origin: pd.Timestamp
     horizon: int = 48
-    run_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
+    run_id: str = ""
     steps: list[dict] = field(default_factory=list)
     facts: dict = field(default_factory=dict)
     prediction: pd.DataFrame | None = None
@@ -51,6 +51,14 @@ class AgentRun:
     degraded: bool = False
     report: str = ""
     report_source: str = ""
+    explanation: dict | None = None
+
+    def __post_init__(self) -> None:
+        # Детерминированный id: тот же момент и горизонт → тот же прогноз и та же ссылка
+        # из черновика заявки после перезапуска.
+        if not self.run_id:
+            key = f"{self.origin.isoformat()}|{self.horizon}|{MODEL_VERSION}"
+            self.run_id = hashlib.sha1(key.encode()).hexdigest()[:12]
 
     def step(self, agent: str, action: str, status: str, t0: float, detail: str = "") -> None:
         self.steps.append(
@@ -204,6 +212,27 @@ def run(
         "warn" if a["n_ramps"] or a["wide_interval_hours"] else "ok",
         t0,
     )
+
+    t0 = time.time()
+    if r.degraded:
+        r.step("Объяснитель", "прогноз деградирован — объяснение модели не применимо", "warn", t0)
+    else:
+        from windcast.explain import explain_origin
+
+        r.explanation = explain_origin(fc, r.origin, horizon, archive)
+        top = [o for o in r.explanation["overall"] if o["mean_abs_wind_ms"] >= 0.05][:3]
+        r.facts["explain"] = {
+            "top_factors": [
+                {"label": o["label"], "mean_abs_wind_ms": o["mean_abs_wind_ms"]} for o in top
+            ],
+            "summary": r.explanation["summary"],
+        }
+        r.step(
+            "Объяснитель",
+            "главные факторы: " + ", ".join(o["label"].lower() for o in top),
+            "ok",
+            t0,
+        )
 
     t0 = time.time()
     rev = tools.compare_with_previous(pred, previous)

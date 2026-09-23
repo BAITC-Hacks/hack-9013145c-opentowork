@@ -1,142 +1,142 @@
 [
  {
   "day": "2026-02-01",
-  "total_mwh": 16.745,
+  "total_mwh": 16.979,
   "corrections": 1
  },
  {
   "day": "2026-02-02",
-  "total_mwh": 62.595,
-  "corrections": 11
+  "total_mwh": 62.669,
+  "corrections": 9
  },
  {
   "day": "2026-02-03",
-  "total_mwh": 20.635,
+  "total_mwh": 20.661,
   "corrections": 9
  },
  {
   "day": "2026-02-04",
-  "total_mwh": 34.746,
+  "total_mwh": 34.699,
   "corrections": 4
  },
  {
   "day": "2026-02-05",
-  "total_mwh": 114.132,
-  "corrections": 2
+  "total_mwh": 114.131,
+  "corrections": 1
  },
  {
   "day": "2026-02-06",
-  "total_mwh": 73.342,
+  "total_mwh": 73.415,
   "corrections": 8
  },
  {
   "day": "2026-02-07",
-  "total_mwh": 40.636,
+  "total_mwh": 40.45,
   "corrections": 13
  },
  {
   "day": "2026-02-08",
-  "total_mwh": 69.586,
+  "total_mwh": 69.452,
   "corrections": 8
  },
  {
   "day": "2026-02-09",
-  "total_mwh": 107.399,
-  "corrections": 4
+  "total_mwh": 107.479,
+  "corrections": 3
  },
  {
   "day": "2026-02-10",
-  "total_mwh": 29.771,
+  "total_mwh": 29.896,
   "corrections": 7
  },
  {
   "day": "2026-02-11",
-  "total_mwh": 70.356,
-  "corrections": 7
+  "total_mwh": 70.038,
+  "corrections": 5
  },
  {
   "day": "2026-02-12",
-  "total_mwh": 28.777,
+  "total_mwh": 28.691,
   "corrections": 9
  },
  {
   "day": "2026-02-13",
-  "total_mwh": 8.483,
+  "total_mwh": 8.601,
   "corrections": 4
  },
  {
   "day": "2026-02-14",
-  "total_mwh": 33.652,
+  "total_mwh": 33.746,
   "corrections": 11
  },
  {
   "day": "2026-02-15",
-  "total_mwh": 71.26,
+  "total_mwh": 71.211,
   "corrections": 6
  },
  {
   "day": "2026-02-16",
-  "total_mwh": 87.151,
-  "corrections": 18
+  "total_mwh": 87.08,
+  "corrections": 19
  },
  {
   "day": "2026-02-17",
-  "total_mwh": 52.702,
+  "total_mwh": 52.665,
   "corrections": 14
  },
  {
   "day": "2026-02-18",
-  "total_mwh": 104.165,
-  "corrections": 2
+  "total_mwh": 104.312,
+  "corrections": 3
  },
  {
   "day": "2026-02-19",
-  "total_mwh": 48.559,
+  "total_mwh": 48.764,
   "corrections": 11
  },
  {
   "day": "2026-02-20",
-  "total_mwh": 37.354,
+  "total_mwh": 37.581,
   "corrections": 14
  },
  {
   "day": "2026-02-21",
-  "total_mwh": 54.137,
+  "total_mwh": 54.477,
   "corrections": 11
  },
  {
   "day": "2026-02-22",
-  "total_mwh": 56.318,
+  "total_mwh": 56.211,
   "corrections": 17
  },
  {
   "day": "2026-02-23",
-  "total_mwh": 45.759,
+  "total_mwh": 45.884,
   "corrections": 3
  },
  {
   "day": "2026-02-24",
-  "total_mwh": 58.029,
+  "total_mwh": 58.273,
   "corrections": 1
  },
  {
   "day": "2026-02-25",
-  "total_mwh": 33.49,
-  "corrections": 18
+  "total_mwh": 33.459,
+  "corrections": 17
  },
  {
   "day": "2026-02-26",
-  "total_mwh": 70.761,
+  "total_mwh": 70.567,
   "corrections": 7
  },
  {
   "day": "2026-02-27",
-  "total_mwh": 71.884,
+  "total_mwh": 71.309,
   "corrections": 15
  },
  {
   "day": "2026-02-28",
-  "total_mwh": 79.517,
+  "total_mwh": 78.823,
   "corrections": 1
  }
 ]

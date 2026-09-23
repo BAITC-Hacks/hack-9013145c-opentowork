@@ -283,3 +283,68 @@ async def bid_file(day: str, format: str = Query("pdf", pattern="^(pdf|docx|csv|
 
     path = _bid_path(day, format)
     return FileResponse(path, media_type=BID_MEDIA[format], filename=path.name)
+
+
+# ─── Интерпретация прогноза (windcast/explain.py) ────────────────────────────
+
+EXPLAIN_DIR = FORECASTS_DIR.parent / "explain"
+
+
+@lru_cache(maxsize=64)
+def _explain_day(day: str) -> dict | None:
+    path = EXPLAIN_DIR / f"{day}.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def _live_explain(origin_iso: str) -> dict:
+    import pandas as pd
+
+    from windcast import live
+    from windcast.config import SITE_LAT, SITE_LON
+    from windcast.explain import explain_origin
+
+    origin = pd.Timestamp(origin_iso.rstrip("Z"))
+    archive = live.fetch_window(SITE_LAT, SITE_LON, origin, 48)
+    doc = explain_origin(live.forecaster(), origin, 48, archive)
+    doc["live"] = True
+    return doc
+
+
+@router.get("/explain")
+async def explain(
+    origin: str = Query(..., max_length=32),
+    station_id: str = Query("nurly", max_length=64),
+) -> dict:
+    """Почему прогноз такой: разбор по шагам каскада, вклады групп признаков (TreeSHAP),
+    причины ревизий. Тестовый период — из артефактов агента, иначе считается на лету."""
+    if station_id != "nurly":
+        raise NotFound("объяснение есть только для станции с обученной моделью (Нурлы)")
+    origin_iso = _normalize_origin(origin)
+    doc = _explain_day(origin_iso[:10])
+    if doc:
+        versions = doc["versions"]
+        exact = [v for v in versions if v["origin"] == origin_iso]
+        pub = [v for v in versions if v["published"] and v["origin"] <= origin_iso]
+        chosen = exact[0] if exact else (pub[-1] if pub else None)
+        if chosen:
+            return {
+                **chosen,
+                "versions": [
+                    {
+                        "origin": v["origin"],
+                        "published": v["published"],
+                        "revision": v.get("revision"),
+                    }
+                    for v in versions
+                ],
+            }
+    try:
+        return await run_in_threadpool(_live_explain, origin_iso)
+    except ImportError as exc:
+        raise NotFound("объяснение не найдено, а ML-стек для расчёта не установлен") from exc
+
+
+@router.get("/explain/global")
+async def explain_global() -> dict:
+    """Модель в целом: кривая мощности, важность групп признаков, доверие к погодным моделям."""
+    return _read(EXPLAIN_DIR / "global.json")
