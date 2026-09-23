@@ -1,7 +1,7 @@
 # 4. API
 
 Версионированный REST, база `/api/v1`. FastAPI даёт OpenAPI-схему бесплатно —
-`/docs` это ваша живая документация для технического эксперта (п. 5.6.3).
+`/docs` — живая документация API (Swagger).
 
 ## 4.1 Эндпоинты
 
@@ -154,5 +154,4 @@ GET /api/v1/entities?limit=20&cursor=<opaque>
 → { "items": [...], "next_cursor": "...", "has_more": true }
 ```
 
-Cursor-based, не offset — на больших таблицах offset деградирует, и это
-вопрос, который жюри с бэкенд-опытом иногда задаёт.
+Cursor-based, не offset: на больших таблицах offset деградирует.

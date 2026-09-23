@@ -1,8 +1,6 @@
 # 5. Деплой, контейнеризация, масштабирование
 
-Критерий «лёгкость деплоя» на техотборе проверяется буквально: эксперт клонирует репо,
-читает README, выполняет команды. Если не поднялось — команда выбывает без права
-на пояснения (п. 5.4.16). Поэтому цель: **одна команда от `git clone` до рабочего приложения.**
+Цель: **одна команда от `git clone` до рабочего приложения**, без внешних аккаунтов и ключей.
 
 ```bash
 git clone <repo> && cd <repo>
@@ -40,8 +38,8 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 Почему так:
-- **multi-stage** — образ ~200 МБ вместо ~1.2 ГБ; собирается и пушится быстрее (важно в CI на хакатоне).
-- **non-root user** — стандартное требование security-скана, спросят на техотборе.
+- **multi-stage** — образ ~200 МБ вместо ~1.2 ГБ; собирается и пушится быстрее .
+- **non-root user** — стандартное требование сканеров безопасности.
 - **HEALTHCHECK** — docker-compose и K8s знают, когда контейнер реально готов.
 - Один и тот же образ для API и воркера — меняется только команда запуска. Не нужно
   собирать два образа и синхронизировать зависимости.
@@ -187,7 +185,7 @@ lifecycle:
      Worker 1       Worker 2       Worker N      ← HPA по длине очереди (1→20)
 ```
 
-Ключевая мысль для жюри: **API и воркеры скейлятся независимо**. AI-нагрузка обычно
+Главное: **API и воркеры масштабируются независимо**. AI-нагрузка обычно
 упирается не в HTTP, а в LLM-вызовы; при всплеске растёт очередь, а не latency API.
 Именно это отличает архитектуру, рассчитанную на AI-трафик.
 
@@ -218,49 +216,36 @@ spec:
 
 ```mermaid
 graph LR
-    D["Push или PR"] --> L["Lint: ruff"]
-    L --> T["Type: mypy"]
-    T --> U["Unit tests: pytest"]
-    U --> I["Integration: testcontainers"]
-    I --> B["Docker build"]
-    B --> S["Trivy security scan"]
-    S --> R["Push to GHCR"]
-    R --> K["kubectl apply или helm upgrade"]
-    K --> H["Smoke test /health"]
+    P["Пуш в любую ветку"] --> T["ruff + pytest"]
+    T -->|только main| S["rsync на сервер"]
+    S --> B["docker compose up -d --build"]
+    B --> H["проверка :8000/health и :3000"]
+    PR["Pull request или ручной запуск"] --> I["интеграционные тесты"]
+    PR --> SEC["gitleaks, pip-audit, bandit, trivy"]
+    PR --> IMG["сборка образов + /health"]
 ```
 
-`.github/workflows/ci.yml` (минимум, который стоит иметь):
+Проверки разделены на быстрые и долгие, чтобы пуш доезжал до сервера за пару минут.
 
-```yaml
-name: CI
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env: { POSTGRES_PASSWORD: postgres }
-        options: >-
-          --health-cmd pg_isready --health-interval 10s --health-retries 5
-      redis:
-        image: redis:7-alpine
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
-      - run: uv sync
-      - run: uv run ruff check .
-      - run: uv run pytest -q
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: docker build -f infra/docker/backend.Dockerfile -t app:${{ github.sha }} .
-```
+**`.github/workflows/ci.yml`** — на каждый пуш:
+- `test`: `ruff check .` и `pytest -q`. Зависимости ставятся через `uv` с кэшем.
+  В тестах старта приложение пытается создать бакет в S3; переменные
+  `S3_ENDPOINT=http://127.0.0.1:9` и `AWS_MAX_ATTEMPTS=1` заставляют boto3 сразу получить
+  отказ вместо повторов с паузами.
+- `deploy` (ветка `main`, после `test`): `rsync` кода на сервер, `docker compose up -d --build`,
+  ожидание ответа `200` от API и фронтенда. Деплои идут строго по очереди.
+  Нужен секрет `DEPLOY_SSH_KEY`; ключ хоста сервера закреплён в workflow.
 
-Зелёный CI-бейдж в README — дешёвый и заметный сигнал качества для технического эксперта.
-Даже если тестов немного, факт работающего пайплайна отличает вас от большинства команд.
+**`.github/workflows/checks.yml`** — на pull request и вручную: интеграционные тесты
+с PostgreSQL и Redis, поиск секретов, аудит зависимостей, статический анализ,
+сборка образов бэкенда и фронтенда, проверка `/health` собранного образа, сканирование
+образа на уязвимости.
+
+**Быстрая пересборка.** В `infra/docker/backend.Dockerfile` обучение модели вынесено
+в отдельную стадию `model`, которая получает только входы обучения (`windcast/`,
+`datasets/`, `artifacts/weather/`, отчёт бэктеста, `artifacts/models/`). Правка в `app/`
+не перезапускает обучение: такая пересборка на сервере занимает около 10 секунд
+вместо ~85.
 
 ## 5.6 Конфигурация
 
@@ -288,7 +273,5 @@ AI-запросе во время демо.
 
 ## 5.7 Infrastructure as Code
 
-Terraform для облачных ресурсов (кластер, managed Postgres/Redis, бакет, registry, LB).
-Для хакатона достаточно `infra/terraform/` со скелетом и README-описанием — это
-предъявляется как продакшн-слой деплоя, даже если MVP крутится в docker-compose.
-Тратить на реальный `terraform apply` время соревновательной части не стоит.
+Не сделано: облачные ресурсы (кластер, managed Postgres/Redis, бакет, registry,
+балансировщик) описаны только манифестами Kubernetes, Terraform в репозитории нет.
