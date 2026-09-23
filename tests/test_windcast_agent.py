@@ -104,3 +104,71 @@ def test_report_without_key_is_template(monkeypatch):
 
 def test_number_extraction_for_llm_guard():
     assert _numbers("мощность 53% и 0,25 номинала, 12 ч") == {"53", "0.25", "12"}
+
+
+class _FakeState:
+    weights = {"cascade": 0.5, "direct": 0.5}
+
+
+class _FakeFc:
+    state = _FakeState()
+
+
+def _full_pred(origin, hours=48):
+    p = _pred(origin=str(origin), hours=hours)
+    for c in ("mean", "raw_nwp_curve", "wind_corrected", "wind_nwp"):
+        p[c] = 0.5
+    p["climatology"] = 0.3
+    return p
+
+
+def _wire_agent(monkeypatch, qa_ok, pred_fn):
+    from windcast.agent import graph
+
+    calls = {"fetch": [], "forecast": []}
+
+    def fetch(origin, horizon, archive=None):
+        calls["fetch"].append(pd.Timestamp(origin))
+        return pd.DataFrame(), {"hub_models_ok": ["a", "b"], "nwp_days_used": [1]}
+
+    def run_forecast(fc, origin, horizon, archive=None):
+        calls["forecast"].append(pd.Timestamp(origin))
+        return pred_fn(origin)
+
+    qa = {"ok": qa_ok, "issues": [] if qa_ok else ["ветер вне диапазона"], "warnings": []}
+    monkeypatch.setattr(graph.tools, "fetch_weather", fetch)
+    monkeypatch.setattr(graph.tools, "qa_check", lambda x, meta: qa)
+    monkeypatch.setattr(graph.tools, "run_forecast", run_forecast)
+    monkeypatch.setattr(graph, "llm_report", lambda facts: ("отчёт", "template"))
+    return graph, calls
+
+
+ORIGIN = pd.Timestamp("2026-02-07 00:00")
+
+
+def test_failed_qa_never_feeds_unchecked_weather_to_model(monkeypatch):
+    graph, calls = _wire_agent(monkeypatch, False, lambda o: _full_pred(ORIGIN))
+    r = graph.run(_FakeFc(), ORIGIN, 48)
+    # Прогноз считается на последнем выпуске, который проходил qa_check, а не на ещё более старом.
+    assert calls["forecast"][0] == calls["fetch"][-1]
+    assert r.degraded and not r.facts["qa_passed"]
+    assert (r.prediction["q50"] == 0.3).all()  # модель заменена климатологией целиком
+
+
+def test_fallback_curve_gaps_filled_and_rechecked(monkeypatch):
+    def bad(o):
+        p = _full_pred(ORIGIN)
+        p["q90"] = p["q10"] - 0.1  # критик забракует модель
+        p.iloc[:5, p.columns.get_loc("raw_nwp_curve")] = np.nan
+        return p
+
+    graph, _ = _wire_agent(monkeypatch, True, bad)
+    r = graph.run(_FakeFc(), ORIGIN, 48)
+    assert r.degraded and r.facts["fallback_critic"]["ok"]
+    assert not r.prediction[QS].isna().any().any()
+
+
+def test_unusable_fallback_raises_instead_of_publishing(monkeypatch):
+    graph, _ = _wire_agent(monkeypatch, True, lambda o: _full_pred(ORIGIN, hours=40))
+    with pytest.raises(graph.AgentFailure):
+        graph.run(_FakeFc(), ORIGIN, 48)

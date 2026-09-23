@@ -32,6 +32,12 @@ async def _call(fn, *args):
     except (OSError, ValueError, KeyError) as exc:
         # Open-Meteo недоступен или ответил не тем форматом — не 500, а понятная причина.
         raise ServiceUnavailable(f"погодный сервис недоступен: {type(exc).__name__}") from exc
+    except RuntimeError as exc:
+        from windcast.agent.graph import AgentFailure
+
+        if isinstance(exc, AgentFailure):
+            raise ServiceUnavailable(str(exc)) from exc
+        raise
 
 
 def _origin(origin: str | None):

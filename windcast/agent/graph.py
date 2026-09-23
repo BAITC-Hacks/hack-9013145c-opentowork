@@ -3,7 +3,9 @@
 Переходы — явные правила, а не «LLM решит»: так агент воспроизводим без ключа.
 Решения, которые принимает граф:
   - qa провалена         → повтор с более старым выпуском погоды (сдвиг origin на −6 ч)
-  - critic провален      → запасной прогноз (сырой прогноз ветра + кривая), флаг degraded
+  - qa провалена везде   → модели не верим: климатология, флаг degraded
+  - critic провален      → запасной прогноз (сырой прогноз ветра + кривая), флаг degraded;
+                           запасной прогноз проверяется тем же критиком, не прошёл — AgentFailure
   - ревизия не существенна → версия не публикуется, остаётся предыдущая
 """
 
@@ -13,6 +15,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 
+import numpy as np
 import pandas as pd
 
 from windcast.agent import tools
@@ -21,6 +24,19 @@ from windcast.metrics import QCOLS
 from windcast.pipeline import Forecaster
 
 MAX_WEATHER_RETRIES = 2
+# Множители климатологии для P5…P95: интервал намеренно широкий, погоды нет.
+CLIM_BANDS = (0.1, 0.25, 0.6, 1.0, 1.4, 1.75, 1.9)
+
+
+class AgentFailure(RuntimeError):
+    """Ни основной, ни запасной прогноз не прошли проверку — публиковать нечего."""
+
+
+def _climatology_fill(pred: pd.DataFrame, mask) -> None:
+    clim = pred.loc[mask, "climatology"].to_numpy()
+    for c, k in zip(QCOLS, CLIM_BANDS, strict=True):
+        pred.loc[mask, c] = (clim * k).clip(0, 1)
+    pred.loc[mask, "mean"] = clim
 
 
 @dataclass
@@ -66,6 +82,7 @@ def run(
     )
 
     effective_origin = r.origin
+    qa_passed = False
     for attempt in range(MAX_WEATHER_RETRIES + 1):
         t0 = time.time()
         shift_h = int((r.origin - effective_origin) / pd.Timedelta(hours=1))
@@ -80,6 +97,7 @@ def run(
         t0 = time.time()
         qa = tools.qa_check(x, meta)
         if qa["ok"]:
+            qa_passed = True
             r.step(
                 "Контроль качества",
                 "; ".join(qa["warnings"]) or "данные в норме",
@@ -87,16 +105,23 @@ def run(
                 t0,
             )
             break
+        last = attempt == MAX_WEATHER_RETRIES
         r.step(
             "Контроль качества",
             "; ".join(qa["issues"]),
             "fail",
             t0,
-            detail=f"попытка {attempt + 1}: откат на предыдущий выпуск",
+            detail="повторы исчерпаны: прогноз по климатологии"
+            if last
+            else f"попытка {attempt + 1}: откат на предыдущий выпуск",
         )
-        effective_origin = effective_origin - pd.Timedelta(hours=6)
+        # Сдвигаем только перед следующей попыткой: прогноз должен считаться
+        # на том выпуске, который реально прошёл через qa_check.
+        if not last:
+            effective_origin = effective_origin - pd.Timedelta(hours=6)
     r.facts["weather"] = meta
     r.facts["qa"] = qa
+    r.facts["qa_passed"] = qa_passed
 
     t0 = time.time()
     shift_h = int((r.origin - effective_origin) / pd.Timedelta(hours=1))
@@ -112,19 +137,18 @@ def run(
         t0,
     )
 
-    # Часы, где погоды нет даже после отката: модели на пустых признаках не верим —
-    # ставим климатологию с широким интервалом и помечаем прогноз как деградированный.
-    no_wx = pred["wind_nwp"].isna().to_numpy()
+    # Часы, где погоды нет даже после отката, и все часы, если погода не прошла qa:
+    # модели на таких признаках не верим — климатология с широким интервалом.
+    no_wx = pred["wind_nwp"].isna().to_numpy() if qa_passed else np.ones(len(pred), dtype=bool)
     if no_wx.any():
         t0 = time.time()
         r.degraded = True
-        clim = pred.loc[no_wx, "climatology"].to_numpy()
-        for c, k in zip(QCOLS, (0.1, 0.25, 0.6, 1.0, 1.4, 1.75, 1.9), strict=True):
-            pred.loc[no_wx, c] = (clim * k).clip(0, 1)
-        pred.loc[no_wx, "mean"] = clim
+        _climatology_fill(pred, no_wx)
+        n_h = int(no_wx.sum() // pred["turbine"].nunique())
+        why = "нет погоды" if qa_passed else "погода не прошла контроль"
         r.step(
             "Прогнозист",
-            f"нет погоды на {int(no_wx.sum() // pred['turbine'].nunique())} ч → климатология",
+            f"{why} на {n_h} ч → климатология",
             "fail",
             t0,
         )
@@ -134,8 +158,34 @@ def run(
     if not crit["ok"]:
         r.degraded = True
         for c in QCOLS:
-            pred[c] = pred["raw_nwp_curve"]
-        r.step("Критик", "; ".join(crit["problems"]) + " → запасной прогноз по кривой", "fail", t0)
+            pred[c] = pred["raw_nwp_curve"].clip(0, 1)
+        pred["mean"] = pred["q50"]
+        # Кривая по сырому ветру тоже бывает пустой — эти часы закрываем климатологией.
+        gaps = pred["q50"].isna().to_numpy()
+        if gaps.any():
+            _climatology_fill(pred, gaps)
+        recheck = tools.critic(pred, horizon)
+        r.facts["fallback_critic"] = recheck
+        if not recheck["ok"]:
+            r.step(
+                "Критик",
+                "; ".join(crit["problems"])
+                + " → запасной прогноз тоже не прошёл: "
+                + "; ".join(recheck["problems"]),
+                "fail",
+                t0,
+            )
+            raise AgentFailure(
+                "Прогноз не выпущен: основной и запасной варианты не прошли проверку ("
+                + "; ".join(recheck["problems"])
+                + ")"
+            )
+        r.step(
+            "Критик",
+            "; ".join(crit["problems"]) + " → запасной прогноз по кривой, перепроверен",
+            "fail",
+            t0,
+        )
     else:
         r.step(
             "Критик",

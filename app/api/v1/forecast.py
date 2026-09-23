@@ -17,7 +17,7 @@ from fastapi import APIRouter, Query
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
-from app.errors import NotFound, ValidationFailed
+from app.errors import NotFound, ServiceUnavailable, ValidationFailed
 from windcast.config import FORECASTS_DIR, MODELS_DIR, REPORTS_DIR, TURBINES
 
 router = APIRouter(tags=["forecast"])
@@ -134,12 +134,15 @@ def _live_run(origin_iso: str, horizon: int) -> dict:
     from windcast.agent import graph
     from windcast.agent.runner import _load_or_train, forecast_run_json
 
-    run = graph.run(
-        _load_or_train(),
-        pd.Timestamp(origin_iso.rstrip("Z")),
-        horizon,
-        reason="ручной запуск из интерфейса",
-    )
+    try:
+        run = graph.run(
+            _load_or_train(),
+            pd.Timestamp(origin_iso.rstrip("Z")),
+            horizon,
+            reason="ручной запуск из интерфейса",
+        )
+    except graph.AgentFailure as e:
+        raise ServiceUnavailable(str(e), {"forecast_origin": origin_iso}) from e
     doc = forecast_run_json(run, horizon)
     doc["live"] = True
     from app.wind.forecast_store import remember
