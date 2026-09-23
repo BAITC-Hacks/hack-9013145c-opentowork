@@ -160,9 +160,11 @@
 | `WindMap.tsx` | Ленивая загрузка WebGL-сцены и переход на canvas при недоступности WebGL |
 | `LegacyWindMap.tsx` | Прежняя canvas-карта, общие типы слоёв и шкала скорости |
 | `scene/Scene.tsx` | Three.js-рендерер, камера, свет, тени, выбор агрегатов и отображение слоёв прогноза |
+| `scene/picking.ts` | Выбор турбин по экранному силуэту башни и области ротора с допуском в CSS-пикселях |
 | `scene/turbines.ts` | Процедурные модели турбин и солнечных панелей |
 | `scene/terrain.ts` | Рельеф, текстуры поверхности, дороги, площадки, камни и трава |
 | `StationView.tsx`, `twin.css` | Переключатели слоёв, управление и оформление сцены |
+| `Predictions.tsx`, `predictions.css` | Раздел «Прогнозы»: сводка парка, таблица станций, подробный прогноз с P10–P90 и шагами агента |
 | `design.css` | Светлая тема рабочего пространства, адаптивная навигация и карточки, оформление ВЭС/СЭС |
 | `flow-refresh.css` | Главная с прямыми входами в ветер, солнце и городские крыши; карточки выбора |
 | `scene/infrastructure.ts` | Сервисный корпус, подстанция, ограждения, парковка и оборудование станции |
@@ -182,6 +184,12 @@
 
 ## Справочник ВЭС Казахстана
 
+`frontend/src/twin/SceneBoundary.tsx` — изоляция ошибки загрузки/рендера 3D с 2D fallback.
+
+`tests/test_forecast_copilot.py` — проверки расчётных ответов и изоляции выпусков без БД/сети.
+
+`app/wind/copilot.py` — анализ выбранного прогноза и сценария для AIOrchestrator.
+
 `app/wind/forecast_store.py` — временная память живых прогнозов для сценариев и объяснения.
 
 | Файл | Назначение |
@@ -189,7 +197,12 @@
 | `app/wind/data/kz_wind_farms.json` | 83 ВЭС: реестр Минэнерго (QazaqGreen, январь 2026) + координаты турбин из OSM. **Лежит в репозитории** |
 | `app/wind/catalog.py` | Загрузка JSON в `wind_farms` / `wind_turbines` (целиком, справочник) |
 | `migrations/versions/0004_wind_farms.py` | Таблицы справочника и его первичная загрузка — не зависит от `SEED_ON_START` |
-| `app/api/v1/stations.py` | `GET /api/v1/stations`, `GET /api/v1/stations/{id}` в формате `Station` фронтенда |
+| `app/api/v1/stations.py` | `GET /api/v1/stations`, `GET /api/v1/stations/{id}` в формате `Station` фронтенда; `GET /stations/{id}/units/{unit}/history` — SCADA Нурлы; `GET /stations/{id}/wind` — ветер у станции |
+| `app/wind/weather.py` | Ветер у станции из Open-Meteo (10/100 м, порывы, Бофорт, сдвиг α), кэш в памяти; `python -m app.wind.weather` пересобирает снимок |
+| `app/wind/data/wind_snapshot.json` | Снимок ветра у Нурлы на тестовый период — `/stations/nurly/wind` работает офлайн |
+| `frontend/src/twin/WindPanel.tsx`, `windpanel.css` | Панель «Ветер у станции» на экране станции |
+| `app/api/v1/predictions.py` | `GET /predictions/run` (прогноз любой станции на любой момент/сейчас), `GET /predictions/overview` (живая сводка по всем ВЭС) |
+| `windcast/live.py` | Погода Open-Meteo на лету под координаты; ML-прогноз Нурлы, кривая мощности для прочих ВЭС, физика для СЭС, кэш 30 мин |
 | `scripts/fetch_wind_farms.py` | Пересобрать JSON (Overpass + реестр + ручные сопоставления `CURATED`); вручную, не при старте. Новые данные в БД — новой миграцией или `catalog.sync` |
 | `frontend/src/twin/KzMap.tsx`, `kzmap.css` | Карта Казахстана на экране выбора ВЭС: точки станций, карточка с данными |
 | `frontend/src/twin/kz_outline.json` | Контур страны, Natural Earth 1:50m |
