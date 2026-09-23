@@ -106,3 +106,33 @@
 .roof-scene-tools { align-items: flex-end; }
 .roof-scene-tools button { width: 38px; height: 38px; min-width: 38px; min-height: 38px; padding: 0; }
 .roof-scene-tools button.roof-view-button { width: 85px; height: 34px; min-height: 34px; padding: 7px; }
+
+/* Real city navigation stays available while district calculations load. */
+.roof-city-switch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 20px 0 0; }
+.roof-city-switch button { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 15px 40px 15px 17px; border: 1px solid #dde4e2; border-radius: 12px; background: #ffffffa8; color: #34473f; text-align: left; transition: background .15s, border-color .15s; }
+.roof-city-switch button > span:first-child { font-size: 15px; font-weight: 650; }
+.roof-city-switch button small { font-size: 10px; color: #78867e; line-height: 1.4; }
+.roof-city-switch button:hover { border-color: #91a89b; background: #f5f8f2; }
+.roof-city-switch button[aria-pressed="true"] { background: #edf3e8; border-color: #71896a; box-shadow: inset 0 0 0 1px #71896a; }
+.roof-city-switch .roof-city-arrow { position: absolute; right: 16px; top: 17px; font-size: 18px; color: #72926c; }
+.roof-data-status { display: flex; align-items: center; gap: 12px; min-height: 68px; font-size: 12px; color: #657368; }
+.roof-data-status button { margin-left: auto; flex-shrink: 0; }
+.roof-data-details { margin-top: 20px; padding: 15px 18px; border: 1px solid #dfe5df; border-radius: 10px; background: #ffffff90; color: #667369; font-size: 11px; line-height: 1.8; }
+.roof-data-details summary { cursor: pointer; color: #455947; font-size: 12px; font-weight: 550; }
+.roof-data-details a { color: #42663e; text-underline-offset: 3px; }
+.roof-view-switch { flex-shrink: 0; }
+.roof-view-switch button { white-space: nowrap; padding: 6px 9px; }
+@media (max-width: 1050px) { .roof-toolbar { align-items: flex-start; flex-wrap: wrap; } }
+@media (max-width: 600px) { .roof-city-switch { gap: 6px; } .roof-city-switch button { padding: 12px 10px; } .roof-city-switch button > span:first-child { font-size: 13px; } .roof-city-switch button small { font-size: 9px; } .roof-city-switch .roof-city-arrow { display: none; } }
+
+.rooftops-page .place-head .flow-q { margin: 0; font-size: clamp(24px, 2.2vw, 31px); }
+.rooftops-page .flow-sub { margin: 10px 0 0; max-width: 1000px; }
+.rooftops-page .roof-eyebrow { margin-bottom: 6px; }
+.roof-city-switch { margin-top: 16px; }
+.roof-city-switch button { padding-top: 11px; padding-bottom: 11px; }
+.roof-kpis { margin: 14px 0; gap: 10px; }
+.roof-kpis > div { padding: 10px 15px; }
+.roof-kpis > div:first-child { padding-top: 8px; }
+.roof-kpis b { font-size: 24px; }
+.roof-toolbar { padding-top: 14px; padding-bottom: 10px; }
+.roof-layers { padding-bottom: 12px; }

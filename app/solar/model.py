@@ -25,6 +25,11 @@ from functools import lru_cache
 from pathlib import Path
 
 DATA_FILE = Path(__file__).parent / "data" / "astana_left_bank.json"
+CITY_FILES = {
+    "astana": DATA_FILE,
+    "almaty": DATA_FILE.parent / "almaty_center.json",
+    "shymkent": DATA_FILE.parent / "shymkent_center.json",
+}
 
 ASSUMPTIONS = {
     "usable_roof_share_flat": 0.6,  # парапеты, выходы, вентиляция, проходы
@@ -262,7 +267,8 @@ def horizon_profile(
         if dist < 1 or dist > radius:
             continue
         elev = math.atan2(dh, dist)
-        k = int((math.degrees(math.atan2(dx, dy)) % 360) // AZ_BIN_DEG)
+        # A tiny negative angle can round to exactly 360 after float modulo.
+        k = int((math.degrees(math.atan2(dx, dy)) % 360) // AZ_BIN_DEG) % len(bins)
         if elev > bins[k]:
             bins[k] = elev
     return bins
@@ -275,7 +281,7 @@ def shaded_share(horizon: list[float], path: list[SunSample]) -> float:
     blocked = sum(
         s.weight
         for s in path
-        if s.altitude < horizon[int((math.degrees(s.azimuth) % 360) // AZ_BIN_DEG)]
+        if s.altitude < horizon[int((math.degrees(s.azimuth) % 360) // AZ_BIN_DEG) % len(horizon)]
     )
     return blocked / total
 
@@ -398,13 +404,31 @@ def compute_district(data: dict) -> dict:
         r["notes"] = _notes(r, large)
 
     total_kwh = sum(r["kwh_year"] for r in results)
+    candidate_ids = {r["id"] for r in results}
+    context_buildings = []
+    for roof, raw in zip(roofs, data["buildings"], strict=True):
+        if roof.id in candidate_ids:
+            continue
+        item = {
+            "id": roof.id, "name": roof.name, "type": roof.type, "polygon": roof.polygon,
+            "height_m": roof.height_m, "height_source": roof.height_source,
+            "min_height_m": min(roof.height_m, _max_number(raw.get("min_height")) or 0.0),
+            "roof_shape": roof.roof_shape,
+        }
+        roof_height = _max_number(raw.get("roof_height"))
+        if roof_height is not None:
+            item["roof_height_m"] = min(roof.height_m, roof_height)
+        context_buildings.append(item)
     return {
+        "city_id": data.get("city_id", "astana"),
+        "city_name": data.get("city_name", "Астана"),
         "district": data["district"],
         "bbox": data["bbox"],
         "sources": {
             "buildings": data["buildings_source"],
             "irradiance": irr["source"],
             "fetched": data["fetched"],
+            "osm_snapshot": data.get("osm", {}).get("timestamp"),
         },
         "irradiance": irr,
         "assumptions": ASSUMPTIONS,
@@ -418,9 +442,20 @@ def compute_district(data: dict) -> dict:
             "top10_mwh_year": round(sum(r["kwh_year"] for r in results[:10]) / 1000),
         },
         "buildings": results,
+        "context_buildings": context_buildings,
+        "environment": data.get("environment", {"roads": [], "areas": []}),
     }
 
 
-@lru_cache(maxsize=1)
-def district_rooftops() -> dict:
-    return compute_district(json.loads(DATA_FILE.read_text()))
+@lru_cache(maxsize=3)
+def district_rooftops(city: str = "astana") -> dict:
+    if city not in CITY_FILES:
+        raise ValueError(f"Unknown solar city: {city}")
+    data = json.loads(CITY_FILES[city].read_text())
+    if data.get("city_id", "astana") != city:
+        raise ValueError(f"Solar snapshot does not belong to {city}")
+    south, west, north, east = data["bbox"]
+    irr = data["irradiance"]
+    if not (south <= irr["lat"] <= north and west <= irr["lon"] <= east):
+        raise ValueError(f"PVGIS location is outside the {city} district")
+    return compute_district(data)

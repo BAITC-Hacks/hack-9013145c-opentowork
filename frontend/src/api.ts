@@ -334,11 +334,35 @@ export interface Rooftop {
   polygon: [number, number][]; // [lat, lon]
 }
 
+export type RooftopCity = "astana" | "almaty" | "shymkent";
+
+export interface RooftopEnvironment {
+  roads: {
+    id: string;
+    name?: string;
+    kind: string;
+    width_m: number;
+    width_source?: "osm_width" | "assumed_from_lanes" | "assumed_by_kind";
+    lanes?: number;
+    bridge?: boolean;
+    tunnel?: boolean;
+    coordinates: [number, number][];
+  }[];
+  areas: { id: string; kind: string; polygon: [number, number][] }[];
+  source?: string;
+  notes?: string[];
+  skipped_polygon_features?: number;
+}
+
 export interface RooftopsResponse {
+  city_id?: RooftopCity;
+  city_name?: string;
   district: string;
   bbox: [number, number, number, number]; // south, west, north, east
-  sources: { buildings: string; irradiance: string; fetched: string };
+  sources: { buildings: string; irradiance: string; fetched: string; osm_snapshot?: string | null };
   irradiance: {
+    lat?: number;
+    lon?: number;
     tilt_deg: number;
     kwh_per_kwp_year: number;
     months: { month: number; kwh_per_kwp: number; diffuse_share: number }[];
@@ -352,6 +376,18 @@ export interface RooftopsResponse {
     top10_mwh_year: number;
   };
   buildings: Rooftop[];
+  context_buildings?: {
+    id: string;
+    name?: string | null;
+    type?: string | null;
+    polygon: [number, number][];
+    height_m: number;
+    height_source?: "osm_height" | "osm_levels" | "assumed";
+    min_height_m: number;
+    roof_shape: string | null;
+    roof_height_m?: number;
+  }[];
+  environment?: RooftopEnvironment;
 }
 
 const TOKEN_KEY = "hackalem.token";
@@ -410,6 +446,62 @@ export interface WindSimulation {
   }[];
   assumptions: string[];
 }
+
+// ─── Заявка на продажу в РФЦ (windcast/submission.py) ───────────────────────
+// Черновик на операционные сутки D из прогноза, опубликованного до 08:00 D−1.
+
+export interface BidSummary {
+  day: string; // операционные сутки, YYYY-MM-DD
+  total_mwh: number;
+  corrections: number;
+}
+
+export interface BidHour {
+  hour: number; // час формы 1..24
+  interval_local: string;
+  utc_start: string;
+  mw: number;
+  p10_mw: number;
+  p90_mw: number;
+  wind_ms: number;
+  wind_spread_ms: number;
+  horizon_h: number;
+  icing: boolean;
+}
+
+export interface BidCorrection {
+  decided_at_local: string;
+  weather_run_origin: string;
+  hour: number;
+  interval_local: string;
+  direction: string;
+  volume_mw: number;
+  was_mw: number;
+  new_mw: number;
+  submit_before_local: string;
+  partial_allowed: boolean;
+}
+
+export interface Bid {
+  operational_day: string;
+  deadline_local: string;
+  prepared_at_local: string;
+  sender: string;
+  counterparty: string;
+  operation: string;
+  installed_mw: number;
+  forecast_id: string;
+  model_version: string;
+  weather_run: string;
+  hours: BidHour[];
+  total_mwh: number;
+  corrections: BidCorrection[];
+  risks: string[];
+  assumptions: string[];
+  agent_summary?: string;
+}
+
+export type BidFormat = "pdf" | "docx" | "csv" | "json";
 
 export const token = {
   get: () => localStorage.getItem(TOKEN_KEY),
@@ -518,6 +610,12 @@ export const api = {
 
   explainGlobal: () => request<GlobalExplanation>("/explain/global"),
 
+  bids: () => request<BidSummary[]>("/bids"),
+  bid: (day: string) => request<Bid>(`/bids/${encodeURIComponent(day)}`),
+  // Файл отдаётся без токена (как и остальной /forecast-контур) — хватает обычной ссылки.
+  bidFileUrl: (day: string, format: BidFormat) =>
+    `/api/v1/bids/${encodeURIComponent(day)}/file?format=${format}`,
+
   stationWind: (stationId: string, origin: string, horizon: number) =>
     request<StationWind>(
       `/stations/${encodeURIComponent(stationId)}/wind?origin=${encodeURIComponent(origin)}&horizon=${horizon}`,
@@ -536,7 +634,8 @@ export const api = {
 
   predictionsOverview: (horizon = 48) => request<Overview>(`/predictions/overview?horizon=${horizon}`),
 
-  rooftops: () => request<RooftopsResponse>("/solar/rooftops"),
+  rooftops: (city: RooftopCity = "astana") =>
+    request<RooftopsResponse>(`/solar/rooftops?city=${encodeURIComponent(city)}`),
 
   simulate: (forecastId: string, windChangePct: number, horizon = 48) =>
     request<SimulationResult>("/simulation", {

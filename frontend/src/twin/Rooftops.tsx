@@ -3,8 +3,10 @@ import { api, ApiError } from "../api";
 import type { Rooftop, RooftopsResponse } from "../api";
 import type { Route } from "./data";
 import SceneBoundary from "./SceneBoundary";
+import { CITIES, type CityId } from "./cities";
 import "./rooftops.css";
 
+const CityMap = lazy(() => import("./scene/CityMap"));
 const RooftopScene = lazy(() => import("./scene/RooftopScene"));
 type Metric = "materials" | "energy" | "quality";
 
@@ -42,16 +44,46 @@ function rampRgb(f: number, quality = false): string {
   return `rgb(${lo.map((c, i) => Math.round(c + (hi[i] - c) * t)).join(",")})`;
 }
 
-function useRooftops() {
-  const [data, setData] = useState<RooftopsResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+const roofCache = new Map<CityId, RooftopsResponse>();
+function useRooftops(city: CityId) {
+  const [result, setResult] = useState<{ city: CityId; data: RooftopsResponse | null; error: string | null }>({ city, data: null, error: null });
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    api
-      .rooftops()
-      .then(setData)
-      .catch((e) => setError(e instanceof ApiError ? e.message : String(e)));
-  }, []);
-  return { data, error };
+    let active = true;
+    const cached = roofCache.get(city);
+    setResult({ city, data: cached ?? null, error: null });
+    if (!cached) api.rooftops(city).then((data) => {
+      // Never label a stale backend's Astana response as a different city.
+      if ((data.city_id ?? "astana") !== city) throw new Error("Обновите API: данные выбранного города ещё не загружены.");
+      roofCache.set(city, data);
+      if (active) setResult({ city, data, error: null });
+    }).catch((e) => {
+      if (active) setResult({ city, data: null, error: e instanceof ApiError ? e.message : String(e) });
+    });
+    return () => { active = false; };
+  }, [city, attempt]);
+  return { data: result.city === city ? result.data : null, error: result.city === city ? result.error : null, retry: () => setAttempt((n) => n + 1) };
+}
+
+export default function Rooftops({ go }: { go: (r: Route) => void }) {
+  const [city, setCity] = useState<CityId>("astana");
+  const { data, error, retry } = useRooftops(city);
+  const current = CITIES.find((c) => c.id === city)!;
+  return <div className="flow wide rooftops-page">
+    <div className="place-head">
+      <div><span className="roof-eyebrow">ГОРОД И СОЛНЕЧНАЯ ЭНЕРГИЯ</span><h1 className="flow-q">Город и солнечный потенциал</h1></div>
+      <span className="roof-district-badge">{current.name} · Казахстан</span>
+    </div>
+    <p className="flow-sub">Настоящие улицы, парки и контуры зданий. Исследуйте город целиком или приблизьтесь к крышам расчётного района.</p>
+    <div className="roof-city-switch" role="group" aria-label="Выберите город">
+      {CITIES.map((c) => <button key={c.id} aria-pressed={city === c.id} onClick={() => setCity(c.id)}><span>{c.name}</span><small>{c.subtitle}</small><span className="roof-city-arrow" aria-hidden="true">↗</span></button>)}
+    </div>
+    {data ? <RooftopWorkspace key={city} go={go} city={city} data={data} /> : <>
+      <div className="roof-data-status" role="status">{error ? <><span>Расчёт крыш недоступен: {error}</span><button className="ghost" onClick={retry}>Повторить</button></> : <><span className="spin" /> Загружаем здания и считаем солнечный потенциал {current.name === "Астана" ? "Астаны" : current.name === "Шымкент" ? "Шымкента" : "Алматы"}…</>}</div>
+      <SceneBoundary key={city} fallback={<div className="roof-scene roof-scene-loading">Не удалось открыть карту. Выберите другой город или обновите страницу.</div>}><Suspense fallback={<div className="roof-scene roof-scene-loading"><span className="spin" /> Загружаем карту…</div>}><CityMap city={city} data={null} selected={null} metric="materials" onSelect={() => {}} onUnavailable={retry} /></Suspense></SceneBoundary>
+      <button className="back" onClick={() => go({ page: "kind", mode: "place" })}>← Назад</button>
+    </>}
+  </div>;
 }
 
 interface View {
@@ -60,8 +92,8 @@ interface View {
   w: number;
 }
 
-export default function Rooftops({ go }: { go: (r: Route) => void }) {
-  const { data, error } = useRooftops();
+function RooftopWorkspace({ go, city, data }: { go: (r: Route) => void; city: CityId; data: RooftopsResponse }) {
+  const [showCity, setShowCity] = useState(true);
   const [sceneMetric, setSceneMetric] = useState<Metric>("materials");
   const metric = sceneMetric === "quality" ? "quality" : "energy";
   const [sceneAvailable, setSceneAvailable] = useState(true);
@@ -83,7 +115,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
     const paths = new Map(
       data.buildings.map((b) => [b.id, "M" + b.polygon.map((p) => xy(p).map((v) => v.toFixed(1)).join(",")).join("L") + "Z"]),
     );
-    return { W, H, paths };
+    return { W, H, paths, xy, unitsPerMetre: W / ((e - w) * k * 111320) };
   }, [data]);
 
   const [view, setView] = useState<View | null>(null);
@@ -98,13 +130,13 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
     if (metric === "energy") {
       // Выработка распределена с длинным хвостом (частный дом против ТРЦ) —
       // в логарифме различимы и маленькие крыши.
-      const lo = Math.log10(Math.min(...vals));
-      const hi = Math.log10(Math.max(...vals));
-      return (b: Rooftop) => (Math.log10(value(b)) - lo) / (hi - lo);
+      const lo = Math.log10(Math.max(1, Math.min(...vals)));
+      const hi = Math.log10(Math.max(1, Math.max(...vals)));
+      return (b: Rooftop) => (Math.log10(Math.max(1, value(b))) - lo) / (hi - lo || 1);
     }
     const lo = Math.min(...vals);
     const hi = Math.max(...vals);
-    return (b: Rooftop) => (value(b) - lo) / (hi - lo);
+    return (b: Rooftop) => (value(b) - lo) / (hi - lo || 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, metric]);
 
@@ -177,14 +209,6 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
     setView(clamp({ x: cx - vw / 2, y: cy - (vw * aspect) / 2, w: vw }));
   };
 
-  if (error) {
-    return (
-      <div className="flow">
-        <h1 className="flow-q">Не удалось загрузить расчёт</h1>
-        <div className="error">{error}</div>
-      </div>
-    );
-  }
   if (!data || !geo || !view) {
     return (
       <div className="flow">
@@ -201,16 +225,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
       : [`${fmt(Math.min(...data.buildings.map((b) => b.kwh_per_kwp)))}`, `${fmt(data.irradiance.kwh_per_kwp_year)} кВт·ч с 1 кВт панелей`];
 
   return (
-    <div className="flow wide rooftops-page">
-      <div className="place-head">
-        <div><span className="roof-eyebrow">СОЛНЕЧНАЯ ЭНЕРГИЯ</span><h1 className="flow-q">Найдите потенциал каждой крыши</h1></div>
-        <span className="roof-district-badge">{data.district}</span>
-      </div>
-      <p className="flow-sub">
-        Исследуйте здания в 3D, сравните выработку и оцените окупаемость солнечных панелей.
-        Расчёт учитывает площадь крыши и тени от соседних домов.
-      </p>
-
+    <div className="roof-workspace">
       <div className="roof-kpis">
         <div>
           <span className="kpi-label">Потенциал района</span>
@@ -226,7 +241,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
           <small>потенциала</small>
         </div>
         <div>
-          <span className="kpi-label">Высота известна</span>
+          <span className="kpi-label">Высота или этажность в OSM</span>
           <b>{Math.round(data.summary.height_known_share * 100)}%</b> <small>зданий</small>
         </div>
       </div>
@@ -234,18 +249,21 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
       <div className="place">
         <div className="place-map card">
           <div className="roof-toolbar">
-            <div className="roof-map-heading"><strong>Крыши района</strong><span>{fmt(data.summary.buildings)} зданий · выберите объект</span></div>
+            <div className="roof-map-heading"><strong>{showCity ? "Город на настоящей карте" : data.district}</strong><span>{fmt(data.summary.buildings)} крыш в расчётном районе · выберите объект</span></div>
             <div className="roof-view-switch" aria-label="Режим отображения">
-              <button className={show3D && sceneAvailable ? "on" : ""} disabled={!sceneAvailable} onClick={() => setShow3D(true)}>3D</button>
-              <button className={!show3D || !sceneAvailable ? "on" : ""} onClick={() => setShow3D(false)}>2D</button>
+              <button className={showCity ? "on" : ""} aria-pressed={showCity} onClick={() => setShowCity(true)}>Город 3D</button>
+              <button className={!showCity && show3D && sceneAvailable ? "on" : ""} aria-pressed={!showCity && show3D && sceneAvailable} disabled={!sceneAvailable} onClick={() => { setShowCity(false); setShow3D(true); }}>Крыши 3D</button>
+              <button className={!showCity && (!show3D || !sceneAvailable) ? "on" : ""} aria-pressed={!showCity && (!show3D || !sceneAvailable)} onClick={() => { setShowCity(false); setShow3D(false); }}>План</button>
             </div>
           </div>
           <div className="roof-layers" role="group" aria-label="Слой на крышах">
-            <button aria-pressed={sceneMetric === "materials"} onClick={() => setSceneMetric("materials")}>Здания и панели</button>
+            <button aria-pressed={sceneMetric === "materials"} onClick={() => setSceneMetric("materials")}>{showCity ? "Город" : "Здания и панели"}</button>
             <button aria-pressed={sceneMetric === "energy"} onClick={() => setSceneMetric("energy")}>Выработка за год</button>
             <button aria-pressed={sceneMetric === "quality"} onClick={() => setSceneMetric("quality")}>Влияние теней</button>
           </div>
-          {show3D && sceneAvailable ? <SceneBoundary onUnavailable={() => setSceneAvailable(false)}><Suspense fallback={<div className="roof-scene roof-scene-loading"><span className="spin" /> Загружаем 3D-сцену…</div>}>
+          {showCity ? <SceneBoundary key="city-map" onUnavailable={() => setShowCity(false)}><Suspense fallback={<div className="roof-scene roof-scene-loading"><span className="spin" /> Загружаем карту города…</div>}>
+            <CityMap city={city} data={data} selected={picked} metric={sceneMetric} onSelect={setPicked} onUnavailable={() => setShowCity(false)} />
+          </Suspense></SceneBoundary> : show3D && sceneAvailable ? <SceneBoundary key="roof-scene" onUnavailable={() => setSceneAvailable(false)}><Suspense fallback={<div className="roof-scene roof-scene-loading"><span className="spin" /> Загружаем 3D-сцену…</div>}>
             <RooftopScene data={data} selected={picked} metric={sceneMetric} onSelect={setPicked} onUnavailable={() => setSceneAvailable(false)} />
           </Suspense></SceneBoundary> : <>
           <div className="roof-zoom">
@@ -280,6 +298,8 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
             }}
           >
             <rect x={0} y={0} width={geo.W} height={geo.H} className="roof-ground" />
+            {data.environment?.areas.map((a) => <path key={a.id} d={"M" + a.polygon.map((p) => geo.xy(p).join(",")).join("L") + "Z"} fill={a.kind === "water" ? "#9cc6cd" : ["park", "wood", "grass"].includes(a.kind) ? "#c1d1ad" : a.kind === "parking" ? "#c3c3be" : "#e5e1d9"} />)}
+            {data.environment?.roads.filter((r) => !r.tunnel).map((r) => <polyline key={r.id} points={r.coordinates.map((p) => geo.xy(p).join(",")).join(" ")} fill="none" stroke={["footway", "path", "pedestrian", "cycleway", "steps"].includes(r.kind) ? "#d8cdb8" : "#949c9f"} strokeWidth={r.width_m * geo.unitsPerMetre} strokeLinejoin="round" strokeLinecap="round" />)}
             {data.buildings.map((b) => (
               <path
                 key={b.id}
@@ -308,7 +328,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
               <i style={{ background: `linear-gradient(90deg, ${rampRgb(0, sceneMetric === "quality")}, ${rampRgb(0.5, sceneMetric === "quality")}, ${rampRgb(1, sceneMetric === "quality")})` }} />
               <span>{legend[1]}</span>
             </> : <span>Контуры — OSM · часть высот принята по типу здания</span>}
-            <span className="dim">{show3D && sceneAvailable ? "Вращайте мышью · Колесо — масштаб" : "Колесо — масштаб · Потяните для сдвига"}</span>
+            <span className="dim">{showCity ? "Правая кнопка — вращение · Колесо — масштаб" : show3D && sceneAvailable ? "Вращайте мышью · Колесо — масштаб" : "Колесо — масштаб · Потяните для сдвига"}</span>
           </div>
         </div>
 
@@ -320,7 +340,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
               <div className="spot-empty">
                 <span className="roof-selection-icon" aria-hidden="true">⌂</span>
                 <h2>Начните с одного здания</h2>
-                <p>Выберите крышу в 3D или в списке. Здесь появятся выработка, площадь панелей и срок окупаемости.</p>
+                <p>Выберите крышу в расчётном районе или в списке. Здесь появятся выработка, площадь панелей и срок окупаемости.</p>
                 {top[0] && <button className="roof-start-button" onClick={() => focus(top[0])}>Показать лучшую крышу →</button>}
               </div>
             )}
@@ -368,9 +388,14 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
         </aside>
       </div>
 
+      <details className="roof-data-details">
+        <summary>Точность карты и источники данных</summary>
+        <p>Карта всего города — <a href="https://openfreemap.org/" target="_blank" rel="noreferrer">OpenFreeMap</a> / <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>, рельеф — <a href="https://mapterhorn.com/attribution/" target="_blank" rel="noreferrer">Mapterhorn</a>. Дороги, вода и зелёные зоны следуют геоданным. Полнота зависит от наполнения OSM; это реконструкция, а не фотосъёмка. В детальном районе ширина дорог без точного значения оценена по числу полос или классу улицы.</p>
+        <p>Солнечный расчёт доступен для {fmt(data.summary.buildings)} зданий: {data.district}. Граница района отмечена на карте. Фасады и размещение панелей в детальном режиме иллюстративны. Этажность переводится в метры; неизвестная высота — допущение, указанное в карточке.</p>
+      </details>
       <p className="flow-foot">
         3D — реконструкция по контурам и высотам, фасады и размещение панелей иллюстративные. Радиация — {data.sources.irradiance} (среднее за многолетний период), панели на юг под {data.irradiance.tilt_deg}°,
-        потери системы 14%. Контуры и этажность — {data.sources.buildings}, выгрузка {data.sources.fetched}. Тени считаются
+        потери системы 14%. Контуры и этажность — {data.sources.buildings}; {data.sources.osm_snapshot && <>срез OSM {data.sources.osm_snapshot.slice(0, 10)}, </>}загружено {data.sources.fetched}. Тени считаются
         по высотам соседних зданий для прямого света; рассеянный свет и снег на панелях не учитываются. Купола и шатры
         (Хан Шатыр) исключены. Где высоты нет в OSM, она принята по типу здания — такие здания помечены.
       </p>
@@ -429,7 +454,7 @@ function RoofCard({ b, data, tariff, costPerKw }: { b: Rooftop; data: RooftopsRe
         </dd>
         <dt>Потери от теней</dt>
         <dd>−{Math.round(b.shading_loss * 100)}% за год</dd>
-        <dt>Высота здания</dt>
+        <dt>Высота расчётной крыши</dt>
         <dd title={HEIGHT_LABEL[b.height_source]}>
           {fmt(b.height_m)} м{b.height_source === "assumed" && <span className="roof-flag"> допущение</span>}
         </dd>

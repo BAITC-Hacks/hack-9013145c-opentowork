@@ -1,9 +1,12 @@
 import * as THREE from "three";
 import type { Rooftop, RooftopsResponse } from "../../api";
+import { createCityEnvironment } from "./cityEnvironment";
+import type { CityEnvironmentData } from "./cityEnvironment";
 
 const DEG = Math.PI / 180;
 type Point = [number, number];
-export type CityBuilding = { data: Rooftop; polygon: Point[]; center: THREE.Vector3; radius: number; roofStart: number; roofEnd: number };
+export type CityContextBuilding = { id: string; polygon: [number, number][]; height_m: number; min_height_m: number; roof_shape?: string | null; roof_height_m?: number | null };
+export type CityBuilding = { data: Rooftop; polygon: Point[]; center: THREE.Vector3; radius: number; roofStart: number; roofEnd: number; detailRoofRanges?: [number, number][]; parts?: { polygon: Point[]; height: number }[] };
 
 type Surface = { positions: number[]; uvs: number[]; colors: number[]; owners: string[] };
 const surface = (): Surface => ({ positions: [], uvs: [], colors: [], owners: [] });
@@ -82,19 +85,6 @@ function panelTexture() {
     }
   });
 }
-function groundTexture() {
-  let seed = 714;
-  const rand = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-  return texture(1024, 1024, (ctx) => {
-    // A fine, coherent lawn surface rather than metre-scale dirt blotches.
-    ctx.fillStyle = "#789169"; ctx.fillRect(0, 0, 1024, 1024);
-    for (let i = 0; i < 125000; i++) {
-      ctx.fillStyle = i % 3 === 0 ? "rgba(204,215,169,.13)" : i % 3 === 1 ? "rgba(44,81,42,.10)" : "rgba(128,151,97,.14)";
-      const x = rand() * 1024, y = rand() * 1024;
-      ctx.fillRect(x, y, .5 + rand(), 1 + rand() * 3);
-    }
-  });
-}
 function pavingTexture() {
   let seed = 816;
   const rand = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
@@ -144,8 +134,13 @@ export function createCity(data: RooftopsResponse) {
   const lat = (south + north) / 2, lon = (west + east) / 2;
   const width = (east - west) * Math.cos(lat * DEG) * 111320;
   const depth = (north - south) * 110540;
+  const project = ([la, lo]: [number, number]): Point => [(lo - lon) * Math.cos(lat * DEG) * 111320, -(la - lat) * 110540];
+  const environment = createCityEnvironment((data as RooftopsResponse & { environment?: CityEnvironmentData }).environment, project, width, depth);
+  const contextBuildings = (data as RooftopsResponse & { context_buildings?: CityContextBuilding[] }).context_buildings ?? [];
+  const projectedContexts = contextBuildings.map(data => ({ data, polygon: data.polygon.map(project) }));
   const walls = surface(), roofs = surface(), trim = surface(), paths = surface(), curbs = surface();
   const buildings: CityBuilding[] = [];
+  const partOwners = new Map<string, string>();
   const panelPositions: THREE.Vector3[] = [];
   const fixtures: { x: number; y: number; z: number; scale: number }[] = [];
   const palette = ["#f2f0e9", "#e7e1d4", "#d1d5d4", "#d9c7b0", "#e2e7e6", "#e9ded5"];
@@ -157,6 +152,20 @@ export function createCity(data: RooftopsResponse) {
     const h = Math.max(2.8, b.height_m);
     const cx = poly.reduce((sum, p) => sum + p[0], 0) / poly.length;
     const cz = poly.reduce((sum, p) => sum + p[1], 0) / poly.length;
+    const contained = projectedContexts.filter(c => c.polygon.every(p => inside(p[0], p[1], poly) || edgeDistance(p[0], p[1], poly) < .85));
+    const minX = Math.min(...poly.map((p) => p[0])), maxX = Math.max(...poly.map((p) => p[0]));
+    const minZ = Math.min(...poly.map((p) => p[1])), maxZ = Math.max(...poly.map((p) => p[1]));
+    let samples = 0, covered = 0;
+    if (contained.length >= 2) for (let ix = 0; ix < 16; ix++) for (let iz = 0; iz < 16; iz++) {
+      const x = minX + (ix + .5) / 16 * (maxX - minX), z = minZ + (iz + .5) / 16 * (maxZ - minZ);
+      if (!inside(x, z, poly)) continue;
+      samples++;
+      if (contained.some(c => inside(x, z, c.polygon))) covered++;
+    }
+    // OSM's parent height is often the maximum of its parts. Extruding that whole
+    // outline would turn a 382/63/138 m composition into one false 382 m slab.
+    const composite = samples >= 8 && covered / samples >= .98;
+    if (composite) contained.forEach(c => partOwners.set(c.data.id, b.id));
     const roofStart = roofs.positions.length / 3;
     const wallColor = new THREE.Color(palette[index % palette.length]);
     const roofColor = new THREE.Color(b.pitched ? "#8f9290" : "#d1d1c9");
@@ -165,6 +174,7 @@ export function createCity(data: RooftopsResponse) {
       const a = poly[i], c = poly[(i + 1) % poly.length];
       const length = Math.hypot(c[0] - a[0], c[1] - a[1]);
       if (length < .01) continue;
+      if (!composite) {
       quad(walls, [[a[0], 0, a[1]], [c[0], 0, c[1]], [c[0], h, c[1]], [a[0], h, a[1]]], [[0, 0], [length / 3.5, 0], [length / 3.5, h / 3.2], [0, h / 3.2]], wallColor, b.id);
       // A roof parapet has inner and outer faces and a cap, rather than a line.
       const nx = (a[1] - c[1]) / length * .25, nz = (c[0] - a[0]) / length * .25;
@@ -172,6 +182,7 @@ export function createCity(data: RooftopsResponse) {
       quad(trim, [[a[0], h, a[1]], [c[0], h, c[1]], [c[0], h + rim, c[1]], [a[0], h + rim, a[1]]], uv, trimColor, b.id);
       quad(trim, [[a[0] + nx, h, a[1] + nz], [c[0] + nx, h, c[1] + nz], [c[0] + nx, h + rim, c[1] + nz], [a[0] + nx, h + rim, a[1] + nz]], uv, trimColor, b.id);
       quad(trim, [[a[0], h + rim, a[1]], [c[0], h + rim, c[1]], [c[0] + nx, h + rim, c[1] + nz], [a[0] + nx, h + rim, a[1] + nz]], uv, trimColor, b.id);
+      }
       // Modest paved aprons follow real building edges; they do not imply mapped streets.
       const [ox, oz] = outsideNormal(poly, i);
       const apron = b.roof_m2 > 1000 ? 6 : 4.5;
@@ -188,6 +199,7 @@ export function createCity(data: RooftopsResponse) {
       const corner = [[a[0], .12, a[1]], edgeA, [a[0] + px * apron, .12, a[1] + pz * apron]];
       triangle(paths, corner[0], corner[1], corner[2], corner.map(([x, , z]) => [x / 5, z / 5]), new THREE.Color("#ffffff"), "");
     }
+    if (!composite) {
     const shape = new THREE.Shape(poly.map(([x, z]) => new THREE.Vector2(x, -z)));
     const roofGeometry = new THREE.ShapeGeometry(shape).toNonIndexed();
     const p = roofGeometry.getAttribute("position");
@@ -196,20 +208,71 @@ export function createCity(data: RooftopsResponse) {
       triangle(roofs, points[0], points[1], points[2], points.map(([x, , z]) => [x / 14, z / 14]), roofColor, b.id);
     }
     roofGeometry.dispose();
-    const minX = Math.min(...poly.map((p) => p[0])), maxX = Math.max(...poly.map((p) => p[0]));
-    const minZ = Math.min(...poly.map((p) => p[1])), maxZ = Math.max(...poly.map((p) => p[1]));
-    buildings.push({ data: b, polygon: poly, center: new THREE.Vector3((minX + maxX) / 2, h, (minZ + maxZ) / 2), radius: Math.max(maxX - minX, maxZ - minZ) / 2, roofStart, roofEnd: roofs.positions.length / 3 });
+    }
+    buildings.push({ data: b, polygon: poly, center: new THREE.Vector3((minX + maxX) / 2, h, (minZ + maxZ) / 2), radius: Math.max(maxX - minX, maxZ - minZ) / 2, roofStart, roofEnd: roofs.positions.length / 3, parts: composite ? contained.map(c => ({ polygon: c.polygon, height: c.data.height_m })) : undefined });
     let count = 0;
-    const limit = Math.min(220, Math.floor(b.kwp / 1.1));
+    const limit = composite ? 0 : Math.min(220, Math.floor(b.kwp / 1.1));
     for (let z = minZ + 4; z < maxZ - 4 && count < limit; z += 7) for (let x = minX + 4; x < maxX - 4 && count < limit; x += 4.2) {
       if (inside(x, z, poly) && edgeDistance(x, z, poly) > 3) {
         panelPositions.push(new THREE.Vector3(x, h + 1.1, z)); count++;
       }
     }
-    if (b.roof_m2 > 150 && inside(cx, cz, poly) && edgeDistance(cx, cz, poly) > 4) fixtures.push({ x: cx, y: h + .9, z: cz, scale: Math.min(3, Math.sqrt(b.roof_m2) / 20) });
+    if (!composite && b.roof_m2 > 150 && inside(cx, cz, poly) && edgeDistance(cx, cz, poly) > 4) fixtures.push({ x: cx, y: h + .9, z: cz, scale: Math.min(3, Math.sqrt(b.roof_m2) / 20) });
   });
 
+  // OSM building parts and unsuitable roofs remain physical neighbours, without
+  // becoming solar candidates. In particular, real tower parts retain their height.
+  for (const context of contextBuildings) {
+    const poly = context.polygon.map(project);
+    if (poly.length > 2 && Math.hypot(poly[0][0] - poly[poly.length - 1][0], poly[0][1] - poly[poly.length - 1][1]) < .01) poly.pop();
+    if (poly.length < 3 || !poly.every(p => p.every(Number.isFinite))) continue;
+    const bottom = Math.max(0, context.min_height_m || 0);
+    const top = Math.max(bottom + 1, context.height_m || 3);
+    const cx = poly.reduce((sum, p) => sum + p[0], 0) / poly.length;
+    const cz = poly.reduce((sum, p) => sum + p[1], 0) / poly.length;
+    const parent = buildings.find(b => b.data.id === partOwners.get(context.id)) ?? buildings.find(b => inside(cx, cz, b.polygon));
+    const owner = parent?.data.id ?? context.id;
+    if (parent) parent.center.y = Math.max(parent.center.y, top);
+    const roofShape = context.roof_shape ?? "flat";
+    const shaped = /^(dome|cone|round|orb|onion|spherical|pyramidal)$/.test(roofShape);
+    const span = Math.min(Math.max(...poly.map(p => p[0])) - Math.min(...poly.map(p => p[0])), Math.max(...poly.map(p => p[1])) - Math.min(...poly.map(p => p[1])));
+    const estimatedRise = Math.min((top - bottom) * (roofShape === "cone" ? .72 : .35), span * .45);
+    const rise = shaped ? Math.max(.5, Math.min(top - bottom, context.roof_height_m ?? estimatedRise)) : 0;
+    const eave = top - rise;
+    const wallColor = new THREE.Color(top > 80 ? "#c2ccd0" : "#dddcd3");
+    const roofColor = new THREE.Color(shaped ? "#b0bcbb" : "#c7cbc4");
+    const detailStart = roofs.positions.length / 3;
+    for (let i = 0; i < poly.length; i++) {
+      const p = poly[i], q = poly[(i + 1) % poly.length];
+      const length = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (eave > bottom + .01) quad(walls, [[p[0], bottom, p[1]], [q[0], bottom, q[1]], [q[0], eave, q[1]], [p[0], eave, p[1]]], [[0, bottom / 3.2], [length / 3.5, bottom / 3.2], [length / 3.5, eave / 3.2], [0, eave / 3.2]], wallColor, owner);
+      if (shaped) {
+        const sections = /^(cone|pyramidal)$/.test(roofShape) ? 1 : 8;
+        for (let layer = 0; layer < sections; layer++) {
+          const lower = layer / sections, upper = (layer + 1) / sections;
+          const radius = (t: number) => sections === 1 ? 1 - t : Math.cos(t * Math.PI / 2);
+          const height = (t: number) => eave + rise * (sections === 1 ? t : Math.sin(t * Math.PI / 2));
+          const vertex = (v: Point, t: number) => [cx + (v[0] - cx) * radius(t), height(t), cz + (v[1] - cz) * radius(t)];
+          const ring = [vertex(p, lower), vertex(q, lower), vertex(q, upper), vertex(p, upper)];
+          if (layer === sections - 1) triangle(roofs, ring[0], ring[1], ring[2], ring.slice(0, 3).map(([x, , z]) => [x / 20, z / 20]), roofColor, owner);
+          else quad(roofs, ring, ring.map(([x, , z]) => [x / 20, z / 20]), roofColor, owner);
+        }
+      }
+    }
+    if (!shaped) {
+      const shape = new THREE.Shape(poly.map(([x, z]) => new THREE.Vector2(x, -z)));
+      const indexed = new THREE.ShapeGeometry(shape), roof = indexed.toNonIndexed(), positions = roof.getAttribute("position");
+      for (let i = 0; i < positions.count; i += 3) {
+        const points = [i, i + 1, i + 2].map(j => [positions.getX(j), top, -positions.getY(j)]);
+        triangle(roofs, points[0], points[1], points[2], points.map(([x, , z]) => [x / 14, z / 14]), roofColor, owner);
+      }
+      roof.dispose(); indexed.dispose();
+    }
+    if (parent) (parent.detailRoofRanges ??= []).push([detailStart, roofs.positions.length / 3]);
+  }
+
   const group = new THREE.Group();
+  group.add(environment.group);
   const wallMesh = mesh(walls, new THREE.MeshStandardMaterial({ map: facadeTexture(), vertexColors: true, roughness: .76, side: THREE.DoubleSide }));
   const roofMaterial = new THREE.MeshStandardMaterial({ map: roofTexture(), vertexColors: true, roughness: .88, side: THREE.DoubleSide });
   const roofMesh = mesh(roofs, roofMaterial);
@@ -223,30 +286,14 @@ export function createCity(data: RooftopsResponse) {
   fixtures.forEach((f, i) => { helper.position.set(f.x, f.y, f.z); helper.rotation.set(0, 0, 0); helper.scale.set(f.scale * 2, 1.6, f.scale); helper.updateMatrix(); equipment.setMatrixAt(i, helper.matrix); });
   equipment.castShadow = true; equipment.receiveShadow = true;
   group.add(equipment);
-  const groundMap = groundTexture();
-  // Extend past the fog horizon so the district never sits on a visible rectangular sheet.
-  groundMap.repeat.set((width + 12000) / 80, (depth + 12000) / 80);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(width + 12000, depth + 12000), new THREE.MeshStandardMaterial({ map: groundMap, roughness: 1 }));
-  ground.rotation.x = -Math.PI / 2; ground.position.y = -.08; ground.receiveShadow = true; group.add(ground);
-  // Trees are grouped along the aprons, with clearance from every measured footprint.
+  // Landscaping is constrained by mapped green polygons and road/water clearance.
   const bounds = buildings.map((b) => ({ b, x0: Math.min(...b.polygon.map(p => p[0])) - 6, x1: Math.max(...b.polygon.map(p => p[0])) + 6, z0: Math.min(...b.polygon.map(p => p[1])) - 6, z1: Math.max(...b.polygon.map(p => p[1])) + 6 }));
+  const contextPolygons = contextBuildings.map(b => b.polygon.map(project));
   const trees: { x: number; z: number; scale: number }[] = [];
-  const clear = (x: number, z: number) => !bounds.some(q => x > q.x0 && x < q.x1 && z > q.z0 && z < q.z1 && (inside(x, z, q.b.polygon) || edgeDistance(x, z, q.b.polygon) < 6));
-  for (const b of buildings) {
-    let planted = 0;
-    for (let j = 0; j < b.polygon.length && planted < 8; j++) {
-      const a = b.polygon[j], p = b.polygon[(j + 1) % b.polygon.length];
-      const length = Math.hypot(p[0] - a[0], p[1] - a[1]);
-      if (length < 20) continue;
-      const [nx, nz] = outsideNormal(b.polygon, j);
-      for (let d = 9; d < length - 7 && planted < 8; d += 18) {
-        if (trees.length >= 1000) break;
-        const x = a[0] + (p[0] - a[0]) * d / length + nx * 10.5;
-        const z = a[1] + (p[1] - a[1]) * d / length + nz * 10.5;
-        if (!clear(x, z) || trees.some(t => Math.hypot(t.x - x, t.z - z) < 12)) continue;
-        trees.push({ x, z, scale: .85 + (trees.length % 5) * .085 }); planted++;
-      }
-    }
+  const clear = (x: number, z: number) => !bounds.some(q => x > q.x0 && x < q.x1 && z > q.z0 && z < q.z1 && (inside(x, z, q.b.polygon) || edgeDistance(x, z, q.b.polygon) < 6)) && !contextPolygons.some(poly => inside(x, z, poly) || edgeDistance(x, z, poly) < 6);
+  for (const candidate of environment.treeCandidates) {
+    if (trees.length >= 1400) break;
+    if (clear(candidate.x, candidate.z) && !trees.some(t => Math.hypot(t.x - candidate.x, t.z - candidate.z) < 10)) trees.push(candidate);
   }
   const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(.22, .34, 4, 6), new THREE.MeshStandardMaterial({ color: "#6f6c5b", roughness: 1 }), trees.length);
   const crowns = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: .94 }), trees.length * 3);
@@ -260,7 +307,7 @@ export function createCity(data: RooftopsResponse) {
       helper.scale.set(2.7 * t.scale, (2.9 - j * .2) * t.scale, 2.4 * t.scale); helper.updateMatrix(); crowns.setMatrixAt(i * 3 + j, helper.matrix);
       crowns.setColorAt(i * 3 + j, new THREE.Color(["#607b4d", "#738950", "#536f45", "#829452"][i % 4]));
     }
-    helper.position.set(t.x, -.035, t.z); helper.rotation.set(-Math.PI / 2, 0, 0); helper.scale.setScalar(t.scale); helper.updateMatrix(); beds.setMatrixAt(i, helper.matrix);
+    helper.position.set(t.x, .001, t.z); helper.rotation.set(-Math.PI / 2, 0, 0); helper.scale.setScalar(t.scale); helper.updateMatrix(); beds.setMatrixAt(i, helper.matrix);
     helper.rotation.set(0, 0, 0);
     for (let j = 0; j < 2; j++) {
       const angle = i + j * Math.PI;
@@ -284,7 +331,7 @@ export function createCity(data: RooftopsResponse) {
     else for (const b of buildings) {
       const amount = metric === "energy" ? (Math.log10(Math.max(1, b.data.kwh_year)) - lo) / range : (b.data.kwh_per_kwp - qualityMin) / qualityRange;
       const color = new THREE.Color("#e2e8eb").lerp(new THREE.Color(metric === "energy" ? "#d99222" : "#159581"), Math.max(0, Math.min(1, amount)));
-      for (let i = b.roofStart; i < b.roofEnd; i++) colors.setXYZ(i, color.r, color.g, color.b);
+      for (const [start, end] of [[b.roofStart, b.roofEnd], ...(b.detailRoofRanges ?? [])]) for (let i = start; i < end; i++) colors.setXYZ(i, color.r, color.g, color.b);
     }
     colors.needsUpdate = true;
     roofMaterial.map = metric === "materials" ? originalRoofMap : null;
@@ -292,5 +339,5 @@ export function createCity(data: RooftopsResponse) {
     panels.visible = metric === "materials";
   };
   const originalRoofMap = roofMaterial.map;
-  return { group, buildings, width, depth, panels, pickables: [wallMesh, roofMesh], setMetric, roofTexture: originalRoofMap };
+  return { group, buildings, width, depth, panels, environment, pickables: [wallMesh, roofMesh], setMetric, roofTexture: originalRoofMap };
 }

@@ -64,7 +64,7 @@ export default function RooftopScene(props: Props) {
       position.copy(nextPosition); target.copy(nextTarget); flying = true;
       if (reduced.matches || document.hidden) { camera.position.copy(position); controls.target.copy(target); flying = false; }
     };
-    const outline = new THREE.LineLoop(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: "#eb9b18", depthTest: false, transparent: true, opacity: .95 }));
+    const outline = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: "#eb9b18", depthTest: false, transparent: true, opacity: .95 }));
     outline.renderOrder = 5; outline.visible = false; scene.add(outline);
     let frame = 0, last = performance.now(), rendering = false, disposed = false;
     const render = (now: number, schedule = true) => {
@@ -93,9 +93,14 @@ export default function RooftopScene(props: Props) {
         outline.visible = Boolean(b);
         if (b) {
           outline.geometry.dispose();
-          outline.geometry = new THREE.BufferGeometry().setFromPoints(b.polygon.map(([x, z]) => new THREE.Vector3(x, b.data.height_m + 1.1, z)));
-          const distance = Math.max(90, b.radius * 3.3, b.data.height_m * 1.8);
-          const nextTarget = new THREE.Vector3(b.center.x, b.data.height_m * .55, b.center.z);
+          const outlines = b.parts ?? [{ polygon: b.polygon, height: b.data.height_m }];
+          outline.geometry = new THREE.BufferGeometry().setFromPoints(outlines.flatMap(part => part.polygon.flatMap(([x, z], i) => {
+            const next = part.polygon[(i + 1) % part.polygon.length];
+            return [new THREE.Vector3(x, part.height + 1.1, z), new THREE.Vector3(next[0], part.height + 1.1, next[1])];
+          })));
+          const visualHeight = Math.max(b.data.height_m, b.center.y);
+          const distance = Math.max(90, b.radius * 3.3, visualHeight * 1.8);
+          const nextTarget = new THREE.Vector3(b.center.x, visualHeight * .55, b.center.z);
           fly(nextTarget.clone().add(isTop ? new THREE.Vector3(0, distance * 1.5, .1) : new THREE.Vector3(-distance * .85, distance * .68, distance)), nextTarget);
         }
       }
@@ -168,6 +173,6 @@ export default function RooftopScene(props: Props) {
       <button className="roof-view-button" aria-pressed={topView} onClick={() => action.current("top")}>{topView ? "Перспектива" : "Вид сверху"}</button>
     </div>
     <div className="roof-scene-compass" ref={north} aria-hidden="true"><span>С</span>↑</div>
-    <div className="roof-scene-caption"><b>3D-реконструкция · OpenStreetMap</b><span>Фасады, озеленение и панели — иллюстрация</span></div>
+    <div className="roof-scene-caption"><b>3D-квартал · OpenStreetMap</b><span>Архитектурные детали, посадки и панели — иллюстрация</span></div>
   </div>;
 }
