@@ -165,13 +165,14 @@ def save(pred: pd.DataFrame, summary: dict) -> None:
         *QCOLS,
         "mean",
         *[v for v in MODELS.values() if v not in QCOLS],
-        "cas_mean",
+        *[f"{m}_{c}" for m in ("cas", "dir") for c in (*QCOLS, "mean")],
         "cas_naive_curve",
         "wind_corrected",
         "wind_nwp",
         "wind_nwp_spread",
     ]
-    pred[[c for c in keep if c in pred]].to_parquet(REPORTS_DIR / "backtest_predictions.parquet")
+    cols = [c for c in dict.fromkeys(keep) if c in pred]
+    pred[cols].to_parquet(REPORTS_DIR / "backtest_predictions.parquet")
     (REPORTS_DIR / "backtest_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=1, default=float), encoding="utf-8"
     )

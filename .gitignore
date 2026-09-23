@@ -48,3 +48,7 @@ uploads/
 
 .playwright-mcp/
 *.tsbuildinfo
+
+# windcast: бинарная модель воспроизводится `python -m windcast train`
+artifacts/models/*.pkl
+artifacts/*.log

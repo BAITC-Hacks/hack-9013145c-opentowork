@@ -67,7 +67,8 @@ def run(
     effective_origin = r.origin
     for attempt in range(MAX_WEATHER_RETRIES + 1):
         t0 = time.time()
-        x, meta = tools.fetch_weather(effective_origin, horizon)
+        shift_h = int((r.origin - effective_origin) / pd.Timedelta(hours=1))
+        x, meta = tools.fetch_weather(effective_origin, horizon + shift_h)
         r.step(
             "Сборщик погоды",
             f"Open-Meteo: {len(meta['hub_models_ok'])} моделей с ветром на 100 м, "
@@ -97,11 +98,35 @@ def run(
     r.facts["qa"] = qa
 
     t0 = time.time()
-    pred = tools.run_forecast(
-        fc, effective_origin, horizon + int((r.origin - effective_origin) / pd.Timedelta(hours=1))
+    shift_h = int((r.origin - effective_origin) / pd.Timedelta(hours=1))
+    pred = tools.run_forecast(fc, effective_origin, horizon + shift_h)
+    pred = pred[pred.index > r.origin].copy()
+    # Горизонт — всегда от момента выпуска прогноза, даже если погода взята из более раннего.
+    pred["horizon_h"] = ((pred.index - r.origin) / pd.Timedelta(hours=1)).astype(int)
+    r.step(
+        "Прогнозист",
+        f"каскад + прямая модель, веса {fc.state.weights}"
+        + (f"; погода из выпуска на {shift_h} ч раньше" if shift_h else ""),
+        "warn" if shift_h else "ok",
+        t0,
     )
-    pred = pred[pred.index > r.origin]
-    r.step("Прогнозист", f"каскад + прямая модель, веса {fc.state.weights}", "ok", t0)
+
+    # Часы, где погоды нет даже после отката: модели на пустых признаках не верим —
+    # ставим климатологию с широким интервалом и помечаем прогноз как деградированный.
+    no_wx = pred["wind_nwp"].isna().to_numpy()
+    if no_wx.any():
+        t0 = time.time()
+        r.degraded = True
+        clim = pred.loc[no_wx, "climatology"].to_numpy()
+        for c, k in zip(QCOLS, (0.1, 0.25, 0.6, 1.0, 1.4, 1.75, 1.9), strict=True):
+            pred.loc[no_wx, c] = (clim * k).clip(0, 1)
+        pred.loc[no_wx, "mean"] = clim
+        r.step(
+            "Прогнозист",
+            f"нет погоды на {int(no_wx.sum() // pred['turbine'].nunique())} ч → климатология",
+            "fail",
+            t0,
+        )
 
     t0 = time.time()
     crit = tools.critic(pred, horizon)

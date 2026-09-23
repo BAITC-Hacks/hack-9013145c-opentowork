@@ -1,0 +1,198 @@
+[
+ {
+  "day": "2026-01-31",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.154,
+  "ramps": 0
+ },
+ {
+  "day": "2026-02-01",
+  "versions": 4,
+  "revisions_published": 3,
+  "mean_p50": 0.512,
+  "ramps": 3
+ },
+ {
+  "day": "2026-02-02",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.231,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-03",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.437,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-04",
+  "versions": 4,
+  "revisions_published": 1,
+  "mean_p50": 0.678,
+  "ramps": 3
+ },
+ {
+  "day": "2026-02-05",
+  "versions": 4,
+  "revisions_published": 3,
+  "mean_p50": 0.606,
+  "ramps": 3
+ },
+ {
+  "day": "2026-02-06",
+  "versions": 4,
+  "revisions_published": 3,
+  "mean_p50": 0.4,
+  "ramps": 3
+ },
+ {
+  "day": "2026-02-07",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.707,
+  "ramps": 2
+ },
+ {
+  "day": "2026-02-08",
+  "versions": 4,
+  "revisions_published": 0,
+  "mean_p50": 0.67,
+  "ramps": 3
+ },
+ {
+  "day": "2026-02-09",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.335,
+  "ramps": 2
+ },
+ {
+  "day": "2026-02-10",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.569,
+  "ramps": 2
+ },
+ {
+  "day": "2026-02-11",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.275,
+  "ramps": 2
+ },
+ {
+  "day": "2026-02-12",
+  "versions": 4,
+  "revisions_published": 1,
+  "mean_p50": 0.164,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-13",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.249,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-14",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.541,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-15",
+  "versions": 4,
+  "revisions_published": 3,
+  "mean_p50": 0.677,
+  "ramps": 0
+ },
+ {
+  "day": "2026-02-16",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.461,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-17",
+  "versions": 4,
+  "revisions_published": 1,
+  "mean_p50": 0.73,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-18",
+  "versions": 4,
+  "revisions_published": 3,
+  "mean_p50": 0.34,
+  "ramps": 0
+ },
+ {
+  "day": "2026-02-19",
+  "versions": 4,
+  "revisions_published": 3,
+  "mean_p50": 0.412,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-20",
+  "versions": 4,
+  "revisions_published": 3,
+  "mean_p50": 0.505,
+  "ramps": 4
+ },
+ {
+  "day": "2026-02-21",
+  "versions": 4,
+  "revisions_published": 3,
+  "mean_p50": 0.411,
+  "ramps": 2
+ },
+ {
+  "day": "2026-02-22",
+  "versions": 4,
+  "revisions_published": 1,
+  "mean_p50": 0.526,
+  "ramps": 2
+ },
+ {
+  "day": "2026-02-23",
+  "versions": 4,
+  "revisions_published": 1,
+  "mean_p50": 0.411,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-24",
+  "versions": 4,
+  "revisions_published": 3,
+  "mean_p50": 0.241,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-25",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.625,
+  "ramps": 2
+ },
+ {
+  "day": "2026-02-26",
+  "versions": 4,
+  "revisions_published": 3,
+  "mean_p50": 0.538,
+  "ramps": 1
+ },
+ {
+  "day": "2026-02-27",
+  "versions": 4,
+  "revisions_published": 2,
+  "mean_p50": 0.558,
+  "ramps": 2
+ }
+]
