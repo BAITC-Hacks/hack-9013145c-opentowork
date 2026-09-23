@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
-import type { Station, WindSimulation, WindSimulationInput, WindTurbineModel } from "../api";
+import type { ReferenceTurbine, Station, WindSimulation, WindSimulationInput, WindTurbineModel } from "../api";
 import type { Route } from "./data";
 import { StepBar } from "./Flow";
 import KzMap from "./KzMap";
@@ -14,6 +14,27 @@ const number = (n: number, digits = 1) => n.toLocaleString("ru-RU", {
 const date = (iso: string) => new Intl.DateTimeFormat("ru-RU", {
   timeZone: "Asia/Almaty", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
 }).format(new Date(iso));
+
+/** Паспорт модели без кривой мощности: где стоит в Казахстане и откуда факты. Выработку не считаем. */
+function ReferenceCard({ turbine }: { turbine: ReferenceTurbine }) {
+  return <div className="reference-card">
+    <dl className="facts">
+      <dt>Номинальная мощность</dt><dd>{number(turbine.rated_power_kw / 1000, 2)} МВт</dd>
+      <dt>Диаметр ротора</dt><dd>{turbine.rotor_diameter_m} м</dd>
+      {turbine.hub_height_m != null && <><dt>Высота башни</dt><dd>{turbine.hub_height_m} м</dd></>}
+    </dl>
+    {turbine.sites.map((s) => <p key={s.name} className="reference-site">
+      <b>{s.name}</b>
+      {s.units != null && ` · ${s.units} турбин`}{s.capacity_mw != null && ` · ${s.capacity_mw} МВт`}
+      {s.owner && <><br /><span className="dim">{s.owner}</span></>}
+    </p>)}
+    <ul className="reference-specs">{turbine.specs.map((s) => <li key={s}>{s}</li>)}</ul>
+    <p className="hint warn-text">Производитель не публикует кривую мощности этой модели, поэтому выработку не считаем:
+      подставлять кривую другой турбины под это название нельзя.</p>
+    <p className="hint">Источники: {turbine.sources.map((s, i) => <span key={s.url + i}>
+      {i > 0 && "; "}<a href={s.url} target="_blank" rel="noreferrer">{s.title}</a></span>)}</p>
+  </div>;
+}
 
 function Output({ run, save, canSave }: { run: WindSimulation; save: () => void; canSave: boolean }) {
   const [cursor, setCursor] = useState(0);
@@ -65,6 +86,8 @@ export default function WindPlacement({ go, stations }: {
   go: (route: Route) => void; stations: Station[];
 }) {
   const [catalog, setCatalog] = useState<WindTurbineModel[]>([]);
+  // Модели казахстанских ВЭС без кривой мощности: только паспорт, расчёта нет.
+  const [reference, setReference] = useState<ReferenceTurbine[]>([]);
   const [catalogError, setCatalogError] = useState("");
   const [reload, setReload] = useState(0);
   const [modelId, setModelId] = useState("");
@@ -84,6 +107,7 @@ export default function WindPlacement({ go, stations }: {
   const activeKey = useRef(key);
   activeKey.current = key;
   const model = catalog.find((t) => t.id === modelId);
+  const referenceModel = model ? undefined : reference.find((t) => t.id === modelId);
   const lat = Number(latitude), lon = Number(longitude), loss = Number(losses);
   const valid = !!model && model.hub_heights_m.includes(height)
     && latitude.trim() !== "" && longitude.trim() !== "" && losses.trim() !== ""
@@ -101,6 +125,8 @@ export default function WindPlacement({ go, stations }: {
     }).catch((e: unknown) => {
       if (alive) setCatalogError(e instanceof Error ? e.message : "Не удалось загрузить каталог");
     });
+    // Справочник необязателен: без него расчётный каталог работает как раньше.
+    api.windReferenceTurbines().then((items) => { if (alive) setReference(items); }, () => undefined);
     return () => { alive = false; };
   }, [reload]);
 
@@ -194,17 +220,25 @@ export default function WindPlacement({ go, stations }: {
           <button type="button" onClick={() => setReload((n) => n + 1)}>Загрузить каталог повторно</button></div>}
         <label>Модель оборудования<select value={modelId} disabled={!catalog.length}
           onChange={(e) => {
-            const chosen = catalog.find((t) => t.id === e.target.value)!;
-            setModelId(chosen.id); setHeight(chosen.hub_heights_m[0]);
+            const chosen = catalog.find((t) => t.id === e.target.value);
+            setModelId(e.target.value); setHeight(chosen ? chosen.hub_heights_m[0] : 0);
           }}>
           {!catalog.length && <option value="">Загрузка каталога…</option>}
-          {catalog.map((t) => <option value={t.id} key={t.id}>{t.name}</option>)}
+          {reference.length > 0 ? <>
+            <optgroup label="С расчётом выработки">
+              {catalog.map((t) => <option value={t.id} key={t.id}>{t.name}</option>)}
+            </optgroup>
+            <optgroup label="Стоят на ВЭС Казахстана — без расчёта">
+              {reference.map((t) => <option value={t.id} key={t.id}>{t.name}</option>)}
+            </optgroup>
+          </> : catalog.map((t) => <option value={t.id} key={t.id}>{t.name}</option>)}
         </select></label>
         {model && <dl className="facts"><dt>Номинальная мощность</dt><dd>{number(model.rated_power_kw / 1000, 2)} МВт</dd>
           <dt>Диаметр ротора</dt><dd>{model.rotor_diameter_m} м</dd></dl>}
-        <label>Высота башни<select value={height} disabled={!model} onChange={(e) => setHeight(Number(e.target.value))}>
+        {referenceModel && <ReferenceCard turbine={referenceModel} />}
+        {!referenceModel && <label>Высота башни<select value={height} disabled={!model} onChange={(e) => setHeight(Number(e.target.value))}>
           {model?.hub_heights_m.map((h) => <option key={h} value={h}>{h} м</option>)}
-        </select></label>
+        </select></label>}
         <label>Горизонт<select value={horizon} onChange={(e) => setHorizon(Number(e.target.value) as 24 | 48)}>
           <option value={24}>24 часа</option><option value={48}>48 часов</option>
         </select></label>
@@ -212,7 +246,7 @@ export default function WindPlacement({ go, stations }: {
           value={losses} onChange={(e) => setLosses(e.target.value)} /></label>
         <p className="hint">0% — идеальная работа. Можно задать суммарные потери на доступность и передачу энергии.</p>
         <button className="primary" type="submit" disabled={!valid || busy}>
-          {busy ? "Считаем…" : "Рассчитать выработку"}</button>
+          {busy ? "Считаем…" : referenceModel ? "Расчёт недоступен для этой модели" : "Рассчитать выработку"}</button>
         {error && <div className="error" role="alert">{error}</div>}
         <p className="hint">Расчёт использует текущую погоду для выбранных координат. Новое обучение не требуется.</p>
       </form>

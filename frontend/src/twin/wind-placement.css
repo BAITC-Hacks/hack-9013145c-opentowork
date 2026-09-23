@@ -34,3 +34,9 @@
   .wind-placement .card-head { flex-wrap: wrap; gap: 10px; }
   .wind-power-bars { gap: 2px; }
 }
+
+/* Паспорт модели без кривой мощности */
+.reference-card { display: flex; flex-direction: column; gap: 8px; }
+.reference-card .facts, .reference-card .hint { margin: 0; }
+.reference-site { margin: 0; line-height: 1.45; }
+.reference-specs { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }

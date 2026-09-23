@@ -393,6 +393,19 @@ export interface RooftopsResponse {
 
 const TOKEN_KEY = "hackalem.token";
 
+/** Оборудование действующих ВЭС Казахстана без опубликованной кривой: паспорт, без расчёта. */
+export interface ReferenceTurbine {
+  id: string;
+  name: string;
+  manufacturer: string;
+  rated_power_kw: number;
+  rotor_diameter_m: number;
+  hub_height_m: number | null;
+  sites: { name: string; units: number | null; capacity_mw: number | null; owner: string | null }[];
+  specs: string[];
+  sources: { title: string; url: string }[];
+}
+
 export interface WindTurbineModel {
   id: string;
   name: string;
@@ -547,6 +560,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 export const api = {
   windTurbineModels: () => request<WindTurbineModel[]>("/wind/turbine-models"),
+  windReferenceTurbines: () => request<ReferenceTurbine[]>("/wind/reference-turbines"),
   simulateWind: (input: WindSimulationInput, signal?: AbortSignal) =>
     request<WindSimulation>("/wind/simulate", {
       method: "POST", body: JSON.stringify(input), signal,
