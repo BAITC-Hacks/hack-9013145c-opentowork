@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.wind import weather
+from app.wind import station_weather as weather
 
 
 def test_beaufort_scale_edges():

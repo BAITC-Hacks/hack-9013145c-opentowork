@@ -59,6 +59,13 @@
 .kzmap-registry td, .kzmap-registry th { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); }
 .kzmap-registry td:last-child, .kzmap-registry th:last-child { text-align: right; white-space: nowrap; }
 .kzmap-source { font-size: 11.5px; color: var(--text-dim); margin: 6px 0 0; }
+.kzmap-placement { grid-template-columns: minmax(0, 1fr); }
+.kzmap-placement svg { cursor: crosshair; }
+.kzmap-new-point { pointer-events: none; }
+.kzmap-new-point circle { fill: #d7f5e9; stroke: #087f72; stroke-width: 2; }
+.kzmap-new-point path, .kzmap-draft path { fill: none; stroke: #075c53; stroke-width: 3; stroke-linecap: round; }
+.kzmap-draft { cursor: pointer; }
+.kzmap-draft circle { fill: #d7f5e9; stroke: #087f72; stroke-width: 1.5; }
 
 @media (max-width: 860px) {
   .kzmap { grid-template-columns: 1fr; }

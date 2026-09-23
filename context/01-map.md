@@ -1,5 +1,18 @@
 # Карта проекта
 
+## Новые ветровые турбины
+
+`app/wind/turbines.py` + `turbines.json` — отдельный каталог оборудования;
+существующий `app/wind/catalog.py` остаётся справочником станций.
+`schemas.py`, `weather.py`, `model.py` — контракт, текущая погода и физический расчёт.
+`app/api/v1/wind.py` — маршруты `/wind/turbine-models`, `/wind/simulate`.
+`frontend/src/twin/WindPlacement.tsx` — ветровая ветка существующей `Placement`;
+общая `KzMap` поддерживает выбор точки и маркеры новых турбин.
+`wind-drafts.ts` — локальное сохранение конфигураций; `wind-placement.css` — стили.
+`scripts/build_wind_catalog.py` — обновление закреплённого каталога;
+`scripts/smoke_wind.py` — проверка реальной погоды; `tests/test_wind.py` — тесты без сети.
+Полный контракт: `docs/new-wind-turbines.md`.
+
 Колонка «Завтра» — что делать с файлом после объявления Задачи:
 **МЕНЯТЬ** (там живёт домен) · **дополнять** (добавляем, не переписываем) ·
 **не трогать** (работает, правка только сломает).
@@ -198,7 +211,8 @@
 | `app/wind/catalog.py` | Загрузка JSON в `wind_farms` / `wind_turbines` (целиком, справочник) |
 | `migrations/versions/0004_wind_farms.py` | Таблицы справочника и его первичная загрузка — не зависит от `SEED_ON_START` |
 | `app/api/v1/stations.py` | `GET /api/v1/stations`, `GET /api/v1/stations/{id}` в формате `Station` фронтенда; `GET /stations/{id}/units/{unit}/history` — SCADA Нурлы; `GET /stations/{id}/wind` — ветер у станции |
-| `app/wind/weather.py` | Ветер у станции из Open-Meteo (10/100 м, порывы, Бофорт, сдвиг α), кэш в памяти; `python -m app.wind.weather` пересобирает снимок |
+| `app/wind/station_weather.py` | Ветер у станции из Open-Meteo (10/100 м, порывы, Бофорт, сдвиг α), кэш в памяти; `python -m app.wind.station_weather` пересобирает снимок |
+| `app/wind/weather.py` | Погода Open-Meteo для расчёта новых турбин (`fetch_weather`, `/wind/simulate`) |
 | `app/wind/data/wind_snapshot.json` | Снимок ветра у Нурлы на тестовый период — `/stations/nurly/wind` работает офлайн |
 | `frontend/src/twin/WindPanel.tsx`, `windpanel.css` | Панель «Ветер у станции» на экране станции |
 | `app/api/v1/predictions.py` | `GET /predictions/run` (прогноз любой станции на любой момент/сейчас), `GET /predictions/overview` (живая сводка по всем ВЭС) |

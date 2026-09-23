@@ -10,6 +10,8 @@ secrets.yaml
 __pycache__/
 *.py[cod]
 .venv/
+.venv-wind/
+.work-wind/
 venv/
 .pytest_cache/
 .mypy_cache/

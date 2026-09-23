@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from app.deps import SessionDep, UserDep
 from app.errors import NotFound, ServiceUnavailable, ValidationFailed
 from app.models import WindFarm
-from app.wind import weather
+from app.wind import station_weather as weather
 
 router = APIRouter(prefix="/stations", tags=["stations"])
 
