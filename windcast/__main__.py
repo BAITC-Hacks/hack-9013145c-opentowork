@@ -33,6 +33,12 @@ def main() -> None:
     a.add_argument("--origin", required=True)
     a.add_argument("--runs", default="00,06,12,18", help="выпуски погоды для пересчёта, UTC")
     sub.add_parser("test-period")
+    for name in ("bid", "bids"):
+        bp = sub.add_parser(name)
+        if name == "bid":
+            bp.add_argument("--day", required=True, help="операционные сутки, время Астаны")
+        bp.add_argument("--sender", default=None, help="наименование ЭПО-отправителя")
+        bp.add_argument("--rated-mw", type=float, default=None, help="номинал одной турбины, МВт")
     args = ap.parse_args()
 
     if args.cmd == "weather":
@@ -66,6 +72,19 @@ def main() -> None:
         from windcast.agent.runner import run_test_period
 
         run_test_period(verbose=True)
+    elif args.cmd in ("bid", "bids"):
+        from windcast import submission
+
+        kw = {}
+        if args.sender:
+            kw["sender"] = args.sender
+        if args.rated_mw:
+            kw["rated_mw_per_turbine"] = args.rated_mw
+        if args.cmd == "bid":
+            print(submission.export(args.day, **kw))
+        else:
+            for r in submission.export_all(**kw):
+                print(f"{r['day']}: {r['total_mwh']:.3f} МВт·ч, корректировок {r['corrections']}")
 
 
 if __name__ == "__main__":

@@ -88,3 +88,16 @@ def test_horizon_is_respected_without_mutating_saved_run(client, monkeypatch):
 
 def test_origin_offset_is_converted_to_utc():
     assert forecast._normalize_origin("2026-02-07T05:00:00+05:00") == "2026-02-07T00:00:00Z"
+
+
+BIDS = FORECASTS_DIR.parent / "bids"
+
+
+@pytest.mark.skipif(not (BIDS / "2026-02-07").exists(), reason="нет черновиков заявок")
+def test_bid_download(client):
+    body = client.get("/api/v1/bids/2026-02-07").json()
+    assert body["operational_day"] == "2026-02-07" and len(body["hours"]) == 24
+    r = client.get("/api/v1/bids/2026-02-07/file", params={"format": "pdf"})
+    assert r.status_code == 200 and r.content[:4] == b"%PDF"
+    assert client.get("/api/v1/bids/2026-02-07/file", params={"format": "exe"}).status_code == 422
+    assert client.get("/api/v1/bids/..%2F..%2Fetc/file").status_code == 404

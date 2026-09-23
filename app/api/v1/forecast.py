@@ -239,3 +239,44 @@ def simulate_run(run: dict, wind_change_pct: float) -> dict:
         "scenario_energy": round(sum(p["p50"] for p in pts), 2),
         "points": pts,
     }
+
+
+# ─── Черновики заявок в РФЦ (windcast/submission.py) ─────────────────────────
+
+BIDS_DIR = FORECASTS_DIR.parent / "bids"
+BID_MEDIA = {
+    "pdf": "application/pdf",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "csv": "text/csv; charset=utf-8",
+    "json": "application/json",
+}
+
+
+def _bid_path(day: str, fmt: str) -> Path:
+    # День проверяется по формату, а не только по наличию файла: путь собирается из ввода.
+    if len(day) != 10 or not day.replace("-", "").isdigit() or fmt not in BID_MEDIA:
+        raise NotFound("нет такой заявки")
+    path = BIDS_DIR / day / f"zayavka_{day}.{fmt}"
+    if not path.exists():
+        raise NotFound(f"нет черновика заявки на {day} — python -m windcast bids")
+    return path
+
+
+@router.get("/bids")
+async def bids_index() -> list:
+    """Операционные сутки, на которые готовы черновики заявки на продажу."""
+    return _read(BIDS_DIR / "index.json")
+
+
+@router.get("/bids/{day}")
+async def bid(day: str) -> dict:
+    """Черновик заявки (приложение 7) и корректировок (п. 97–99) в JSON."""
+    return json.loads(_bid_path(day, "json").read_text(encoding="utf-8"))
+
+
+@router.get("/bids/{day}/file")
+async def bid_file(day: str, format: str = Query("pdf", pattern="^(pdf|docx|csv|json)$")):
+    from fastapi.responses import FileResponse
+
+    path = _bid_path(day, format)
+    return FileResponse(path, media_type=BID_MEDIA[format], filename=path.name)

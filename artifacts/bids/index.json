@@ -1,0 +1,142 @@
+[
+ {
+  "day": "2026-02-01",
+  "total_mwh": 16.745,
+  "corrections": 1
+ },
+ {
+  "day": "2026-02-02",
+  "total_mwh": 62.595,
+  "corrections": 11
+ },
+ {
+  "day": "2026-02-03",
+  "total_mwh": 20.635,
+  "corrections": 9
+ },
+ {
+  "day": "2026-02-04",
+  "total_mwh": 34.746,
+  "corrections": 4
+ },
+ {
+  "day": "2026-02-05",
+  "total_mwh": 114.132,
+  "corrections": 2
+ },
+ {
+  "day": "2026-02-06",
+  "total_mwh": 73.342,
+  "corrections": 8
+ },
+ {
+  "day": "2026-02-07",
+  "total_mwh": 40.636,
+  "corrections": 13
+ },
+ {
+  "day": "2026-02-08",
+  "total_mwh": 69.586,
+  "corrections": 8
+ },
+ {
+  "day": "2026-02-09",
+  "total_mwh": 107.399,
+  "corrections": 4
+ },
+ {
+  "day": "2026-02-10",
+  "total_mwh": 29.771,
+  "corrections": 7
+ },
+ {
+  "day": "2026-02-11",
+  "total_mwh": 70.356,
+  "corrections": 7
+ },
+ {
+  "day": "2026-02-12",
+  "total_mwh": 28.777,
+  "corrections": 9
+ },
+ {
+  "day": "2026-02-13",
+  "total_mwh": 8.483,
+  "corrections": 4
+ },
+ {
+  "day": "2026-02-14",
+  "total_mwh": 33.652,
+  "corrections": 11
+ },
+ {
+  "day": "2026-02-15",
+  "total_mwh": 71.26,
+  "corrections": 6
+ },
+ {
+  "day": "2026-02-16",
+  "total_mwh": 87.151,
+  "corrections": 18
+ },
+ {
+  "day": "2026-02-17",
+  "total_mwh": 52.702,
+  "corrections": 14
+ },
+ {
+  "day": "2026-02-18",
+  "total_mwh": 104.165,
+  "corrections": 2
+ },
+ {
+  "day": "2026-02-19",
+  "total_mwh": 48.559,
+  "corrections": 11
+ },
+ {
+  "day": "2026-02-20",
+  "total_mwh": 37.354,
+  "corrections": 14
+ },
+ {
+  "day": "2026-02-21",
+  "total_mwh": 54.137,
+  "corrections": 11
+ },
+ {
+  "day": "2026-02-22",
+  "total_mwh": 56.318,
+  "corrections": 17
+ },
+ {
+  "day": "2026-02-23",
+  "total_mwh": 45.759,
+  "corrections": 3
+ },
+ {
+  "day": "2026-02-24",
+  "total_mwh": 58.029,
+  "corrections": 1
+ },
+ {
+  "day": "2026-02-25",
+  "total_mwh": 33.49,
+  "corrections": 18
+ },
+ {
+  "day": "2026-02-26",
+  "total_mwh": 70.761,
+  "corrections": 7
+ },
+ {
+  "day": "2026-02-27",
+  "total_mwh": 71.884,
+  "corrections": 15
+ },
+ {
+  "day": "2026-02-28",
+  "total_mwh": 79.517,
+  "corrections": 1
+ }
+]
