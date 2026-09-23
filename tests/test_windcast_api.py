@@ -1,0 +1,66 @@
+"""Эндпоинты прогноза отдают артефакты агента в контракте фронтенда. Без БД и ML-стека."""
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from app.api.v1 import forecast
+from app.errors import AppError
+from windcast.config import FORECASTS_DIR, REPORTS_DIR
+
+
+@pytest.fixture(scope="module")
+def client():
+    app = FastAPI()
+
+    @app.exception_handler(AppError)
+    async def _app_error(_, exc: AppError):
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse(status_code=exc.http_status, content={"code": exc.code})
+
+    app.include_router(forecast.router, prefix="/api/v1")
+    return TestClient(app)
+
+
+def test_turbines(client):
+    r = client.get("/api/v1/turbines")
+    assert r.status_code == 200
+    assert {t["id"] for t in r.json()} == {"T1", "T2"}
+
+
+def test_origin_normalization():
+    assert forecast._normalize_origin("2026-02-07") == "2026-02-07T00:00:00Z"
+    assert forecast._normalize_origin("2026-02-07T00:00:00.000Z") == "2026-02-07T00:00:00Z"
+    assert forecast._normalize_origin("2026-02-07 06:00") == "2026-02-07T06:00:00Z"
+
+
+@pytest.mark.skipif(not (REPORTS_DIR / "backtest_frontend.json").exists(), reason="нет бэктеста")
+def test_metrics_shape(client):
+    body = client.get("/api/v1/metrics").json()
+    assert {"period", "metrics", "daily", "by_horizon"} <= body.keys()
+    assert any(m["selected"] for m in body["metrics"])
+    assert len(body["by_horizon"]) == 48
+
+
+@pytest.mark.skipif(not (FORECASTS_DIR / "2026-02-07.json").exists(), reason="нет прогона агента")
+def test_test_period_forecast_has_agent_trace(client):
+    body = client.get("/api/v1/forecast/latest", params={"origin": "2026-02-07T00:00:00"}).json()
+    assert body["forecast_origin"] == "2026-02-07T00:00:00Z"
+    assert len(body["predictions"]) == 48
+    p = body["predictions"][0]
+    assert p["p10"] <= p["p50"] <= p["p90"]
+    assert body["agent_steps"] and body["explanation"]
+    assert body["versions"][0]["forecast_origin"] == "2026-02-07T00:00:00Z"
+
+
+@pytest.mark.skipif(not (FORECASTS_DIR / "backtest_runs.json").exists(), reason="нет бэктеста")
+def test_backtest_origin_has_actuals(client):
+    body = client.get("/api/v1/forecast/latest", params={"origin": "2025-12-15"}).json()
+    assert body["backtest"] is True
+    assert any(p["actual"] is not None for p in body["predictions"])
+
+
+def test_unknown_origin_is_404(client):
+    r = client.get("/api/v1/forecast/latest", params={"origin": "2019-01-01"})
+    assert r.status_code == 404

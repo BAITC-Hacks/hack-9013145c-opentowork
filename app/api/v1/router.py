@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import ai, auth, entities, files, jobs, knowledge, solar
+from app.api.v1 import ai, auth, entities, files, forecast, jobs, knowledge, solar
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth.router)
@@ -10,3 +10,4 @@ api_router.include_router(jobs.router)
 api_router.include_router(files.router)
 api_router.include_router(knowledge.router)
 api_router.include_router(solar.router)
+api_router.include_router(forecast.router)
