@@ -13,6 +13,7 @@
 | [03-database-schema.md](03-database-schema.md) | схема базы, pgvector, жизненный цикл фоновых задач |
 | [04-api-specification.md](04-api-specification.md) | REST API, коды ошибок, авторизация |
 | [05-deployment-and-kubernetes.md](05-deployment-and-kubernetes.md) | Docker, docker-compose, Kubernetes, CI/CD, масштабирование |
+| [deployability.md](deployability.md) | развёртываемость: Compose → демо-сервер → Kubernetes, зачем кубер, что проверено |
 | [06-security-observability.md](06-security-observability.md) | авторизация и роли, лимиты запросов, логи, метрики |
 | [new-wind-turbines.md](new-wind-turbines.md) | расчёт выработки новых ветровых турбин |
 
