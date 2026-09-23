@@ -1,0 +1,5872 @@
+{
+ "generated": "2026-09-23",
+ "sources": {
+  "registry": "QazaqGreen, карта ВИЭ, данные Минэнерго РК на январь 2026 — https://qazaqgreen.com/map/",
+  "osm": "© участники OpenStreetMap, ODbL — https://www.openstreetmap.org/copyright"
+ },
+ "farms": [
+  {
+   "id": "nurly",
+   "name": "ВЭС Нурлы",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «ВЭС НУРЛЫ»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": 43.64425,
+   "lon": 78.53716,
+   "location": "turbines",
+   "osm": "relation/14072944",
+   "in_registry": true,
+   "data": "history",
+   "note": "Станция из датасета кейса: SCADA с марта 2023 по январь 2026. В реестре 4.5 МВт, в OSM — 2 × Goldwind GW109/2500",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.64515,
+     "lon": 78.535604,
+     "rated_kw": 2500.0,
+     "model": "Goldwind GW109/2500",
+     "osm": "node/9690012914"
+    },
+    {
+     "id": "T2",
+     "lat": 43.643198,
+     "lon": 78.538828,
+     "rated_kw": 2500.0,
+     "model": "Goldwind GW109/2500",
+     "osm": "node/9690012913"
+    }
+   ]
+  },
+  {
+   "id": "ereymentau",
+   "name": "Ерейментау ВЭС",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Первая ветровая электрическая станция»"
+   ],
+   "capacity_mw": 45.1,
+   "capacity_source": "registry",
+   "commissioned": "2015",
+   "lat": 51.59111,
+   "lon": 73.08262,
+   "location": "turbines",
+   "osm": "relation/9249912",
+   "in_registry": true,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 51.60982,
+     "lon": 73.067208,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232840957"
+    },
+    {
+     "id": "T2",
+     "lat": 51.60771,
+     "lon": 73.084122,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232841091"
+    },
+    {
+     "id": "T3",
+     "lat": 51.606583,
+     "lon": 73.072811,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232840956"
+    },
+    {
+     "id": "T4",
+     "lat": 51.602681,
+     "lon": 73.075393,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232782384"
+    },
+    {
+     "id": "T5",
+     "lat": 51.602425,
+     "lon": 73.088809,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232841086"
+    },
+    {
+     "id": "T6",
+     "lat": 51.600414,
+     "lon": 73.07713,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232782383"
+    },
+    {
+     "id": "T7",
+     "lat": 51.597912,
+     "lon": 73.080445,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232701474"
+    },
+    {
+     "id": "T8",
+     "lat": 51.597551,
+     "lon": 73.093186,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232840981"
+    },
+    {
+     "id": "T9",
+     "lat": 51.597278,
+     "lon": 73.063123,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232840958"
+    },
+    {
+     "id": "T10",
+     "lat": 51.593232,
+     "lon": 73.08141,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232716829"
+    },
+    {
+     "id": "T11",
+     "lat": 51.591271,
+     "lon": 73.063976,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232840963"
+    },
+    {
+     "id": "T12",
+     "lat": 51.591237,
+     "lon": 73.100698,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232840976"
+    },
+    {
+     "id": "T13",
+     "lat": 51.590452,
+     "lon": 73.089445,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232716830"
+    },
+    {
+     "id": "T14",
+     "lat": 51.588308,
+     "lon": 73.100518,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232840971"
+    },
+    {
+     "id": "T15",
+     "lat": 51.585426,
+     "lon": 73.090518,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232768860"
+    },
+    {
+     "id": "T16",
+     "lat": 51.585426,
+     "lon": 73.09629,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232840968"
+    },
+    {
+     "id": "T17",
+     "lat": 51.583654,
+     "lon": 73.081926,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232768870"
+    },
+    {
+     "id": "T18",
+     "lat": 51.581181,
+     "lon": 73.091478,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232768865"
+    },
+    {
+     "id": "T19",
+     "lat": 51.576654,
+     "lon": 73.082409,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232768875"
+    },
+    {
+     "id": "T20",
+     "lat": 51.575334,
+     "lon": 73.072679,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232768880"
+    },
+    {
+     "id": "T21",
+     "lat": 51.570015,
+     "lon": 73.077124,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232782377"
+    },
+    {
+     "id": "T22",
+     "lat": 51.56994,
+     "lon": 73.086858,
+     "rated_kw": 2050.0,
+     "model": "FWT FWT2000/100",
+     "osm": "node/6232782382"
+    }
+   ]
+  },
+  {
+   "id": "akmola",
+   "name": "Акмолинская ВЭС",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Борей Энерго» 1",
+    "ТОО «Борей Энерго» 2",
+    "ТОО «Energo Trust»"
+   ],
+   "capacity_mw": 150,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": 51.27197,
+   "lon": 72.09473,
+   "location": "turbines",
+   "osm": "relation/19431823",
+   "in_registry": true,
+   "data": "none",
+   "note": "Три очереди по 50 МВт у сёл Булаксай и Сарыоба (SPIC / CPID) — сопоставлено по сообщениям СМИ",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 51.301275,
+     "lon": 72.040347,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293598"
+    },
+    {
+     "id": "T2",
+     "lat": 51.297915,
+     "lon": 72.025593,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293597"
+    },
+    {
+     "id": "T3",
+     "lat": 51.29714,
+     "lon": 72.076205,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052275132"
+    },
+    {
+     "id": "T4",
+     "lat": 51.295507,
+     "lon": 72.041583,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293591"
+    },
+    {
+     "id": "T5",
+     "lat": 51.29472,
+     "lon": 72.053261,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293590"
+    },
+    {
+     "id": "T6",
+     "lat": 51.293922,
+     "lon": 72.04674,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293589"
+    },
+    {
+     "id": "T7",
+     "lat": 51.29379,
+     "lon": 72.025659,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293592"
+    },
+    {
+     "id": "T8",
+     "lat": 51.291351,
+     "lon": 72.054285,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293588"
+    },
+    {
+     "id": "T9",
+     "lat": 51.289949,
+     "lon": 72.071912,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052275131"
+    },
+    {
+     "id": "T10",
+     "lat": 51.287377,
+     "lon": 72.022004,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293596"
+    },
+    {
+     "id": "T11",
+     "lat": 51.283632,
+     "lon": 72.058616,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293587"
+    },
+    {
+     "id": "T12",
+     "lat": 51.283417,
+     "lon": 72.02558,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293595"
+    },
+    {
+     "id": "T13",
+     "lat": 51.281768,
+     "lon": 72.13151,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052275142"
+    },
+    {
+     "id": "T14",
+     "lat": 51.281036,
+     "lon": 72.121811,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052275143"
+    },
+    {
+     "id": "T15",
+     "lat": 51.279761,
+     "lon": 72.031862,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293594"
+    },
+    {
+     "id": "T16",
+     "lat": 51.279095,
+     "lon": 72.063355,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293586"
+    },
+    {
+     "id": "T17",
+     "lat": 51.277731,
+     "lon": 72.11007,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052275172"
+    },
+    {
+     "id": "T18",
+     "lat": 51.276179,
+     "lon": 72.069376,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293585"
+    },
+    {
+     "id": "T19",
+     "lat": 51.275445,
+     "lon": 72.045112,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293593"
+    },
+    {
+     "id": "T20",
+     "lat": 51.272148,
+     "lon": 72.071808,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293584"
+    },
+    {
+     "id": "T21",
+     "lat": 51.27186,
+     "lon": 72.166456,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050359410"
+    },
+    {
+     "id": "T22",
+     "lat": 51.27104,
+     "lon": 72.096705,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052275173"
+    },
+    {
+     "id": "T23",
+     "lat": 51.268415,
+     "lon": 72.085661,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052275174"
+    },
+    {
+     "id": "T24",
+     "lat": 51.268275,
+     "lon": 72.072179,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293583"
+    },
+    {
+     "id": "T25",
+     "lat": 51.26805,
+     "lon": 72.170632,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050359409"
+    },
+    {
+     "id": "T26",
+     "lat": 51.264559,
+     "lon": 72.071493,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293582"
+    },
+    {
+     "id": "T27",
+     "lat": 51.264453,
+     "lon": 72.17543,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050359408"
+    },
+    {
+     "id": "T28",
+     "lat": 51.262744,
+     "lon": 72.090495,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052299818"
+    },
+    {
+     "id": "T29",
+     "lat": 51.259757,
+     "lon": 72.178866,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050359407"
+    },
+    {
+     "id": "T30",
+     "lat": 51.25826,
+     "lon": 72.0782,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293581"
+    },
+    {
+     "id": "T31",
+     "lat": 51.258037,
+     "lon": 72.090286,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052299820"
+    },
+    {
+     "id": "T32",
+     "lat": 51.257227,
+     "lon": 72.096673,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052299819"
+    },
+    {
+     "id": "T33",
+     "lat": 51.256568,
+     "lon": 72.141846,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293600"
+    },
+    {
+     "id": "T34",
+     "lat": 51.255224,
+     "lon": 72.182048,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050359406"
+    },
+    {
+     "id": "T35",
+     "lat": 51.253406,
+     "lon": 72.090072,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13052299821"
+    },
+    {
+     "id": "T36",
+     "lat": 51.253102,
+     "lon": 72.155971,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050359402"
+    },
+    {
+     "id": "T37",
+     "lat": 51.252648,
+     "lon": 72.1482,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050359401"
+    },
+    {
+     "id": "T38",
+     "lat": 51.252479,
+     "lon": 72.132176,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050293599"
+    },
+    {
+     "id": "T39",
+     "lat": 51.251762,
+     "lon": 72.163427,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050359403"
+    },
+    {
+     "id": "T40",
+     "lat": 51.235067,
+     "lon": 72.159417,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050359404"
+    },
+    {
+     "id": "T41",
+     "lat": 51.234738,
+     "lon": 72.151087,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13050359405"
+    }
+   ]
+  },
+  {
+   "id": "arshaly",
+   "name": "Аршалынская ВЭС",
+   "region": "Акмолинская область",
+   "operators": [],
+   "capacity_mw": 45.0,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 51.27589,
+   "lon": 71.89036,
+   "location": "turbines",
+   "osm": "relation/14072937",
+   "in_registry": false,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 51.300784,
+     "lon": 71.932726,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682128"
+    },
+    {
+     "id": "T2",
+     "lat": 51.298128,
+     "lon": 71.936545,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682129"
+    },
+    {
+     "id": "T3",
+     "lat": 51.293566,
+     "lon": 71.910882,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682133"
+    },
+    {
+     "id": "T4",
+     "lat": 51.292009,
+     "lon": 71.930623,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682132"
+    },
+    {
+     "id": "T5",
+     "lat": 51.289486,
+     "lon": 71.934829,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682131"
+    },
+    {
+     "id": "T6",
+     "lat": 51.289084,
+     "lon": 71.90084,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682139"
+    },
+    {
+     "id": "T7",
+     "lat": 51.288467,
+     "lon": 71.91895,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682135"
+    },
+    {
+     "id": "T8",
+     "lat": 51.287635,
+     "lon": 71.906762,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682138"
+    },
+    {
+     "id": "T9",
+     "lat": 51.287044,
+     "lon": 71.938777,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682130"
+    },
+    {
+     "id": "T10",
+     "lat": 51.286051,
+     "lon": 71.923199,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682134"
+    },
+    {
+     "id": "T11",
+     "lat": 51.284804,
+     "lon": 71.888758,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690012207"
+    },
+    {
+     "id": "T12",
+     "lat": 51.284065,
+     "lon": 71.908865,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682137"
+    },
+    {
+     "id": "T13",
+     "lat": 51.283562,
+     "lon": 71.87303,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690012208"
+    },
+    {
+     "id": "T14",
+     "lat": 51.282355,
+     "lon": 71.878235,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690012209"
+    },
+    {
+     "id": "T15",
+     "lat": 51.282266,
+     "lon": 71.914315,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682136"
+    },
+    {
+     "id": "T16",
+     "lat": 51.282078,
+     "lon": 71.924765,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369682127"
+    },
+    {
+     "id": "T17",
+     "lat": 51.279126,
+     "lon": 71.880139,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690012210"
+    },
+    {
+     "id": "T18",
+     "lat": 51.273702,
+     "lon": 71.87437,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690012211"
+    },
+    {
+     "id": "T19",
+     "lat": 51.272264,
+     "lon": 71.857582,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690012213"
+    },
+    {
+     "id": "T20",
+     "lat": 51.269401,
+     "lon": 71.86215,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690012214"
+    },
+    {
+     "id": "T21",
+     "lat": 51.265385,
+     "lon": 71.862769,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690012215"
+    },
+    {
+     "id": "T22",
+     "lat": 51.261189,
+     "lon": 71.859249,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690012212"
+    },
+    {
+     "id": "T23",
+     "lat": 51.256239,
+     "lon": 71.850007,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690047720"
+    },
+    {
+     "id": "T24",
+     "lat": 51.253717,
+     "lon": 71.854045,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690047721"
+    },
+    {
+     "id": "T25",
+     "lat": 51.251173,
+     "lon": 71.858116,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690047722"
+    },
+    {
+     "id": "T26",
+     "lat": 51.247053,
+     "lon": 71.847389,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690047723"
+    },
+    {
+     "id": "T27",
+     "lat": 51.242287,
+     "lon": 71.854999,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690047725"
+    },
+    {
+     "id": "T28",
+     "lat": 51.242129,
+     "lon": 71.847158,
+     "rated_kw": 3000.0,
+     "model": "Vestas V112/3000",
+     "osm": "node/9690047724"
+    }
+   ]
+  },
+  {
+   "id": "kordai",
+   "name": "Кордайская ВЭС",
+   "region": "Жамбылская область",
+   "operators": [
+    "ТОО «Vista International»",
+    "ТОО «Ветро Инвест»"
+   ],
+   "capacity_mw": 51.65,
+   "capacity_source": "registry",
+   "commissioned": "2015",
+   "lat": 43.3349,
+   "lon": 74.96671,
+   "location": "turbines",
+   "osm": "way/670401286",
+   "in_registry": true,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.34375,
+     "lon": 74.974289,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343283"
+    },
+    {
+     "id": "T2",
+     "lat": 43.341909,
+     "lon": 74.972355,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278093061"
+    },
+    {
+     "id": "T3",
+     "lat": 43.341433,
+     "lon": 74.97405,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278093785"
+    },
+    {
+     "id": "T4",
+     "lat": 43.340818,
+     "lon": 74.969448,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343272"
+    },
+    {
+     "id": "T5",
+     "lat": 43.340452,
+     "lon": 74.971335,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343273"
+    },
+    {
+     "id": "T6",
+     "lat": 43.339983,
+     "lon": 74.973129,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343274"
+    },
+    {
+     "id": "T7",
+     "lat": 43.339743,
+     "lon": 74.969684,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343271"
+    },
+    {
+     "id": "T8",
+     "lat": 43.339045,
+     "lon": 74.967214,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343270"
+    },
+    {
+     "id": "T9",
+     "lat": 43.338599,
+     "lon": 74.969196,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343269"
+    },
+    {
+     "id": "T10",
+     "lat": 43.33829,
+     "lon": 74.970989,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343268"
+    },
+    {
+     "id": "T11",
+     "lat": 43.337992,
+     "lon": 74.964394,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278089823"
+    },
+    {
+     "id": "T12",
+     "lat": 43.337718,
+     "lon": 74.973191,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343267"
+    },
+    {
+     "id": "T13",
+     "lat": 43.337586,
+     "lon": 74.966196,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278091443"
+    },
+    {
+     "id": "T14",
+     "lat": 43.337172,
+     "lon": 74.968064,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278081778"
+    },
+    {
+     "id": "T15",
+     "lat": 43.337079,
+     "lon": 74.97051,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278093276"
+    },
+    {
+     "id": "T16",
+     "lat": 43.336884,
+     "lon": 74.96905,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278091115"
+    },
+    {
+     "id": "T17",
+     "lat": 43.336642,
+     "lon": 74.972033,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278091814"
+    },
+    {
+     "id": "T18",
+     "lat": 43.336221,
+     "lon": 74.963729,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278094521"
+    },
+    {
+     "id": "T19",
+     "lat": 43.336018,
+     "lon": 74.961723,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278089858"
+    },
+    {
+     "id": "T20",
+     "lat": 43.335768,
+     "lon": 74.965573,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278089859"
+    },
+    {
+     "id": "T21",
+     "lat": 43.335252,
+     "lon": 74.970103,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278093831"
+    },
+    {
+     "id": "T22",
+     "lat": 43.334457,
+     "lon": 74.967913,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278096173"
+    },
+    {
+     "id": "T23",
+     "lat": 43.334301,
+     "lon": 74.963053,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278093121"
+    },
+    {
+     "id": "T24",
+     "lat": 43.333989,
+     "lon": 74.965231,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278096305"
+    },
+    {
+     "id": "T25",
+     "lat": 43.333013,
+     "lon": 74.963954,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/6278093020"
+    },
+    {
+     "id": "T26",
+     "lat": 43.332913,
+     "lon": 74.967718,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343265"
+    },
+    {
+     "id": "T27",
+     "lat": 43.332604,
+     "lon": 74.961646,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343261"
+    },
+    {
+     "id": "T28",
+     "lat": 43.332238,
+     "lon": 74.970093,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343266"
+    },
+    {
+     "id": "T29",
+     "lat": 43.332135,
+     "lon": 74.965452,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343262"
+    },
+    {
+     "id": "T30",
+     "lat": 43.331002,
+     "lon": 74.964257,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343263"
+    },
+    {
+     "id": "T31",
+     "lat": 43.330968,
+     "lon": 74.962558,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343260"
+    },
+    {
+     "id": "T32",
+     "lat": 43.33067,
+     "lon": 74.960844,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343258"
+    },
+    {
+     "id": "T33",
+     "lat": 43.329904,
+     "lon": 74.962023,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343259"
+    },
+    {
+     "id": "T34",
+     "lat": 43.329492,
+     "lon": 74.965358,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343264"
+    },
+    {
+     "id": "T35",
+     "lat": 43.329364,
+     "lon": 74.967585,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343281"
+    },
+    {
+     "id": "T36",
+     "lat": 43.329217,
+     "lon": 74.959915,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343257"
+    },
+    {
+     "id": "T37",
+     "lat": 43.329171,
+     "lon": 74.957729,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343256"
+    },
+    {
+     "id": "T38",
+     "lat": 43.328222,
+     "lon": 74.964619,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343275"
+    },
+    {
+     "id": "T39",
+     "lat": 43.32797,
+     "lon": 74.961898,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343276"
+    },
+    {
+     "id": "T40",
+     "lat": 43.326116,
+     "lon": 74.96034,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/7740343277"
+    }
+   ]
+  },
+  {
+   "id": "zhanatas",
+   "name": "Жанатасская ВЭС",
+   "region": "Жамбылская область",
+   "operators": [
+    "ТОО «Жанатасская Ветровая Электростанция»"
+   ],
+   "capacity_mw": 100,
+   "capacity_source": "registry",
+   "commissioned": "2021",
+   "lat": 43.48938,
+   "lon": 69.69119,
+   "location": "turbines",
+   "osm": "relation/14072440",
+   "in_registry": true,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.531031,
+     "lon": 69.58072,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973700"
+    },
+    {
+     "id": "T2",
+     "lat": 43.528404,
+     "lon": 69.629018,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973699"
+    },
+    {
+     "id": "T3",
+     "lat": 43.527263,
+     "lon": 69.58583,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973701"
+    },
+    {
+     "id": "T4",
+     "lat": 43.526564,
+     "lon": 69.634777,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973698"
+    },
+    {
+     "id": "T5",
+     "lat": 43.524602,
+     "lon": 69.59141,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973702"
+    },
+    {
+     "id": "T6",
+     "lat": 43.524297,
+     "lon": 69.641537,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973697"
+    },
+    {
+     "id": "T7",
+     "lat": 43.523068,
+     "lon": 69.64777,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973696"
+    },
+    {
+     "id": "T8",
+     "lat": 43.521316,
+     "lon": 69.596065,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973703"
+    },
+    {
+     "id": "T9",
+     "lat": 43.520084,
+     "lon": 69.656199,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973695"
+    },
+    {
+     "id": "T10",
+     "lat": 43.519733,
+     "lon": 69.601606,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973704"
+    },
+    {
+     "id": "T11",
+     "lat": 43.51936,
+     "lon": 69.608776,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973705"
+    },
+    {
+     "id": "T12",
+     "lat": 43.515426,
+     "lon": 69.61495,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973706"
+    },
+    {
+     "id": "T13",
+     "lat": 43.515318,
+     "lon": 69.62152,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973707"
+    },
+    {
+     "id": "T14",
+     "lat": 43.514385,
+     "lon": 69.627696,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973708"
+    },
+    {
+     "id": "T15",
+     "lat": 43.512194,
+     "lon": 69.633654,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973709"
+    },
+    {
+     "id": "T16",
+     "lat": 43.507509,
+     "lon": 69.635562,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973710"
+    },
+    {
+     "id": "T17",
+     "lat": 43.505669,
+     "lon": 69.640495,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973723"
+    },
+    {
+     "id": "T18",
+     "lat": 43.505348,
+     "lon": 69.645233,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973722"
+    },
+    {
+     "id": "T19",
+     "lat": 43.505068,
+     "lon": 69.650336,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973721"
+    },
+    {
+     "id": "T20",
+     "lat": 43.502442,
+     "lon": 69.665245,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973720"
+    },
+    {
+     "id": "T21",
+     "lat": 43.499853,
+     "lon": 69.669527,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973719"
+    },
+    {
+     "id": "T22",
+     "lat": 43.497432,
+     "lon": 69.673613,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973718"
+    },
+    {
+     "id": "T23",
+     "lat": 43.493497,
+     "lon": 69.680073,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973717"
+    },
+    {
+     "id": "T24",
+     "lat": 43.492405,
+     "lon": 69.690569,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973716"
+    },
+    {
+     "id": "T25",
+     "lat": 43.488174,
+     "lon": 69.695183,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973715"
+    },
+    {
+     "id": "T26",
+     "lat": 43.486968,
+     "lon": 69.70002,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973714"
+    },
+    {
+     "id": "T27",
+     "lat": 43.483688,
+     "lon": 69.706669,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973713"
+    },
+    {
+     "id": "T28",
+     "lat": 43.479166,
+     "lon": 69.715471,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973712"
+    },
+    {
+     "id": "T29",
+     "lat": 43.476775,
+     "lon": 69.722867,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973711"
+    },
+    {
+     "id": "T30",
+     "lat": 43.45027,
+     "lon": 69.777718,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973694"
+    },
+    {
+     "id": "T31",
+     "lat": 43.448008,
+     "lon": 69.784097,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973693"
+    },
+    {
+     "id": "T32",
+     "lat": 43.445146,
+     "lon": 69.78731,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973692"
+    },
+    {
+     "id": "T33",
+     "lat": 43.441565,
+     "lon": 69.792811,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973691"
+    },
+    {
+     "id": "T34",
+     "lat": 43.44018,
+     "lon": 69.846064,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973684"
+    },
+    {
+     "id": "T35",
+     "lat": 43.438622,
+     "lon": 69.798044,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973690"
+    },
+    {
+     "id": "T36",
+     "lat": 43.436264,
+     "lon": 69.820818,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973685"
+    },
+    {
+     "id": "T37",
+     "lat": 43.436062,
+     "lon": 69.803238,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973689"
+    },
+    {
+     "id": "T38",
+     "lat": 43.434471,
+     "lon": 69.833692,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973686"
+    },
+    {
+     "id": "T39",
+     "lat": 43.428911,
+     "lon": 69.827483,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973687"
+    },
+    {
+     "id": "T40",
+     "lat": 43.42863,
+     "lon": 69.813805,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/9689973688"
+    }
+   ]
+  },
+  {
+   "id": "shokpar",
+   "name": "Шокпарская ВЭС",
+   "region": "Жамбылская область",
+   "operators": [
+    "ТОО «Шокпарская ветровая электростанция»"
+   ],
+   "capacity_mw": 100,
+   "capacity_source": "registry",
+   "commissioned": "2024",
+   "lat": 43.51406,
+   "lon": 69.75675,
+   "location": "turbines",
+   "osm": "relation/18511885",
+   "in_registry": true,
+   "data": "none",
+   "note": "Сарысуский район, у г. Жанатас",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.530954,
+     "lon": 69.747347,
+     "rated_kw": 4800.0,
+     "model": null,
+     "osm": "node/12479162016"
+    },
+    {
+     "id": "T2",
+     "lat": 43.526607,
+     "lon": 69.749105,
+     "rated_kw": 4800.0,
+     "model": null,
+     "osm": "node/12479162017"
+    },
+    {
+     "id": "T3",
+     "lat": 43.52247,
+     "lon": 69.753816,
+     "rated_kw": 4800.0,
+     "model": null,
+     "osm": "node/12479162018"
+    },
+    {
+     "id": "T4",
+     "lat": 43.518632,
+     "lon": 69.754994,
+     "rated_kw": 4800.0,
+     "model": null,
+     "osm": "node/12479162019"
+    },
+    {
+     "id": "T5",
+     "lat": 43.51474,
+     "lon": 69.756295,
+     "rated_kw": 4800.0,
+     "model": null,
+     "osm": "node/12479162020"
+    },
+    {
+     "id": "T6",
+     "lat": 43.509788,
+     "lon": 69.755764,
+     "rated_kw": 4800.0,
+     "model": null,
+     "osm": "node/12479162021"
+    },
+    {
+     "id": "T7",
+     "lat": 43.50811,
+     "lon": 69.76751,
+     "rated_kw": 4800.0,
+     "model": null,
+     "osm": "node/12479162022"
+    },
+    {
+     "id": "T8",
+     "lat": 43.50012,
+     "lon": 69.758563,
+     "rated_kw": 4800.0,
+     "model": null,
+     "osm": "node/12479162023"
+    },
+    {
+     "id": "T9",
+     "lat": 43.49514,
+     "lon": 69.76739,
+     "rated_kw": 4800.0,
+     "model": null,
+     "osm": "node/12479162024"
+    }
+   ]
+  },
+  {
+   "id": "fort-shevchenko",
+   "name": "ВЭС Форт-Шевченко",
+   "region": "Мангистауская область",
+   "operators": [],
+   "capacity_mw": 43.2,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 44.45637,
+   "lon": 50.30482,
+   "location": "turbines",
+   "osm": "way/1054469775",
+   "in_registry": false,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 44.463619,
+     "lon": 50.313557,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773526"
+    },
+    {
+     "id": "T2",
+     "lat": 44.462133,
+     "lon": 50.308806,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773406"
+    },
+    {
+     "id": "T3",
+     "lat": 44.460846,
+     "lon": 50.304774,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773407"
+    },
+    {
+     "id": "T4",
+     "lat": 44.460726,
+     "lon": 50.313413,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773404"
+    },
+    {
+     "id": "T5",
+     "lat": 44.45963,
+     "lon": 50.300946,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773410"
+    },
+    {
+     "id": "T6",
+     "lat": 44.459321,
+     "lon": 50.309519,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773405"
+    },
+    {
+     "id": "T7",
+     "lat": 44.458407,
+     "lon": 50.297057,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773411"
+    },
+    {
+     "id": "T8",
+     "lat": 44.457949,
+     "lon": 50.305552,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773408"
+    },
+    {
+     "id": "T9",
+     "lat": 44.457421,
+     "lon": 50.312166,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773416"
+    },
+    {
+     "id": "T10",
+     "lat": 44.457128,
+     "lon": 50.293036,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773425"
+    },
+    {
+     "id": "T11",
+     "lat": 44.456825,
+     "lon": 50.318051,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773417"
+    },
+    {
+     "id": "T12",
+     "lat": 44.456732,
+     "lon": 50.301697,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773409"
+    },
+    {
+     "id": "T13",
+     "lat": 44.456052,
+     "lon": 50.30821,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773415"
+    },
+    {
+     "id": "T14",
+     "lat": 44.455759,
+     "lon": 50.31635,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773418"
+    },
+    {
+     "id": "T15",
+     "lat": 44.455503,
+     "lon": 50.297309,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773412"
+    },
+    {
+     "id": "T16",
+     "lat": 44.454825,
+     "lon": 50.304347,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773414"
+    },
+    {
+     "id": "T17",
+     "lat": 44.454504,
+     "lon": 50.312444,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773419"
+    },
+    {
+     "id": "T18",
+     "lat": 44.454189,
+     "lon": 50.292752,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773426"
+    },
+    {
+     "id": "T19",
+     "lat": 44.453778,
+     "lon": 50.300356,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773413"
+    },
+    {
+     "id": "T20",
+     "lat": 44.453242,
+     "lon": 50.308439,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773420"
+    },
+    {
+     "id": "T21",
+     "lat": 44.452231,
+     "lon": 50.295905,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773424"
+    },
+    {
+     "id": "T22",
+     "lat": 44.452022,
+     "lon": 50.304574,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773421"
+    },
+    {
+     "id": "T23",
+     "lat": 44.450794,
+     "lon": 50.30067,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773422"
+    },
+    {
+     "id": "T24",
+     "lat": 44.449247,
+     "lon": 50.295753,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12918773423"
+    }
+   ]
+  },
+  {
+   "id": "taiman",
+   "name": "Исатайская ВЭС (Тайман)",
+   "region": "Атырауская область",
+   "operators": [
+    "ТОО «Ветро Энерго Технологи»"
+   ],
+   "capacity_mw": 52.8,
+   "capacity_source": "registry",
+   "commissioned": "2019",
+   "lat": 46.97046,
+   "lon": 50.56277,
+   "location": "turbines",
+   "osm": "relation/13673983",
+   "in_registry": true,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 46.981318,
+     "lon": 50.578125,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094325"
+    },
+    {
+     "id": "T2",
+     "lat": 46.979517,
+     "lon": 50.572181,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094322"
+    },
+    {
+     "id": "T3",
+     "lat": 46.978405,
+     "lon": 50.576473,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094321"
+    },
+    {
+     "id": "T4",
+     "lat": 46.977248,
+     "lon": 50.580743,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094320"
+    },
+    {
+     "id": "T5",
+     "lat": 46.976575,
+     "lon": 50.570507,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094323"
+    },
+    {
+     "id": "T6",
+     "lat": 46.975433,
+     "lon": 50.574799,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094324"
+    },
+    {
+     "id": "T7",
+     "lat": 46.974289,
+     "lon": 50.579048,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094348"
+    },
+    {
+     "id": "T8",
+     "lat": 46.973661,
+     "lon": 50.568855,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060716"
+    },
+    {
+     "id": "T9",
+     "lat": 46.973309,
+     "lon": 50.55188,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060712"
+    },
+    {
+     "id": "T10",
+     "lat": 46.972519,
+     "lon": 50.573147,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060715"
+    },
+    {
+     "id": "T11",
+     "lat": 46.972188,
+     "lon": 50.55614,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060714"
+    },
+    {
+     "id": "T12",
+     "lat": 46.971534,
+     "lon": 50.545912,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060711"
+    },
+    {
+     "id": "T13",
+     "lat": 46.971377,
+     "lon": 50.577417,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094318"
+    },
+    {
+     "id": "T14",
+     "lat": 46.970675,
+     "lon": 50.567241,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060708"
+    },
+    {
+     "id": "T15",
+     "lat": 46.97038,
+     "lon": 50.550205,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060713"
+    },
+    {
+     "id": "T16",
+     "lat": 46.969716,
+     "lon": 50.539997,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094326"
+    },
+    {
+     "id": "T17",
+     "lat": 46.969576,
+     "lon": 50.571495,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094317"
+    },
+    {
+     "id": "T18",
+     "lat": 46.969422,
+     "lon": 50.563026,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060707"
+    },
+    {
+     "id": "T19",
+     "lat": 46.969271,
+     "lon": 50.554522,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060710"
+    },
+    {
+     "id": "T20",
+     "lat": 46.968601,
+     "lon": 50.544293,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060698"
+    },
+    {
+     "id": "T21",
+     "lat": 46.968478,
+     "lon": 50.575808,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934094319"
+    },
+    {
+     "id": "T22",
+     "lat": 46.968102,
+     "lon": 50.558811,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060709"
+    },
+    {
+     "id": "T23",
+     "lat": 46.967467,
+     "lon": 50.54859,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060699"
+    },
+    {
+     "id": "T24",
+     "lat": 46.96716,
+     "lon": 50.566957,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060705"
+    },
+    {
+     "id": "T25",
+     "lat": 46.966326,
+     "lon": 50.552849,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060700"
+    },
+    {
+     "id": "T26",
+     "lat": 46.96589,
+     "lon": 50.562779,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060704"
+    },
+    {
+     "id": "T27",
+     "lat": 46.96565,
+     "lon": 50.542619,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060697"
+    },
+    {
+     "id": "T28",
+     "lat": 46.965185,
+     "lon": 50.557155,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060701"
+    },
+    {
+     "id": "T29",
+     "lat": 46.964931,
+     "lon": 50.570963,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060706"
+    },
+    {
+     "id": "T30",
+     "lat": 46.964546,
+     "lon": 50.546923,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060696"
+    },
+    {
+     "id": "T31",
+     "lat": 46.963661,
+     "lon": 50.566748,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060703"
+    },
+    {
+     "id": "T32",
+     "lat": 46.962357,
+     "lon": 50.562558,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/8934060702"
+    }
+   ]
+  },
+  {
+   "id": "makat",
+   "name": "Макатская ВЭС",
+   "region": "Атырауская область",
+   "operators": [
+    "ТОО «Дивитэл»"
+   ],
+   "capacity_mw": 48,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": 47.57328,
+   "lon": 53.08428,
+   "location": "turbines",
+   "osm": "relation/18989260",
+   "in_registry": true,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 47.586065,
+     "lon": 53.084963,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571662"
+    },
+    {
+     "id": "T2",
+     "lat": 47.585014,
+     "lon": 53.080581,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571661"
+    },
+    {
+     "id": "T3",
+     "lat": 47.58407,
+     "lon": 53.075875,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571660"
+    },
+    {
+     "id": "T4",
+     "lat": 47.583105,
+     "lon": 53.086534,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571663"
+    },
+    {
+     "id": "T5",
+     "lat": 47.58203,
+     "lon": 53.08216,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571664"
+    },
+    {
+     "id": "T6",
+     "lat": 47.581013,
+     "lon": 53.07775,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571665"
+    },
+    {
+     "id": "T7",
+     "lat": 47.579844,
+     "lon": 53.085926,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571668"
+    },
+    {
+     "id": "T8",
+     "lat": 47.578812,
+     "lon": 53.081544,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571667"
+    },
+    {
+     "id": "T9",
+     "lat": 47.577762,
+     "lon": 53.077127,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571666"
+    },
+    {
+     "id": "T10",
+     "lat": 47.577036,
+     "lon": 53.088085,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571669"
+    },
+    {
+     "id": "T11",
+     "lat": 47.576,
+     "lon": 53.083703,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571670"
+    },
+    {
+     "id": "T12",
+     "lat": 47.574949,
+     "lon": 53.079307,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571671"
+    },
+    {
+     "id": "T13",
+     "lat": 47.573846,
+     "lon": 53.088622,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571674"
+    },
+    {
+     "id": "T14",
+     "lat": 47.5728,
+     "lon": 53.084248,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571673"
+    },
+    {
+     "id": "T15",
+     "lat": 47.572719,
+     "lon": 53.093025,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571675"
+    },
+    {
+     "id": "T16",
+     "lat": 47.571759,
+     "lon": 53.079866,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571672"
+    },
+    {
+     "id": "T17",
+     "lat": 47.567253,
+     "lon": 53.089566,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571683"
+    },
+    {
+     "id": "T18",
+     "lat": 47.566353,
+     "lon": 53.084963,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571676"
+    },
+    {
+     "id": "T19",
+     "lat": 47.564883,
+     "lon": 53.080824,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571677"
+    },
+    {
+     "id": "T20",
+     "lat": 47.56405,
+     "lon": 53.08875,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571681"
+    },
+    {
+     "id": "T21",
+     "lat": 47.562568,
+     "lon": 53.084637,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571678"
+    },
+    {
+     "id": "T22",
+     "lat": 47.560919,
+     "lon": 53.090467,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571682"
+    },
+    {
+     "id": "T23",
+     "lat": 47.559391,
+     "lon": 53.086044,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571679"
+    },
+    {
+     "id": "T24",
+     "lat": 47.556558,
+     "lon": 53.088224,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9571571680"
+    }
+   ]
+  },
+  {
+   "id": "badamsha-1",
+   "name": "Бадамша ВЭС-1",
+   "region": "Актюбинская область",
+   "operators": [
+    "ТОО «Plentitude» ВЭС Бадамша 1"
+   ],
+   "capacity_mw": 48,
+   "capacity_source": "registry",
+   "commissioned": "2018",
+   "lat": 50.49046,
+   "lon": 58.26008,
+   "location": "turbines",
+   "osm": "relation/14072906",
+   "in_registry": true,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 50.508427,
+     "lon": 58.251382,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981788"
+    },
+    {
+     "id": "T2",
+     "lat": 50.505845,
+     "lon": 58.261187,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981787"
+    },
+    {
+     "id": "T3",
+     "lat": 50.503273,
+     "lon": 58.270629,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981786"
+    },
+    {
+     "id": "T4",
+     "lat": 50.501584,
+     "lon": 58.260373,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981793"
+    },
+    {
+     "id": "T5",
+     "lat": 50.496595,
+     "lon": 58.264463,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981795"
+    },
+    {
+     "id": "T6",
+     "lat": 50.494891,
+     "lon": 58.254732,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981794"
+    },
+    {
+     "id": "T7",
+     "lat": 50.492316,
+     "lon": 58.26505,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981796"
+    },
+    {
+     "id": "T8",
+     "lat": 50.489711,
+     "lon": 58.256179,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981797"
+    },
+    {
+     "id": "T9",
+     "lat": 50.485212,
+     "lon": 58.25675,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981798"
+    },
+    {
+     "id": "T10",
+     "lat": 50.480924,
+     "lon": 58.2577,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981799"
+    },
+    {
+     "id": "T11",
+     "lat": 50.476855,
+     "lon": 58.260058,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981800"
+    },
+    {
+     "id": "T12",
+     "lat": 50.47278,
+     "lon": 58.261706,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981801"
+    },
+    {
+     "id": "T13",
+     "lat": 50.467627,
+     "lon": 58.260869,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/9689981802"
+    }
+   ]
+  },
+  {
+   "id": "badamsha-2",
+   "name": "Бадамша ВЭС-2",
+   "region": "Актюбинская область",
+   "operators": [
+    "ТОО «Plentitude» ВЭС Бадамша 2"
+   ],
+   "capacity_mw": 48,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": 50.5363,
+   "lon": 58.23069,
+   "location": "turbines",
+   "osm": "relation/19036232",
+   "in_registry": true,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 50.554971,
+     "lon": 58.23992,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/12552195006"
+    },
+    {
+     "id": "T2",
+     "lat": 50.55054,
+     "lon": 58.226423,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/12552195007"
+    },
+    {
+     "id": "T3",
+     "lat": 50.545904,
+     "lon": 58.232324,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/12552195009"
+    },
+    {
+     "id": "T4",
+     "lat": 50.542945,
+     "lon": 58.220501,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/12552195008"
+    },
+    {
+     "id": "T5",
+     "lat": 50.541213,
+     "lon": 58.23359,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/12552195010"
+    },
+    {
+     "id": "T6",
+     "lat": 50.534394,
+     "lon": 58.233869,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/12552195011"
+    },
+    {
+     "id": "T7",
+     "lat": 50.530698,
+     "lon": 58.227196,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/12552195012"
+    },
+    {
+     "id": "T8",
+     "lat": 50.526715,
+     "lon": 58.22063,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/12552195013"
+    },
+    {
+     "id": "T9",
+     "lat": 50.521149,
+     "lon": 58.233762,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/12552195014"
+    },
+    {
+     "id": "T10",
+     "lat": 50.51445,
+     "lon": 58.238718,
+     "rated_kw": 3800.0,
+     "model": "GE Energy 3.8-130",
+     "osm": "node/12552195015"
+    }
+   ]
+  },
+  {
+   "id": "khromtau",
+   "name": "ВЭС Хромтау",
+   "region": "Актюбинская область",
+   "operators": [
+    "ТОО «ERG Capital Project» Хромтау",
+    "ТОО «ERG Capital Project» Хромтау"
+   ],
+   "capacity_mw": 150.0,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": 50.33906,
+   "lon": 58.62223,
+   "location": "plant",
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "В OSM отмечена одной точкой, турбины не нанесены",
+   "units": []
+  },
+  {
+   "id": "arkalyk",
+   "name": "Аркалыкская ВЭС",
+   "region": "Костанайская область",
+   "operators": [
+    "ТОО «KazWindEnergy» в г. Аркалык"
+   ],
+   "capacity_mw": 48,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": 50.32531,
+   "lon": 66.84873,
+   "location": "turbines",
+   "osm": "relation/18995937",
+   "in_registry": true,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 50.349319,
+     "lon": 66.861251,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12662562901"
+    },
+    {
+     "id": "T2",
+     "lat": 50.346157,
+     "lon": 66.843089,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12662562699"
+    },
+    {
+     "id": "T3",
+     "lat": 50.343175,
+     "lon": 66.836066,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12662562698"
+    },
+    {
+     "id": "T4",
+     "lat": 50.341093,
+     "lon": 66.853651,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12662562700"
+    },
+    {
+     "id": "T5",
+     "lat": 50.337426,
+     "lon": 66.83887,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12662562697"
+    },
+    {
+     "id": "T6",
+     "lat": 50.332168,
+     "lon": 66.841494,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12662562696"
+    },
+    {
+     "id": "T7",
+     "lat": 50.306714,
+     "lon": 66.850249,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12662562694"
+    },
+    {
+     "id": "T8",
+     "lat": 50.302727,
+     "lon": 66.851963,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12662562693"
+    },
+    {
+     "id": "T9",
+     "lat": 50.299055,
+     "lon": 66.854017,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12662562692"
+    },
+    {
+     "id": "T10",
+     "lat": 50.295311,
+     "lon": 66.856666,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12662562695"
+    }
+   ]
+  },
+  {
+   "id": "kostanay",
+   "name": "Костанайская ВЭС",
+   "region": "Костанайская область",
+   "operators": [
+    "ТОО «ЖЕЛ ЭЛЕКТРИК»"
+   ],
+   "capacity_mw": 50,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": 53.27588,
+   "lon": 63.82723,
+   "location": "turbines",
+   "osm": "relation/18989187",
+   "in_registry": true,
+   "data": "none",
+   "note": "Сопоставлено по мощности: единственная ВЭС 50 МВт в Костанайской области",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 53.297163,
+     "lon": 63.836818,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828450"
+    },
+    {
+     "id": "T2",
+     "lat": 53.293905,
+     "lon": 63.825467,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828451"
+    },
+    {
+     "id": "T3",
+     "lat": 53.289442,
+     "lon": 63.847697,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828449"
+    },
+    {
+     "id": "T4",
+     "lat": 53.288275,
+     "lon": 63.810167,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828452"
+    },
+    {
+     "id": "T5",
+     "lat": 53.285902,
+     "lon": 63.855164,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828448"
+    },
+    {
+     "id": "T6",
+     "lat": 53.282528,
+     "lon": 63.808773,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828453"
+    },
+    {
+     "id": "T7",
+     "lat": 53.281142,
+     "lon": 63.865807,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828446"
+    },
+    {
+     "id": "T8",
+     "lat": 53.276254,
+     "lon": 63.857353,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828447"
+    },
+    {
+     "id": "T9",
+     "lat": 53.27379,
+     "lon": 63.836582,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828454"
+    },
+    {
+     "id": "T10",
+     "lat": 53.273162,
+     "lon": 63.796391,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828460"
+    },
+    {
+     "id": "T11",
+     "lat": 53.26894,
+     "lon": 63.816969,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828456"
+    },
+    {
+     "id": "T12",
+     "lat": 53.266463,
+     "lon": 63.7974,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828461"
+    },
+    {
+     "id": "T13",
+     "lat": 53.265847,
+     "lon": 63.835637,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828455"
+    },
+    {
+     "id": "T14",
+     "lat": 53.260354,
+     "lon": 63.812055,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828457"
+    },
+    {
+     "id": "T15",
+     "lat": 53.25916,
+     "lon": 63.823836,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828459"
+    },
+    {
+     "id": "T16",
+     "lat": 53.251676,
+     "lon": 63.809588,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11944828458"
+    }
+   ]
+  },
+  {
+   "id": "kokshetau",
+   "name": "Кокшетауская ВЭС",
+   "region": "Акмолинская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 53.30677,
+   "lon": 69.23656,
+   "location": "turbines",
+   "osm": "relation/14072930",
+   "in_registry": false,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 53.309571,
+     "lon": 69.237869,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9689883612"
+    },
+    {
+     "id": "T2",
+     "lat": 53.308946,
+     "lon": 69.239685,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9689883611"
+    },
+    {
+     "id": "T3",
+     "lat": 53.308596,
+     "lon": 69.2359,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9689883613"
+    },
+    {
+     "id": "T4",
+     "lat": 53.307977,
+     "lon": 69.237735,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9689883614"
+    },
+    {
+     "id": "T5",
+     "lat": 53.30736,
+     "lon": 69.239558,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9689883610"
+    },
+    {
+     "id": "T6",
+     "lat": 53.307099,
+     "lon": 69.235676,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9689883616"
+    },
+    {
+     "id": "T7",
+     "lat": 53.306433,
+     "lon": 69.23748,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9689883615"
+    },
+    {
+     "id": "T8",
+     "lat": 53.306134,
+     "lon": 69.233632,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9690032617"
+    },
+    {
+     "id": "T9",
+     "lat": 53.305539,
+     "lon": 69.235406,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9690032618"
+    },
+    {
+     "id": "T10",
+     "lat": 53.304912,
+     "lon": 69.237261,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9690032621"
+    },
+    {
+     "id": "T11",
+     "lat": 53.304638,
+     "lon": 69.233347,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9690032619"
+    },
+    {
+     "id": "T12",
+     "lat": 53.303983,
+     "lon": 69.235135,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/9690032620"
+    }
+   ]
+  },
+  {
+   "id": "petropavlovsk",
+   "name": "Петропавловская ВЭС",
+   "region": "Северо-Казахстанская область",
+   "operators": [],
+   "capacity_mw": 1.5,
+   "capacity_source": "osm",
+   "commissioned": null,
+   "lat": 54.52591,
+   "lon": 68.6675,
+   "location": "turbines",
+   "osm": "relation/14073345",
+   "in_registry": false,
+   "data": "none",
+   "note": null,
+   "units": [
+    {
+     "id": "T1",
+     "lat": 54.52677,
+     "lon": 68.666439,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/5634118267"
+    },
+    {
+     "id": "T2",
+     "lat": 54.525054,
+     "lon": 68.668569,
+     "rated_kw": 750.0,
+     "model": null,
+     "osm": "node/5634118266"
+    }
+   ]
+  },
+  {
+   "id": "abai-1",
+   "name": "ВЭС «Абай 1»",
+   "region": "Абайская область",
+   "operators": [
+    "ТОО «ВЭС 100 МВт «Абай 1»"
+   ],
+   "capacity_mw": 100,
+   "capacity_source": "registry",
+   "commissioned": "2022",
+   "lat": 47.96512,
+   "lon": 80.4366,
+   "location": "district",
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Аягозский район; точные координаты турбин неизвестны",
+   "units": []
+  },
+  {
+   "id": "hyperborea",
+   "name": "ВЭС «Гиперборея»",
+   "region": "Карагандинская область",
+   "operators": [
+    "ТОО «Гиперборея»"
+   ],
+   "capacity_mw": 50,
+   "capacity_source": "registry",
+   "commissioned": "2025",
+   "lat": 50.56067,
+   "lon": 72.58137,
+   "location": "district",
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Осакаровский район; точные координаты турбин неизвестны",
+   "units": []
+  },
+  {
+   "id": "sarkylmas",
+   "name": "ВЭС Sarkylmas Kuat",
+   "region": "Мангистауская область",
+   "operators": [
+    "ТОО «Sarkylmas Kuat»"
+   ],
+   "capacity_mw": 50,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": 43.4985,
+   "lon": 52.08794,
+   "location": "district",
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "С. Мунайшы, Каракиянский район; 8 турбин по 6.25 МВт",
+   "units": []
+  },
+  {
+   "id": "darmen-shuak",
+   "name": "ВЭС Darmen Shuak",
+   "region": "Актюбинская область",
+   "operators": [
+    "ТОО «Darmen Shuak»"
+   ],
+   "capacity_mw": 50,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": 50.25782,
+   "lon": 58.43267,
+   "location": "district",
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Хромтауский район; точные координаты турбин неизвестны",
+   "units": []
+  },
+  {
+   "id": "next-green",
+   "name": "ВЭС Next Green Energy",
+   "region": "Актюбинская область",
+   "operators": [
+    "ТОО «Next Green Energy»"
+   ],
+   "capacity_mw": 50,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": 50.25782,
+   "lon": 58.43267,
+   "location": "district",
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Хромтауский район; точные координаты турбин неизвестны",
+   "units": []
+  },
+  {
+   "id": "osm-relation-18987558",
+   "name": "ВЭС у Актогай",
+   "region": "Абайская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 46.88891,
+   "lon": 79.74002,
+   "location": "turbines",
+   "osm": "relation/18987558",
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 9 км от Актогай",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 46.957923,
+     "lon": 79.755335,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996495"
+    },
+    {
+     "id": "T2",
+     "lat": 46.956253,
+     "lon": 79.76248,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996496"
+    },
+    {
+     "id": "T3",
+     "lat": 46.954085,
+     "lon": 79.770806,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996497"
+    },
+    {
+     "id": "T4",
+     "lat": 46.952415,
+     "lon": 79.778016,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996498"
+    },
+    {
+     "id": "T5",
+     "lat": 46.950526,
+     "lon": 79.785783,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996499"
+    },
+    {
+     "id": "T6",
+     "lat": 46.948431,
+     "lon": 79.794152,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996500"
+    },
+    {
+     "id": "T7",
+     "lat": 46.946483,
+     "lon": 79.802091,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996501"
+    },
+    {
+     "id": "T8",
+     "lat": 46.944623,
+     "lon": 79.809794,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996502"
+    },
+    {
+     "id": "T9",
+     "lat": 46.940345,
+     "lon": 79.738855,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996510"
+    },
+    {
+     "id": "T10",
+     "lat": 46.937693,
+     "lon": 79.747224,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996511"
+    },
+    {
+     "id": "T11",
+     "lat": 46.935129,
+     "lon": 79.755678,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996512"
+    },
+    {
+     "id": "T12",
+     "lat": 46.93255,
+     "lon": 79.764015,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996513"
+    },
+    {
+     "id": "T13",
+     "lat": 46.929964,
+     "lon": 79.77234,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996514"
+    },
+    {
+     "id": "T14",
+     "lat": 46.927444,
+     "lon": 79.780773,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996515"
+    },
+    {
+     "id": "T15",
+     "lat": 46.925575,
+     "lon": 79.713267,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996518"
+    },
+    {
+     "id": "T16",
+     "lat": 46.924674,
+     "lon": 79.789023,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996516"
+    },
+    {
+     "id": "T17",
+     "lat": 46.922615,
+     "lon": 79.721185,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996519"
+    },
+    {
+     "id": "T18",
+     "lat": 46.922117,
+     "lon": 79.797435,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996517"
+    },
+    {
+     "id": "T19",
+     "lat": 46.919669,
+     "lon": 79.729092,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996520"
+    },
+    {
+     "id": "T20",
+     "lat": 46.916635,
+     "lon": 79.737021,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996521"
+    },
+    {
+     "id": "T21",
+     "lat": 46.913682,
+     "lon": 79.744939,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996522"
+    },
+    {
+     "id": "T22",
+     "lat": 46.910845,
+     "lon": 79.752277,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996523"
+    },
+    {
+     "id": "T23",
+     "lat": 46.910069,
+     "lon": 79.692743,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996503"
+    },
+    {
+     "id": "T24",
+     "lat": 46.907877,
+     "lon": 79.760238,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996524"
+    },
+    {
+     "id": "T25",
+     "lat": 46.907122,
+     "lon": 79.700618,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996504"
+    },
+    {
+     "id": "T26",
+     "lat": 46.90493,
+     "lon": 79.768118,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996525"
+    },
+    {
+     "id": "T27",
+     "lat": 46.904058,
+     "lon": 79.708707,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996505"
+    },
+    {
+     "id": "T28",
+     "lat": 46.90029,
+     "lon": 79.718878,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996506"
+    },
+    {
+     "id": "T29",
+     "lat": 46.897329,
+     "lon": 79.726732,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996507"
+    },
+    {
+     "id": "T30",
+     "lat": 46.894352,
+     "lon": 79.734843,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996508"
+    },
+    {
+     "id": "T31",
+     "lat": 46.891463,
+     "lon": 79.742589,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996509"
+    },
+    {
+     "id": "T32",
+     "lat": 46.829921,
+     "lon": 79.713578,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996360"
+    },
+    {
+     "id": "T33",
+     "lat": 46.827601,
+     "lon": 79.719189,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996361"
+    },
+    {
+     "id": "T34",
+     "lat": 46.825289,
+     "lon": 79.724833,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996362"
+    },
+    {
+     "id": "T35",
+     "lat": 46.822969,
+     "lon": 79.730508,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996363"
+    },
+    {
+     "id": "T36",
+     "lat": 46.822529,
+     "lon": 79.675115,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996375"
+    },
+    {
+     "id": "T37",
+     "lat": 46.820723,
+     "lon": 79.736195,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996364"
+    },
+    {
+     "id": "T38",
+     "lat": 46.820267,
+     "lon": 79.68078,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996374"
+    },
+    {
+     "id": "T39",
+     "lat": 46.8183,
+     "lon": 79.741559,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996365"
+    },
+    {
+     "id": "T40",
+     "lat": 46.817999,
+     "lon": 79.686466,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996373"
+    },
+    {
+     "id": "T41",
+     "lat": 46.816127,
+     "lon": 79.747245,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996366"
+    },
+    {
+     "id": "T42",
+     "lat": 46.815767,
+     "lon": 79.692142,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996372"
+    },
+    {
+     "id": "T43",
+     "lat": 46.813571,
+     "lon": 79.752417,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996367"
+    },
+    {
+     "id": "T44",
+     "lat": 46.813505,
+     "lon": 79.697882,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996371"
+    },
+    {
+     "id": "T45",
+     "lat": 46.811281,
+     "lon": 79.70359,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996370"
+    },
+    {
+     "id": "T46",
+     "lat": 46.808938,
+     "lon": 79.709287,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996369"
+    },
+    {
+     "id": "T47",
+     "lat": 46.80675,
+     "lon": 79.714909,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12752996368"
+    }
+   ]
+  },
+  {
+   "id": "osm-relation-18995531",
+   "name": "ВЭС у Нурлы",
+   "region": "Алматинская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.65767,
+   "lon": 78.71757,
+   "location": "turbines",
+   "osm": "relation/18995531",
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 16 км от Нурлы",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.677851,
+     "lon": 78.717341,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195047"
+    },
+    {
+     "id": "T2",
+     "lat": 43.677029,
+     "lon": 78.728435,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195045"
+    },
+    {
+     "id": "T3",
+     "lat": 43.675166,
+     "lon": 78.719788,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195046"
+    },
+    {
+     "id": "T4",
+     "lat": 43.67408,
+     "lon": 78.730667,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195044"
+    },
+    {
+     "id": "T5",
+     "lat": 43.672435,
+     "lon": 78.722502,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195065"
+    },
+    {
+     "id": "T6",
+     "lat": 43.66951,
+     "lon": 78.725066,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11951910251"
+    },
+    {
+     "id": "T7",
+     "lat": 43.666705,
+     "lon": 78.727932,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11951910250"
+    },
+    {
+     "id": "T8",
+     "lat": 43.663712,
+     "lon": 78.729701,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195064"
+    },
+    {
+     "id": "T9",
+     "lat": 43.661647,
+     "lon": 78.733499,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195063"
+    },
+    {
+     "id": "T10",
+     "lat": 43.661228,
+     "lon": 78.670328,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195048"
+    },
+    {
+     "id": "T11",
+     "lat": 43.659342,
+     "lon": 78.736975,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195062"
+    },
+    {
+     "id": "T12",
+     "lat": 43.658325,
+     "lon": 78.672838,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195049"
+    },
+    {
+     "id": "T13",
+     "lat": 43.656943,
+     "lon": 78.74014,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195061"
+    },
+    {
+     "id": "T14",
+     "lat": 43.655748,
+     "lon": 78.675628,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195050"
+    },
+    {
+     "id": "T15",
+     "lat": 43.654421,
+     "lon": 78.743101,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195060"
+    },
+    {
+     "id": "T16",
+     "lat": 43.653714,
+     "lon": 78.730194,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195056"
+    },
+    {
+     "id": "T17",
+     "lat": 43.651688,
+     "lon": 78.745848,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195059"
+    },
+    {
+     "id": "T18",
+     "lat": 43.651448,
+     "lon": 78.732984,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195057"
+    },
+    {
+     "id": "T19",
+     "lat": 43.649181,
+     "lon": 78.748712,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195058"
+    },
+    {
+     "id": "T20",
+     "lat": 43.644538,
+     "lon": 78.684876,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195051"
+    },
+    {
+     "id": "T21",
+     "lat": 43.641448,
+     "lon": 78.686507,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195052"
+    },
+    {
+     "id": "T22",
+     "lat": 43.639592,
+     "lon": 78.70598,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195053"
+    },
+    {
+     "id": "T23",
+     "lat": 43.635967,
+     "lon": 78.70628,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195054"
+    },
+    {
+     "id": "T24",
+     "lat": 43.632394,
+     "lon": 78.706301,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195055"
+    }
+   ]
+  },
+  {
+   "id": "osm-relation-18995532",
+   "name": "ВЭС у Нурлы",
+   "region": "Алматинская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.71191,
+   "lon": 78.74296,
+   "location": "turbines",
+   "osm": "relation/18995532",
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 20 км от Нурлы",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.724465,
+     "lon": 78.77832,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11980026920"
+    },
+    {
+     "id": "T2",
+     "lat": 43.723374,
+     "lon": 78.766656,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195040"
+    },
+    {
+     "id": "T3",
+     "lat": 43.720652,
+     "lon": 78.779215,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195043"
+    },
+    {
+     "id": "T4",
+     "lat": 43.72018,
+     "lon": 78.767864,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195039"
+    },
+    {
+     "id": "T5",
+     "lat": 43.720156,
+     "lon": 78.752494,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195036"
+    },
+    {
+     "id": "T6",
+     "lat": 43.717745,
+     "lon": 78.779665,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195042"
+    },
+    {
+     "id": "T7",
+     "lat": 43.717524,
+     "lon": 78.753482,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195035"
+    },
+    {
+     "id": "T8",
+     "lat": 43.716985,
+     "lon": 78.769044,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195038"
+    },
+    {
+     "id": "T9",
+     "lat": 43.715721,
+     "lon": 78.735913,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195032"
+    },
+    {
+     "id": "T10",
+     "lat": 43.715473,
+     "lon": 78.780105,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195041"
+    },
+    {
+     "id": "T11",
+     "lat": 43.714965,
+     "lon": 78.754447,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195034"
+    },
+    {
+     "id": "T12",
+     "lat": 43.713906,
+     "lon": 78.770245,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195037"
+    },
+    {
+     "id": "T13",
+     "lat": 43.712549,
+     "lon": 78.737179,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195031"
+    },
+    {
+     "id": "T14",
+     "lat": 43.712344,
+     "lon": 78.755429,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195033"
+    },
+    {
+     "id": "T15",
+     "lat": 43.711347,
+     "lon": 78.719519,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195020"
+    },
+    {
+     "id": "T16",
+     "lat": 43.709354,
+     "lon": 78.738381,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195030"
+    },
+    {
+     "id": "T17",
+     "lat": 43.708718,
+     "lon": 78.720624,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195021"
+    },
+    {
+     "id": "T18",
+     "lat": 43.70731,
+     "lon": 78.705888,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195028"
+    },
+    {
+     "id": "T19",
+     "lat": 43.706198,
+     "lon": 78.739572,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195029"
+    },
+    {
+     "id": "T20",
+     "lat": 43.706151,
+     "lon": 78.721611,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195022"
+    },
+    {
+     "id": "T21",
+     "lat": 43.704154,
+     "lon": 78.707074,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195027"
+    },
+    {
+     "id": "T22",
+     "lat": 43.703537,
+     "lon": 78.722588,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195023"
+    },
+    {
+     "id": "T23",
+     "lat": 43.701024,
+     "lon": 78.708254,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195026"
+    },
+    {
+     "id": "T24",
+     "lat": 43.697914,
+     "lon": 78.709488,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195025"
+    },
+    {
+     "id": "T25",
+     "lat": 43.695928,
+     "lon": 78.701023,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195024"
+    }
+   ]
+  },
+  {
+   "id": "osm-relation-19949781",
+   "name": "ВЭС у Коктал",
+   "region": "Жамбылская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.28936,
+   "lon": 70.31501,
+   "location": "turbines",
+   "osm": "relation/19949781",
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 2 км от Коктал",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.293294,
+     "lon": 70.312049,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704064"
+    },
+    {
+     "id": "T2",
+     "lat": 43.293075,
+     "lon": 70.309324,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704066"
+    },
+    {
+     "id": "T3",
+     "lat": 43.291935,
+     "lon": 70.31368,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704062"
+    },
+    {
+     "id": "T4",
+     "lat": 43.291498,
+     "lon": 70.310762,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704063"
+    },
+    {
+     "id": "T5",
+     "lat": 43.291326,
+     "lon": 70.315826,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704060"
+    },
+    {
+     "id": "T6",
+     "lat": 43.29092,
+     "lon": 70.307264,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704065"
+    },
+    {
+     "id": "T7",
+     "lat": 43.290311,
+     "lon": 70.312157,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704061"
+    },
+    {
+     "id": "T8",
+     "lat": 43.289999,
+     "lon": 70.317628,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704058"
+    },
+    {
+     "id": "T9",
+     "lat": 43.289389,
+     "lon": 70.31353,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704059"
+    },
+    {
+     "id": "T10",
+     "lat": 43.289139,
+     "lon": 70.319924,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704057"
+    },
+    {
+     "id": "T11",
+     "lat": 43.287312,
+     "lon": 70.321062,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704056"
+    },
+    {
+     "id": "T12",
+     "lat": 43.28714,
+     "lon": 70.316234,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704052"
+    },
+    {
+     "id": "T13",
+     "lat": 43.286203,
+     "lon": 70.319753,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704055"
+    },
+    {
+     "id": "T14",
+     "lat": 43.28536,
+     "lon": 70.317564,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704054"
+    },
+    {
+     "id": "T15",
+     "lat": 43.283548,
+     "lon": 70.318379,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369704053"
+    }
+   ]
+  },
+  {
+   "id": "osm-relation-19949799",
+   "name": "ВЭС у Ерейментау",
+   "region": "Акмолинская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 51.65869,
+   "lon": 73.05436,
+   "location": "turbines",
+   "osm": "relation/19949799",
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 5 км от Ерейментау",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 51.666274,
+     "lon": 73.046851,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713329"
+    },
+    {
+     "id": "T2",
+     "lat": 51.665023,
+     "lon": 73.051057,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713328"
+    },
+    {
+     "id": "T3",
+     "lat": 51.664943,
+     "lon": 73.04286,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713330"
+    },
+    {
+     "id": "T4",
+     "lat": 51.663532,
+     "lon": 73.054619,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713327"
+    },
+    {
+     "id": "T5",
+     "lat": 51.661802,
+     "lon": 73.040843,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713313"
+    },
+    {
+     "id": "T6",
+     "lat": 51.660657,
+     "lon": 73.057065,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713326"
+    },
+    {
+     "id": "T7",
+     "lat": 51.659832,
+     "lon": 73.046207,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713315"
+    },
+    {
+     "id": "T8",
+     "lat": 51.659219,
+     "lon": 73.040886,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713314"
+    },
+    {
+     "id": "T9",
+     "lat": 51.658847,
+     "lon": 73.050928,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713316"
+    },
+    {
+     "id": "T10",
+     "lat": 51.658767,
+     "lon": 73.058953,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713325"
+    },
+    {
+     "id": "T11",
+     "lat": 51.658155,
+     "lon": 73.054962,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713317"
+    },
+    {
+     "id": "T12",
+     "lat": 51.657276,
+     "lon": 73.062129,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713324"
+    },
+    {
+     "id": "T13",
+     "lat": 51.656531,
+     "lon": 73.058782,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713318"
+    },
+    {
+     "id": "T14",
+     "lat": 51.655971,
+     "lon": 73.065219,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713323"
+    },
+    {
+     "id": "T15",
+     "lat": 51.654374,
+     "lon": 73.062472,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713320"
+    },
+    {
+     "id": "T16",
+     "lat": 51.653522,
+     "lon": 73.058696,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713319"
+    },
+    {
+     "id": "T17",
+     "lat": 51.652271,
+     "lon": 73.064318,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713322"
+    },
+    {
+     "id": "T18",
+     "lat": 51.649342,
+     "lon": 73.061614,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369713321"
+    }
+   ]
+  },
+  {
+   "id": "osm-relation-19949801",
+   "name": "ВЭС у Тургай",
+   "region": "Акмолинская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 51.78164,
+   "lon": 72.76987,
+   "location": "turbines",
+   "osm": "relation/19949801",
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 3 км от Тургай",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 51.787568,
+     "lon": 72.778673,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369704800"
+    },
+    {
+     "id": "T2",
+     "lat": 51.787515,
+     "lon": 72.772279,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369704799"
+    },
+    {
+     "id": "T3",
+     "lat": 51.78725,
+     "lon": 72.78657,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369717401"
+    },
+    {
+     "id": "T4",
+     "lat": 51.783507,
+     "lon": 72.772536,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369704798"
+    },
+    {
+     "id": "T5",
+     "lat": 51.783507,
+     "lon": 72.780905,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369717402"
+    },
+    {
+     "id": "T6",
+     "lat": 51.780347,
+     "lon": 72.776012,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369717403"
+    },
+    {
+     "id": "T7",
+     "lat": 51.780241,
+     "lon": 72.771506,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369717404"
+    },
+    {
+     "id": "T8",
+     "lat": 51.779975,
+     "lon": 72.767,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369717405"
+    },
+    {
+     "id": "T9",
+     "lat": 51.778409,
+     "lon": 72.759662,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369717406"
+    },
+    {
+     "id": "T10",
+     "lat": 51.775833,
+     "lon": 72.753825,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369717407"
+    },
+    {
+     "id": "T11",
+     "lat": 51.773895,
+     "lon": 72.749577,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/13369717408"
+    }
+   ]
+  },
+  {
+   "id": "osm-c43-648-78-529",
+   "name": "ВЭС у Нурлы",
+   "region": "Алматинская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.648,
+   "lon": 78.5285,
+   "location": "turbines",
+   "osm": null,
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 1 км от Нурлы",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.649542,
+     "lon": 78.531738,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195068"
+    },
+    {
+     "id": "T2",
+     "lat": 43.649379,
+     "lon": 78.532939,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195067"
+    },
+    {
+     "id": "T3",
+     "lat": 43.649363,
+     "lon": 78.534458,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195066"
+    },
+    {
+     "id": "T4",
+     "lat": 43.649355,
+     "lon": 78.52963,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195069"
+    },
+    {
+     "id": "T5",
+     "lat": 43.648928,
+     "lon": 78.527532,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195070"
+    },
+    {
+     "id": "T6",
+     "lat": 43.648812,
+     "lon": 78.522972,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195072"
+    },
+    {
+     "id": "T7",
+     "lat": 43.648218,
+     "lon": 78.522935,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195071"
+    },
+    {
+     "id": "T8",
+     "lat": 43.647619,
+     "lon": 78.528989,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9690012909"
+    },
+    {
+     "id": "T9",
+     "lat": 43.647112,
+     "lon": 78.524009,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9690012907"
+    },
+    {
+     "id": "T10",
+     "lat": 43.646886,
+     "lon": 78.532325,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9690012912"
+    },
+    {
+     "id": "T11",
+     "lat": 43.646793,
+     "lon": 78.530601,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9690012911"
+    },
+    {
+     "id": "T12",
+     "lat": 43.646436,
+     "lon": 78.528804,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9690012910"
+    },
+    {
+     "id": "T13",
+     "lat": 43.645509,
+     "lon": 78.523629,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/9690012908"
+    }
+   ]
+  },
+  {
+   "id": "osm-c49-237-81-186",
+   "name": "ВЭС у Шуак",
+   "region": "Абайская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 49.23727,
+   "lon": 81.18605,
+   "location": "turbines",
+   "osm": null,
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 3 км от Шуак",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 49.266656,
+     "lon": 81.176648,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216261"
+    },
+    {
+     "id": "T2",
+     "lat": 49.262918,
+     "lon": 81.183815,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216260"
+    },
+    {
+     "id": "T3",
+     "lat": 49.262344,
+     "lon": 81.190853,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216259"
+    },
+    {
+     "id": "T4",
+     "lat": 49.261041,
+     "lon": 81.198599,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216258"
+    },
+    {
+     "id": "T5",
+     "lat": 49.253465,
+     "lon": 81.175554,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216263"
+    },
+    {
+     "id": "T6",
+     "lat": 49.245243,
+     "lon": 81.176948,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216264"
+    },
+    {
+     "id": "T7",
+     "lat": 49.241839,
+     "lon": 81.201839,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216262"
+    },
+    {
+     "id": "T8",
+     "lat": 49.239121,
+     "lon": 81.175318,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216265"
+    },
+    {
+     "id": "T9",
+     "lat": 49.231317,
+     "lon": 81.190295,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216266"
+    },
+    {
+     "id": "T10",
+     "lat": 49.230224,
+     "lon": 81.177185,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216267"
+    },
+    {
+     "id": "T11",
+     "lat": 49.226146,
+     "lon": 81.198535,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732293169"
+    },
+    {
+     "id": "T12",
+     "lat": 49.225922,
+     "lon": 81.180425,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732216268"
+    },
+    {
+     "id": "T13",
+     "lat": 49.219952,
+     "lon": 81.197269,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732293170"
+    },
+    {
+     "id": "T14",
+     "lat": 49.219559,
+     "lon": 81.186197,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732293172"
+    },
+    {
+     "id": "T15",
+     "lat": 49.219531,
+     "lon": 81.176004,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732293171"
+    },
+    {
+     "id": "T16",
+     "lat": 49.214556,
+     "lon": 81.185188,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732293173"
+    },
+    {
+     "id": "T17",
+     "lat": 49.213813,
+     "lon": 81.192183,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/11732293174"
+    }
+   ]
+  },
+  {
+   "id": "osm-c43-856-77-024",
+   "name": "ВЭС у Конаев",
+   "region": "Алматинская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.85574,
+   "lon": 77.02409,
+   "location": "turbines",
+   "osm": null,
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 3 км от Конаев",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.857915,
+     "lon": 77.025501,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12366975392"
+    },
+    {
+     "id": "T2",
+     "lat": 43.857578,
+     "lon": 77.023788,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12366975391"
+    },
+    {
+     "id": "T3",
+     "lat": 43.856344,
+     "lon": 77.023135,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12366975390"
+    },
+    {
+     "id": "T4",
+     "lat": 43.856135,
+     "lon": 77.025315,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12366975385"
+    },
+    {
+     "id": "T5",
+     "lat": 43.855384,
+     "lon": 77.023857,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12366975389"
+    },
+    {
+     "id": "T6",
+     "lat": 43.854527,
+     "lon": 77.025167,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12366975386"
+    },
+    {
+     "id": "T7",
+     "lat": 43.854486,
+     "lon": 77.02305,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12366975388"
+    },
+    {
+     "id": "T8",
+     "lat": 43.853526,
+     "lon": 77.022916,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12366975387"
+    }
+   ]
+  },
+  {
+   "id": "osm-c46-962-50-550",
+   "name": "ВЭС у Нарын",
+   "region": "Атырауская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 46.96191,
+   "lon": 50.55045,
+   "location": "turbines",
+   "osm": null,
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 9 км от Нарын",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 46.963378,
+     "lon": 50.551271,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195017"
+    },
+    {
+     "id": "T2",
+     "lat": 46.962265,
+     "lon": 50.555584,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195016"
+    },
+    {
+     "id": "T3",
+     "lat": 46.961547,
+     "lon": 50.545349,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195019"
+    },
+    {
+     "id": "T4",
+     "lat": 46.960463,
+     "lon": 50.549598,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12552195018"
+    }
+   ]
+  },
+  {
+   "id": "osm-c53-251-69-193",
+   "name": "ВЭС у Садовое",
+   "region": "Акмолинская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 53.25139,
+   "lon": 69.19348,
+   "location": "turbines",
+   "osm": null,
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 4 км от Садовое",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 53.253826,
+     "lon": 69.187876,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043141"
+    },
+    {
+     "id": "T2",
+     "lat": 53.253686,
+     "lon": 69.197831,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043137"
+    },
+    {
+     "id": "T3",
+     "lat": 53.252499,
+     "lon": 69.185625,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043140"
+    },
+    {
+     "id": "T4",
+     "lat": 53.252197,
+     "lon": 69.195253,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043136"
+    },
+    {
+     "id": "T5",
+     "lat": 53.251553,
+     "lon": 69.199749,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043132"
+    },
+    {
+     "id": "T6",
+     "lat": 53.251389,
+     "lon": 69.188793,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043139"
+    },
+    {
+     "id": "T7",
+     "lat": 53.251343,
+     "lon": 69.19272,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043135"
+    },
+    {
+     "id": "T8",
+     "lat": 53.250091,
+     "lon": 69.200256,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043131"
+    },
+    {
+     "id": "T9",
+     "lat": 53.249942,
+     "lon": 69.189983,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043138"
+    },
+    {
+     "id": "T10",
+     "lat": 53.249466,
+     "lon": 69.193736,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043134"
+    },
+    {
+     "id": "T11",
+     "lat": 53.249336,
+     "lon": 69.196464,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12556043133"
+    }
+   ]
+  },
+  {
+   "id": "osm-c43-436-52-388",
+   "name": "ВЭС у Мунайшы",
+   "region": "Мангистауская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.4364,
+   "lon": 52.38788,
+   "location": "turbines",
+   "osm": null,
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 25 км от Мунайшы",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.437576,
+     "lon": 52.376456,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12566238084"
+    },
+    {
+     "id": "T2",
+     "lat": 43.437404,
+     "lon": 52.379748,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12566238083"
+    },
+    {
+     "id": "T3",
+     "lat": 43.43715,
+     "lon": 52.3908,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12566238079"
+    },
+    {
+     "id": "T4",
+     "lat": 43.436963,
+     "lon": 52.394177,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12566238078"
+    },
+    {
+     "id": "T5",
+     "lat": 43.436142,
+     "lon": 52.385329,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12566238082"
+    },
+    {
+     "id": "T6",
+     "lat": 43.435344,
+     "lon": 52.392397,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12566238080"
+    },
+    {
+     "id": "T7",
+     "lat": 43.43531,
+     "lon": 52.395224,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12566238077"
+    },
+    {
+     "id": "T8",
+     "lat": 43.435302,
+     "lon": 52.388905,
+     "rated_kw": null,
+     "model": null,
+     "osm": "node/12566238081"
+    }
+   ]
+  },
+  {
+   "id": "osm-c43-471-69-810",
+   "name": "ВЭС у Аул Узакбай Сыздыкбаева",
+   "region": "Жамбылская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.47143,
+   "lon": 69.81022,
+   "location": "turbines",
+   "osm": null,
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 5 км от Аул Узакбай Сыздыкбаева",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.481698,
+     "lon": 69.790564,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369667442"
+    },
+    {
+     "id": "T2",
+     "lat": 43.47765,
+     "lon": 69.792709,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369667441"
+    },
+    {
+     "id": "T3",
+     "lat": 43.475657,
+     "lon": 69.797859,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369667440"
+    },
+    {
+     "id": "T4",
+     "lat": 43.472418,
+     "lon": 69.815197,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369667437"
+    },
+    {
+     "id": "T5",
+     "lat": 43.466687,
+     "lon": 69.8176,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369667439"
+    },
+    {
+     "id": "T6",
+     "lat": 43.463946,
+     "lon": 69.826441,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369667438"
+    },
+    {
+     "id": "T7",
+     "lat": 43.461953,
+     "lon": 69.831161,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369667436"
+    }
+   ]
+  },
+  {
+   "id": "osm-c43-458-69-764",
+   "name": "ВЭС у Аул Узакбай Сыздыкбаева",
+   "region": "Жамбылская область",
+   "operators": [],
+   "capacity_mw": null,
+   "capacity_source": null,
+   "commissioned": null,
+   "lat": 43.4577,
+   "lon": 69.76353,
+   "location": "turbines",
+   "osm": null,
+   "in_registry": false,
+   "data": "none",
+   "note": "Оператор не установлен; 6 км от Аул Узакбай Сыздыкбаева",
+   "units": [
+    {
+     "id": "T1",
+     "lat": 43.460707,
+     "lon": 69.760265,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369667443"
+    },
+    {
+     "id": "T2",
+     "lat": 43.456782,
+     "lon": 69.761639,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369667444"
+    },
+    {
+     "id": "T3",
+     "lat": 43.455598,
+     "lon": 69.768677,
+     "rated_kw": 2500.0,
+     "model": "Envision",
+     "osm": "node/13369667445"
+    }
+   ]
+  },
+  {
+   "id": "reg-01",
+   "name": "Аннар",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «Аннар»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-03",
+   "name": "ВЭС Сарыбулак 2",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «ВЭС Сарыбулак 2»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-04",
+   "name": "ВЭС Сарыбулак 1",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «ВЭС Сарыбулак 1»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-05",
+   "name": "ВЭС Кербулак",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «ВЭС Кербулак»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-06",
+   "name": "ВЭС Кербулак 2",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «ВЭС Кербулак 2»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-07",
+   "name": "Samruk Green Energy",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «Samruk Green Energy»"
+   ],
+   "capacity_mw": 5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-08",
+   "name": "ВЭС Нурлы 2",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «ВЭС Нурлы 2»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-09",
+   "name": "Энергия Семиречья",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «Энергия Семиречья»"
+   ],
+   "capacity_mw": 60,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-10",
+   "name": "ЖЕРУЙЫК ЭНЕРГО ВЭС Шелек",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «ЖЕРУЙЫК ЭНЕРГО» ВЭС Шелек"
+   ],
+   "capacity_mw": 50,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-11",
+   "name": "ВЭС Толкын",
+   "region": "Алматинская область",
+   "operators": [
+    "ТОО «ВЭС Толкын»"
+   ],
+   "capacity_mw": 3,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-12",
+   "name": "Агрофирма Родина",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Агрофирма «Родина»"
+   ],
+   "capacity_mw": 0.75,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-14",
+   "name": "ЦАТЭК Green Energy",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «ЦАТЭК Green Energy»"
+   ],
+   "capacity_mw": 100,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-15",
+   "name": "Golden Energy corp.",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Golden Energy corp.»"
+   ],
+   "capacity_mw": 4.95,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-16",
+   "name": "Golden Energy Corp.",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Golden Energy Corp.»"
+   ],
+   "capacity_mw": 25,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-17",
+   "name": "Вичи",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Вичи»"
+   ],
+   "capacity_mw": 7,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-18",
+   "name": "ПФ ЭлектроСетьСтрой ВЭС Торгай",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «ПФ ЭлектроСетьСтрой» ВЭС Торгай"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-22",
+   "name": "Alcor Energy",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Alcor Energy»"
+   ],
+   "capacity_mw": 4.95,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-23",
+   "name": "Восток Ветер",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Восток Ветер»"
+   ],
+   "capacity_mw": 10,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-24",
+   "name": "Аркалыкская ВЭС в с. Сараба",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Аркалыкская ВЭС» в с. Сараба"
+   ],
+   "capacity_mw": 7,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-25",
+   "name": "Аркалыкская ВЭС в с. Сараба",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Аркалыкская ВЭС» в с. Сараба"
+   ],
+   "capacity_mw": 10,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-26",
+   "name": "Софиевская ВЭС в с. Сараба",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Софиевская ВЭС» в с. Сараба"
+   ],
+   "capacity_mw": 39,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-27",
+   "name": "Эталон Пауэр",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Эталон Пауэр»"
+   ],
+   "capacity_mw": 18.15,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-28",
+   "name": "Эталон Пауэр",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Эталон Пауэр»"
+   ],
+   "capacity_mw": 1.4,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-29",
+   "name": "Jasil Jel Energy (бывш. Greencity)",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Jasil Jel Energy» (бывш. «Greencity»)"
+   ],
+   "capacity_mw": 10,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-30",
+   "name": "Jasil Jel Energy (бывш. Аргест)",
+   "region": "Акмолинская область",
+   "operators": [
+    "ТОО «Jasil Jel Energy» (бывш. «Аргест»)"
+   ],
+   "capacity_mw": 4.95,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-33",
+   "name": "Жел энерго",
+   "region": "Актюбинская область",
+   "operators": [
+    "ТОО «Жел энерго»"
+   ],
+   "capacity_mw": 0.45,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-38",
+   "name": "Винд Чарск",
+   "region": "Абайская область",
+   "operators": [
+    "ТОО «Винд Чарск»"
+   ],
+   "capacity_mw": 4.95,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-39",
+   "name": "ВЭС-Чарск",
+   "region": "Абайская область",
+   "operators": [
+    "ТОО «ВЭС-Чарск»"
+   ],
+   "capacity_mw": 4.95,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-40",
+   "name": "Чарск Ветер",
+   "region": "Абайская область",
+   "operators": [
+    "ТОО «Чарск Ветер»"
+   ],
+   "capacity_mw": 4.95,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-41",
+   "name": "DES Consulting",
+   "region": "Абайская область",
+   "operators": [
+    "ТОО «DES Consulting»"
+   ],
+   "capacity_mw": 4.95,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-42",
+   "name": "Ventum Energy",
+   "region": "Абайская область",
+   "operators": [
+    "ТОО «Ventum Energy»"
+   ],
+   "capacity_mw": 4.95,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-43",
+   "name": "EastWindEnergy",
+   "region": "Абайская область",
+   "operators": [
+    "ТОО «EastWindEnergy»"
+   ],
+   "capacity_mw": 4.95,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-45",
+   "name": "Mezgilder Qushteri",
+   "region": "Улытауская область",
+   "operators": [
+    "ТОО «Mezgilder Qushteri»"
+   ],
+   "capacity_mw": 100,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-48",
+   "name": "Изен-Су / ТОО Жымбыл жарык",
+   "region": "Жамбылская область",
+   "operators": [
+    "ТОО «Изен-Су» / ТОО «Жымбыл жарык»"
+   ],
+   "capacity_mw": 1.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-51",
+   "name": "Wind Electricity",
+   "region": "Жамбылская область",
+   "operators": [
+    "ТОО «Wind Electricity»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-52",
+   "name": "Wind Power city",
+   "region": "Жамбылская область",
+   "operators": [
+    "ТОО «Wind Power city»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-54",
+   "name": "ВЭС Шенгельды",
+   "region": "Жамбылская область",
+   "operators": [
+    "ТОО «ВЭС Шенгельды»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-55",
+   "name": "ВЭС Шенгельды 2",
+   "region": "Жамбылская область",
+   "operators": [
+    "ТОО «ВЭС Шенгельды 2»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-56",
+   "name": "НОВОТЭКС",
+   "region": "Жамбылская область",
+   "operators": [
+    "ТОО «НОВОТЭКС»"
+   ],
+   "capacity_mw": 4.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-61",
+   "name": "СП КТ Редкометальная компания",
+   "region": "Мангистауская область",
+   "operators": [
+    "ТОО «СП «КТ Редкометальная компания»"
+   ],
+   "capacity_mw": 43.6,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-62",
+   "name": "БЕСТ-Групп НС",
+   "region": "Мангистауская область",
+   "operators": [
+    "ТОО «БЕСТ-Групп НС»"
+   ],
+   "capacity_mw": 5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-63",
+   "name": "ВЭС Сервис",
+   "region": "Мангистауская область",
+   "operators": [
+    "ТОО «ВЭС Сервис»"
+   ],
+   "capacity_mw": 10,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-64",
+   "name": "ВЭС Жангиз",
+   "region": "Мангистауская область",
+   "operators": [
+    "ТОО «ВЭС Жангиз»"
+   ],
+   "capacity_mw": 5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-66",
+   "name": "Зенченко и К",
+   "region": "Северо-Казахстанская область",
+   "operators": [
+    "КТ «Зенченко и К»"
+   ],
+   "capacity_mw": 3.5,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-67",
+   "name": "Иван Зенченко",
+   "region": "Северо-Казахстанская область",
+   "operators": [
+    "ТОО «Иван Зенченко»"
+   ],
+   "capacity_mw": 2,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-68",
+   "name": "ВЭС Абай 2 50 МВт",
+   "region": "Область Жетісу",
+   "operators": [
+    "ТОО «ВЭС Абай 2 50 МВт»"
+   ],
+   "capacity_mw": 50,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  },
+  {
+   "id": "reg-69",
+   "name": "EcoWattAKA",
+   "region": "Область Жетісу",
+   "operators": [
+    "ТОО «EcoWattAKA»"
+   ],
+   "capacity_mw": 50,
+   "capacity_source": "registry",
+   "commissioned": null,
+   "lat": null,
+   "lon": null,
+   "location": null,
+   "osm": null,
+   "in_registry": true,
+   "data": "none",
+   "note": "Координаты не опубликованы",
+   "units": []
+  }
+ ]
+}

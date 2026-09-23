@@ -116,20 +116,31 @@ REGISTRY: list[tuple[str, str, float]] = [
 # известен только район. registry — подстроки операторов из REGISTRY.
 CURATED: list[dict] = [
     {
+        "id": "nurly",
+        "name": "ВЭС Нурлы",
+        "osm": "relation/14072944",
+        "registry": ["ВЭС НУРЛЫ»"],
+        "data": "history",
+        # Координаты турбин T1/T2 из датасета кейса (переданы организатором
+        # ссылками на карту) — точнее разметки OSM на 5–10 м.
+        "unit_coords": {"T1": (43.645150, 78.535604), "T2": (43.643198, 78.538828)},
+        "note": "Станция из датасета кейса: SCADA с марта 2023 по январь 2026. "
+        "В реестре 4.5 МВт, в OSM — 2 × Goldwind GW109/2500",
+    },
+    {
         "id": "ereymentau",
         "name": "Ерейментау ВЭС",
         "osm": "relation/9249912",
         "registry": ["Первая ветровая"],
         "commissioned": "2015",
-        "data": "history",
-        "note": "Станция из датасета кейса: SCADA с марта 2023 по январь 2026",
     },
     {
         "id": "akmola",
         "name": "Акмолинская ВЭС",
         "osm": "relation/19431823",
         "registry": ["Борей Энерго» 1", "Борей Энерго» 2", "Energo Trust"],
-        "note": "Три очереди по 50 МВт у сёл Булаксай и Сарыоба (SPIC / CPID) — сопоставлено по сообщениям СМИ",
+        "note": "Три очереди по 50 МВт у сёл Булаксай и Сарыоба (SPIC / CPID) — "
+        "сопоставлено по сообщениям СМИ",
     },
     {"id": "arshaly", "name": "Аршалынская ВЭС", "osm": "relation/14072937"},
     {
@@ -198,7 +209,6 @@ CURATED: list[dict] = [
     },
     {"id": "kokshetau", "name": "Кокшетауская ВЭС", "osm": "relation/14072930"},
     {"id": "petropavlovsk", "name": "Петропавловская ВЭС", "osm": "relation/14073345"},
-    {"id": "nurly", "name": "ВЭС Нурлы", "osm": "relation/14072944"},
     # Известен только район — точка ставится на райцентр.
     {
         "id": "abai-1",
@@ -335,7 +345,9 @@ def centroid(points: list[dict]) -> tuple[float, float]:
 
 def kz_outline() -> list[list[list[float]]]:
     """Контур Казахстана из TopoJSON Natural Earth: декодируем дуги без зависимостей."""
-    req = urllib.request.Request("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json", headers=UA)
+    req = urllib.request.Request(
+        "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json", headers=UA
+    )
     with urllib.request.urlopen(req, timeout=60) as resp:
         topo = json.loads(resp.read())
     sx, sy = topo["transform"]["scale"]
@@ -363,26 +375,49 @@ def kz_outline() -> list[list[list[float]]]:
 
 def main() -> None:
     print("OSM: контуры станций…")
-    plants = overpass(f'[out:json][timeout:180];{KZ_AREA}nwr["power"="plant"]["plant:source"="wind"](area.kz);out tags geom;')
+    plants = overpass(
+        f"[out:json][timeout:180];{KZ_AREA}"
+        'nwr["power"="plant"]["plant:source"="wind"](area.kz);out geom;'
+    )
     print("OSM: турбины…")
-    turbines = overpass(f'[out:json][timeout:180];{KZ_AREA}node["generator:source"="wind"](area.kz);out body;')
+    turbines = overpass(
+        f'[out:json][timeout:180];{KZ_AREA}node["generator:source"="wind"](area.kz);out body;'
+    )
     print("OSM: населённые пункты…")
-    places = overpass(f'[out:json][timeout:180];{KZ_AREA}node["place"~"^(city|town|village)$"](area.kz);out;')
+    places = overpass(
+        f'[out:json][timeout:180];{KZ_AREA}node["place"~"^(city|town|village)$"](area.kz);out;'
+    )
     places = [
-        {"name": p["tags"].get("name:ru") or p["tags"].get("name"), "lat": p["lat"], "lon": p["lon"],
-         "rank": {"city": 3, "town": 2, "village": 1}[p["tags"]["place"]]}
-        for p in places if p["tags"].get("name:ru") or p["tags"].get("name")
+        {
+            "name": p["tags"].get("name:ru") or p["tags"].get("name"),
+            "lat": p["lat"],
+            "lon": p["lon"],
+            "rank": {"city": 3, "town": 2, "village": 1}[p["tags"]["place"]],
+        }
+        for p in places
+        if p["tags"].get("name:ru") or p["tags"].get("name")
     ]
 
     # Мелкие бытовые ветряки — не станции.
-    turbines = [t for t in turbines if t.get("tags", {}).get("generator:output:electricity") != "small_installation"]
+    turbines = [
+        t
+        for t in turbines
+        if t.get("tags", {}).get("generator:output:electricity") != "small_installation"
+    ]
 
     plant_by_ref = {f"{p['type']}/{p['id']}": p for p in plants}
     groups: list[dict] = []
     free = list(turbines)
     for ref, p in plant_by_ref.items():
+        # Станция в OSM — либо контур, либо relation type=site, куда турбины
+        # включены участниками напрямую.
         rs = rings(p)
-        members = [t for t in free if any(inside((t["lat"], t["lon"]), r) for r in rs)]
+        refs = {m["ref"] for m in p.get("members", []) if m.get("type") == "node"}
+        members = [
+            t
+            for t in free
+            if t["id"] in refs or any(inside((t["lat"], t["lon"]), r) for r in rs if len(r) > 3)
+        ]
         free = [t for t in free if t not in members]
         c = members and centroid(members)
         if not members:
@@ -406,22 +441,34 @@ def main() -> None:
         return out
 
     def nearest_place(pt: tuple[float, float], min_rank: int = 1) -> dict:
-        return min((p for p in places if p["rank"] >= min_rank), key=lambda p: km(pt, (p["lat"], p["lon"])))
+        return min(
+            (p for p in places if p["rank"] >= min_rank), key=lambda p: km(pt, (p["lat"], p["lon"]))
+        )
 
     def build(c: dict, g: dict | None) -> dict:
         idx = take_registry(c.get("registry", []))
         units = []
         if g and not c.get("location_only"):
-            for n, t in enumerate(sorted(g["turbines"], key=lambda t: (-t["lat"], t["lon"])), start=1):
+            for n, t in enumerate(
+                sorted(g["turbines"], key=lambda t: (-t["lat"], t["lon"])), start=1
+            ):
                 tags = t.get("tags", {})
-                units.append({
-                    "id": f"T{n}",
-                    "lat": round(t["lat"], 6),
-                    "lon": round(t["lon"], 6),
-                    "rated_kw": rated_kw(tags),
-                    "model": " ".join(filter(None, [tags.get("manufacturer"), tags.get("model")])) or None,
-                    "osm": f"node/{t['id']}",
-                })
+                units.append(
+                    {
+                        "id": f"T{n}",
+                        "lat": round(t["lat"], 6),
+                        "lon": round(t["lon"], 6),
+                        "rated_kw": rated_kw(tags),
+                        "model": " ".join(
+                            filter(None, [tags.get("manufacturer"), tags.get("model")])
+                        )
+                        or None,
+                        "osm": f"node/{t['id']}",
+                    }
+                )
+        for u in units:
+            if u["id"] in c.get("unit_coords", {}):
+                u["lat"], u["lon"] = c["unit_coords"][u["id"]]
         cap_registry = round(sum(REGISTRY[i][2] for i in idx), 2) if idx else None
         cap_osm = rated_kw(g["tags"], "plant:output:electricity") if g else None
         if cap_registry is not None:
@@ -475,25 +522,42 @@ def main() -> None:
             continue
         p = nearest_place(g["center"])
         dist = km(g["center"], (p["lat"], p["lon"]))
-        slug = re.sub(r"[^a-z0-9]+", "-", (g["osm"] or f"c{g['center'][0]:.3f}-{g['center'][1]:.3f}").lower()).strip("-")
-        farm = build({
-            "id": f"osm-{slug}",
-            "name": g["tags"].get("name:ru") or g["tags"].get("name") or f"ВЭС у {p['name']}",
-            "note": f"Оператор не установлен; {dist:.0f} км от {p['name']}",
-        }, g)
+        slug = re.sub(
+            r"[^a-z0-9]+", "-", (g["osm"] or f"c{g['center'][0]:.3f}-{g['center'][1]:.3f}").lower()
+        ).strip("-")
+        farm = build(
+            {
+                "id": f"osm-{slug}",
+                "name": g["tags"].get("name:ru") or g["tags"].get("name") or f"ВЭС у {p['name']}",
+                "note": f"Оператор не установлен; {dist:.0f} км от {p['name']}",
+            },
+            g,
+        )
         farms.append(farm)
 
     # Станции реестра, которых нет ни в OSM, ни в открытых источниках с координатами.
     for i, (region, op, mw) in enumerate(REGISTRY):
         if i in registry_used:
             continue
-        farms.append({
-            "id": f"reg-{i + 1:02d}",
-            "name": re.sub(r"^(ТОО|КТ)\s*", "", op).replace("«", "").replace("»", ""),
-            "region": region, "operators": [op], "capacity_mw": mw, "capacity_source": "registry",
-            "commissioned": None, "lat": None, "lon": None, "location": None, "osm": None,
-            "in_registry": True, "data": "none", "note": "Координаты не опубликованы", "units": [],
-        })
+        farms.append(
+            {
+                "id": f"reg-{i + 1:02d}",
+                "name": re.sub(r"^(ТОО|КТ)\s*", "", op).replace("«", "").replace("»", ""),
+                "region": region,
+                "operators": [op],
+                "capacity_mw": mw,
+                "capacity_source": "registry",
+                "commissioned": None,
+                "lat": None,
+                "lon": None,
+                "location": None,
+                "osm": None,
+                "in_registry": True,
+                "data": "none",
+                "note": "Координаты не опубликованы",
+                "units": [],
+            }
+        )
 
     # Область для станций вне реестра — по административной границе OSM.
     missing = [f for f in farms if not f["region"] and f["lat"] is not None]
@@ -509,20 +573,29 @@ def main() -> None:
                 f["region"] = a["tags"].get("name:ru") or a["tags"].get("name")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps({
-        "generated": date.today().isoformat(),
-        "sources": {
-            "registry": "QazaqGreen, карта ВИЭ, данные Минэнерго РК на январь 2026 — https://qazaqgreen.com/map/",
-            "osm": "© участники OpenStreetMap, ODbL — https://www.openstreetmap.org/copyright",
-        },
-        "farms": farms,
-    }, ensure_ascii=False, indent=1) + "\n")
+    OUT.write_text(
+        json.dumps(
+            {
+                "generated": date.today().isoformat(),
+                "sources": {
+                    "registry": "QazaqGreen, карта ВИЭ, данные Минэнерго РК на январь 2026 — https://qazaqgreen.com/map/",
+                    "osm": "© участники OpenStreetMap, ODbL — https://www.openstreetmap.org/copyright",
+                },
+                "farms": farms,
+            },
+            ensure_ascii=False,
+            indent=1,
+        )
+        + "\n"
+    )
     OUT_MAP.write_text(json.dumps(kz_outline()) + "\n")
 
     on_map = [f for f in farms if f["lat"] is not None]
-    print(f"Станций: {len(farms)}, на карте: {len(on_map)}, турбин с координатами: "
-          f"{sum(len(f['units']) for f in farms)}, из реестра не сопоставлено с OSM: "
-          f"{sum(1 for f in farms if f['lat'] is None)}")
+    print(
+        f"Станций: {len(farms)}, на карте: {len(on_map)}, турбин с координатами: "
+        f"{sum(len(f['units']) for f in farms)}, из реестра не сопоставлено с OSM: "
+        f"{sum(1 for f in farms if f['lat'] is None)}"
+    )
     print(f"→ {OUT.relative_to(ROOT)}\n→ {OUT_MAP.relative_to(ROOT)}")
 
 

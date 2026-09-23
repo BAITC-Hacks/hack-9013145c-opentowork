@@ -284,3 +284,52 @@ class Feedback(Base, TimestampMixin):
     )
     rating: Mapped[int] = mapped_column(Integer, nullable=False)  # +1 / -1
     reason: Mapped[str | None] = mapped_column(Text)
+
+
+class WindFarm(Base):
+    """Справочник ВЭС Казахстана — реестр Минэнерго + координаты из OSM.
+
+    Грузится миграцией 0004 из app/wind/data/kz_wind_farms.json, а не сидом:
+    это справочные данные, они нужны и при SEED_ON_START=false.
+    """
+
+    __tablename__ = "wind_farms"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    region: Mapped[str | None] = mapped_column(String(128), index=True)
+    operators: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    capacity_mw: Mapped[float | None] = mapped_column(Float)
+    capacity_source: Mapped[str | None] = mapped_column(String(16))
+    commissioned: Mapped[str | None] = mapped_column(String(16))
+    lat: Mapped[float | None] = mapped_column(Float)
+    lon: Mapped[float | None] = mapped_column(Float)
+    # turbines — по турбинам, plant — точка станции, district — райцентр, None — нет координат
+    location: Mapped[str | None] = mapped_column(String(16))
+    osm: Mapped[str | None] = mapped_column(String(64))
+    in_registry: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    data: Mapped[str] = mapped_column(String(16), default="none", nullable=False)
+    note: Mapped[str | None] = mapped_column(Text)
+
+    turbines: Mapped[list["WindTurbine"]] = relationship(
+        back_populates="farm", cascade="all, delete-orphan", order_by="WindTurbine.position"
+    )
+
+
+class WindTurbine(Base):
+    __tablename__ = "wind_turbines"
+    __table_args__ = (UniqueConstraint("farm_id", "unit_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    farm_id: Mapped[str] = mapped_column(
+        ForeignKey("wind_farms.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    unit_id: Mapped[str] = mapped_column(String(16), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    lat: Mapped[float] = mapped_column(Float, nullable=False)
+    lon: Mapped[float] = mapped_column(Float, nullable=False)
+    rated_kw: Mapped[float | None] = mapped_column(Float)
+    model: Mapped[str | None] = mapped_column(String(128))
+    osm: Mapped[str | None] = mapped_column(String(64))
+
+    farm: Mapped[WindFarm] = relationship(back_populates="turbines")
