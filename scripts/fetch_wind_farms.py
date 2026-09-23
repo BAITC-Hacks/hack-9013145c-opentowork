@@ -55,7 +55,7 @@ REGISTRY: list[tuple[str, str, float]] = [
     ("Акмолинская область", "ТОО «Первая ветровая электрическая станция»", 45.1),
     ("Акмолинская область", "ТОО «ЦАТЭК Green Energy»", 100),
     ("Акмолинская область", "ТОО «Golden Energy corp.»", 4.95),
-    ("Акмолинская область", "ТОО «Golden Energy Corp.» (2)", 25),
+    ("Акмолинская область", "ТОО «Golden Energy Corp.»", 25),
     ("Акмолинская область", "ТОО «Вичи»", 7),
     ("Акмолинская область", "ТОО «ПФ ЭлектроСетьСтрой» ВЭС Торгай", 4.5),
     ("Акмолинская область", "ТОО «Борей Энерго» 1", 50),
@@ -64,17 +64,17 @@ REGISTRY: list[tuple[str, str, float]] = [
     ("Акмолинская область", "ТОО «Alcor Energy»", 4.95),
     ("Акмолинская область", "ТОО «Восток Ветер»", 10),
     ("Акмолинская область", "ТОО «Аркалыкская ВЭС» в с. Сараба", 7),
-    ("Акмолинская область", "ТОО «Аркалыкская ВЭС» в с. Сараба (2)", 10),
+    ("Акмолинская область", "ТОО «Аркалыкская ВЭС» в с. Сараба", 10),
     ("Акмолинская область", "ТОО «Софиевская ВЭС» в с. Сараба", 39),
     ("Акмолинская область", "ТОО «Эталон Пауэр»", 18.15),
-    ("Акмолинская область", "ТОО «Эталон Пауэр» (2)", 1.4),
+    ("Акмолинская область", "ТОО «Эталон Пауэр»", 1.4),
     ("Акмолинская область", "ТОО «Jasil Jel Energy» (бывш. «Greencity»)", 10),
     ("Акмолинская область", "ТОО «Jasil Jel Energy» (бывш. «Аргест»)", 4.95),
     ("Актюбинская область", "ТОО «Plentitude» ВЭС Бадамша 1", 48),
     ("Актюбинская область", "ТОО «Plentitude» ВЭС Бадамша 2", 48),
     ("Актюбинская область", "ТОО «Жел энерго»", 0.45),
     ("Актюбинская область", "ТОО «ERG Capital Project» Хромтау", 12.5),
-    ("Актюбинская область", "ТОО «ERG Capital Project» Хромтау (2)", 137.5),
+    ("Актюбинская область", "ТОО «ERG Capital Project» Хромтау", 137.5),
     ("Актюбинская область", "ТОО «Next Green Energy»", 50),
     ("Актюбинская область", "ТОО «Darmen Shuak»", 50),
     ("Абайская область", "ТОО «Винд Чарск»", 4.95),
@@ -265,11 +265,30 @@ def km(a: tuple[float, float], b: tuple[float, float]) -> float:
 def rings(element: dict) -> list[list[tuple[float, float]]]:
     if element["type"] == "way":
         return [[(p["lat"], p["lon"]) for p in element["geometry"]]]
-    return [
+    # Внешний контур мультиполигона в OSM часто разрезан на несколько линий —
+    # склеиваем их по общим концам в замкнутые кольца.
+    parts = [
         [(p["lat"], p["lon"]) for p in m["geometry"]]
         for m in element.get("members", [])
-        if m.get("role") == "outer" and m.get("geometry")
+        if m.get("type") == "way" and m.get("role") in ("outer", "") and m.get("geometry")
     ]
+    out = []
+    while parts:
+        ring = parts.pop(0)
+        while ring[0] != ring[-1]:
+            for i, part in enumerate(parts):
+                if part[0] == ring[-1]:
+                    ring += part[1:]
+                elif part[-1] == ring[-1]:
+                    ring += part[::-1][1:]
+                else:
+                    continue
+                parts.pop(i)
+                break
+            else:
+                break  # незамкнутое кольцо — всё равно проверяем, как есть
+        out.append(ring)
+    return out
 
 
 def inside(pt: tuple[float, float], ring: list[tuple[float, float]]) -> bool:
@@ -330,7 +349,7 @@ def kz_outline() -> list[list[list[float]]]:
             y += dy
             pts.append([round(y * sy + ty, 3), round(x * sx + tx, 3)])
         arcs.append(pts)
-    geom = next(g for g in topo["objects"]["countries"]["geometries"] if g["id"] == "398")
+    geom = next(g for g in topo["objects"]["countries"]["geometries"] if g.get("id") == "398")
     polys = geom["arcs"] if geom["type"] == "MultiPolygon" else [geom["arcs"]]
     out = []
     for poly in polys:
@@ -348,7 +367,7 @@ def main() -> None:
     print("OSM: турбины…")
     turbines = overpass(f'[out:json][timeout:180];{KZ_AREA}node["generator:source"="wind"](area.kz);out body;')
     print("OSM: населённые пункты…")
-    places = overpass(f'[out:json][timeout:180];{KZ_AREA}node["place"~"^(city|town|village)$"](area.kz);out tags;')
+    places = overpass(f'[out:json][timeout:180];{KZ_AREA}node["place"~"^(city|town|village)$"](area.kz);out;')
     places = [
         {"name": p["tags"].get("name:ru") or p["tags"].get("name"), "lat": p["lat"], "lon": p["lon"],
          "rank": {"city": 3, "town": 2, "village": 1}[p["tags"]["place"]]}
@@ -468,20 +487,26 @@ def main() -> None:
     for i, (region, op, mw) in enumerate(REGISTRY):
         if i in registry_used:
             continue
-        slug = re.sub(r"[^a-z0-9а-яё]+", "-", op.lower()).strip("-")
         farms.append({
-            "id": f"reg-{i + 1:02d}-{slug}"[:64],
-            "name": re.sub(r"^(ТОО|КТ)\s*", "", op).strip("«»"),
+            "id": f"reg-{i + 1:02d}",
+            "name": re.sub(r"^(ТОО|КТ)\s*", "", op).replace("«", "").replace("»", ""),
             "region": region, "operators": [op], "capacity_mw": mw, "capacity_source": "registry",
             "commissioned": None, "lat": None, "lon": None, "location": None, "osm": None,
             "in_registry": True, "data": "none", "note": "Координаты не опубликованы", "units": [],
         })
 
-    # Область для станций вне реестра — по ближайшей станции с известной областью.
-    known = [f for f in farms if f["region"] and f["lat"] is not None]
-    for f in farms:
-        if not f["region"] and f["lat"] is not None:
-            f["region"] = min(known, key=lambda k: km((f["lat"], f["lon"]), (k["lat"], k["lon"])))["region"] + " (оценка)"
+    # Область для станций вне реестра — по административной границе OSM.
+    missing = [f for f in farms if not f["region"] and f["lat"] is not None]
+    if missing:
+        print("OSM: области для станций вне реестра…")
+        query = "[out:json][timeout:180];" + "".join(
+            f'is_in({f["lat"]},{f["lon"]})->.a{i};area.a{i}["admin_level"="4"];out tags;'
+            for i, f in enumerate(missing)
+        )
+        areas = overpass(query)
+        if len(areas) == len(missing):
+            for f, a in zip(missing, areas, strict=True):
+                f["region"] = a["tags"].get("name:ru") or a["tags"].get("name")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({
