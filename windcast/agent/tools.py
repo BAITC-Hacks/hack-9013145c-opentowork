@@ -28,10 +28,12 @@ def list_available_runs(as_of: pd.Timestamp) -> dict:
     }
 
 
-def fetch_weather(origin: pd.Timestamp, horizon: int = 48) -> tuple[pd.DataFrame, dict]:
-    x = inference_frame(origin, horizon)
+def fetch_weather(
+    origin: pd.Timestamp, horizon: int = 48, archive: pd.DataFrame | None = None
+) -> tuple[pd.DataFrame, dict]:
+    archive = load_archive() if archive is None else archive
+    x = inference_frame(origin, horizon, archive)
     one = x[x["turbine"] == x["turbine"].iloc[0]]
-    archive = load_archive()
     per_model = {}
     for m in HUB_MODELS:
         vals = []
@@ -80,8 +82,10 @@ def qa_check(x: pd.DataFrame, weather_meta: dict) -> dict:
     }
 
 
-def run_forecast(fc: Forecaster, origin: pd.Timestamp, horizon: int = 48) -> pd.DataFrame:
-    return fc.predict(origin, horizon)
+def run_forecast(
+    fc: Forecaster, origin: pd.Timestamp, horizon: int = 48, archive: pd.DataFrame | None = None
+) -> pd.DataFrame:
+    return fc.predict(origin, horizon, archive)
 
 
 def analyze(pred: pd.DataFrame) -> dict:

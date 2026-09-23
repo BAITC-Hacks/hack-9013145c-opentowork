@@ -62,15 +62,18 @@ def flag_quality(hourly: pd.DataFrame) -> pd.DataFrame:
 
 
 @lru_cache(maxsize=4)
-def load_hourly(turbine_id: str) -> pd.DataFrame:
-    return flag_quality(to_hourly(load_raw(turbine_id)))
+def load_hourly(turbine_id: str, until: pd.Timestamp | None = None) -> pd.DataFrame:
+    hourly = to_hourly(load_raw(turbine_id))
+    if until is not None:
+        hourly = hourly[hourly.index < until]
+    return flag_quality(hourly)
 
 
-def load_all() -> pd.DataFrame:
+def load_all(until: pd.Timestamp | None = None) -> pd.DataFrame:
     """Длинный формат: (time, turbine) → поля. Удобно для одной модели на обе турбины."""
     frames = []
     for t in TURBINES:
-        df = load_hourly(t.id).copy()
+        df = load_hourly(t.id, until).copy()
         df["turbine"] = t.id
         frames.append(df)
     return pd.concat(frames).reset_index().set_index(["time", "turbine"]).sort_index()

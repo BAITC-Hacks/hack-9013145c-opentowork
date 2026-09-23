@@ -1,12 +1,13 @@
 """Справочник станций для выбора на карте. Сейчас только ВЭС."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.deps import SessionDep, UserDep
-from app.errors import NotFound
+from app.errors import NotFound, ValidationFailed
 from app.models import WindFarm
 
 router = APIRouter(prefix="/stations", tags=["stations"])
@@ -94,3 +95,49 @@ async def get_station(station_id: str, session: SessionDep, _: UserDep) -> Stati
     if farm is None:
         raise NotFound("station not found")
     return _out(farm)
+
+
+class UnitSample(BaseModel):
+    ts: str
+    power: float
+    wind_speed: float | None
+
+
+def _scada_history(unit_id: str, start: str, end: str) -> list[UnitSample]:
+    import pandas as pd
+
+    from windcast.scada import load_hourly
+
+    s = load_hourly(unit_id)
+    lo = pd.Timestamp(start.rstrip("Z"))
+    hi = pd.Timestamp(end.rstrip("Z"))
+    s = s[(s.index >= lo) & (s.index < hi) & s["power"].notna()]
+    return [
+        UnitSample(
+            ts=t.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            power=round(float(r["power"]), 4),
+            wind_speed=None if pd.isna(r["ws"]) else round(float(r["ws"]), 2),
+        )
+        for t, r in s.iterrows()
+    ]
+
+
+@router.get("/{station_id}/units/{unit_id}/history", response_model=list[UnitSample])
+async def unit_history(
+    station_id: str,
+    unit_id: str,
+    session: SessionDep,
+    _: UserDep,
+    start: str = Query(..., alias="from", max_length=32),
+    end: str = Query(..., alias="to", max_length=32),
+) -> list[UnitSample]:
+    """Фактическая почасовая SCADA турбины. Есть только у станции из датасета кейса."""
+    from windcast.config import TURBINES
+
+    farm = await session.get(WindFarm, station_id)
+    if farm is None or farm.data != "history" or unit_id not in {t.id for t in TURBINES}:
+        raise NotFound("у этого агрегата нет фактических данных")
+    try:
+        return await run_in_threadpool(_scada_history, unit_id, start, end)
+    except ValueError as exc:
+        raise ValidationFailed("from/to: ожидается ISO-время") from exc

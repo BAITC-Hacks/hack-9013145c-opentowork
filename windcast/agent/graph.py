@@ -54,6 +54,7 @@ def run(
     horizon: int = 48,
     previous: pd.DataFrame | None = None,
     reason: str = "плановый выпуск",
+    archive: pd.DataFrame | None = None,
 ) -> AgentRun:
     r = AgentRun(origin=pd.Timestamp(origin), horizon=horizon)
 
@@ -68,7 +69,7 @@ def run(
     for attempt in range(MAX_WEATHER_RETRIES + 1):
         t0 = time.time()
         shift_h = int((r.origin - effective_origin) / pd.Timedelta(hours=1))
-        x, meta = tools.fetch_weather(effective_origin, horizon + shift_h)
+        x, meta = tools.fetch_weather(effective_origin, horizon + shift_h, archive)
         r.step(
             "Сборщик погоды",
             f"Open-Meteo: {len(meta['hub_models_ok'])} моделей с ветром на 100 м, "
@@ -99,7 +100,7 @@ def run(
 
     t0 = time.time()
     shift_h = int((r.origin - effective_origin) / pd.Timedelta(hours=1))
-    pred = tools.run_forecast(fc, effective_origin, horizon + shift_h)
+    pred = tools.run_forecast(fc, effective_origin, horizon + shift_h, archive)
     pred = pred[pred.index > r.origin].copy()
     # Горизонт — всегда от момента выпуска прогноза, даже если погода взята из более раннего.
     pred["horizon_h"] = ((pred.index - r.origin) / pd.Timedelta(hours=1)).astype(int)

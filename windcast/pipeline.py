@@ -28,7 +28,7 @@ MODEL_VERSION = f"windcast-{__version__}-cascade+direct"
 
 def scada_rows(until: pd.Timestamp) -> pd.DataFrame:
     """Вся история турбин до until — для кривой мощности (она не зависит от погоды)."""
-    s = load_all().reset_index()
+    s = load_all(until).reset_index()
     s = s[s["time"] < until]
     return pd.DataFrame(
         {
@@ -50,7 +50,16 @@ class Forecaster:
     def fit(self, train: pd.DataFrame | None = None) -> Forecaster:
         t0 = time.time()
         train = training_frame() if train is None else train
-        train = train[train.index < self.until]
+        train = train[train.index < self.until].copy()
+        # Кривая для выявления ограничений также обучается только на прошлом.
+        # Иначе будущая SCADA меняла бы состав обучающей выборки.
+        past = load_all(self.until)
+        keys = pd.MultiIndex.from_arrays([train.index, train["turbine"]])
+        for col in ("usable", "downtime", "curtailed", "expected_power"):
+            values = past[col].reindex(keys)
+            if col != "expected_power":
+                values = values.fillna(False).astype(bool)
+            train[col] = values.to_numpy()
         self.features = feature_columns(train)
         self.cascade = Cascade(self.features).fit(train, scada_rows(self.until))
         self.direct = Direct(self.features).fit(train)
@@ -60,10 +69,13 @@ class Forecaster:
         self.fit_seconds = time.time() - t0
         return self
 
-    def predict(self, origin: pd.Timestamp, horizon: int = 48) -> pd.DataFrame:
-        """Строки (час, турбина): квантили ансамбля, компоненты, baseline, погода."""
+    def predict(
+        self, origin: pd.Timestamp, horizon: int = 48, archive: pd.DataFrame | None = None
+    ) -> pd.DataFrame:
+        """Строки (час, турбина): квантили ансамбля, компоненты, baseline, погода.
+        archive — погода в формате load_archive(); по умолчанию сохранённый архив."""
         origin = pd.Timestamp(origin)
-        x = inference_frame(origin, horizon)
+        x = inference_frame(origin, horizon, archive)
         cas = self.cascade.predict(x)
         dr = self.direct.predict(x)
         ens = blend(cas, dr, x["nwp_day"].to_numpy(), self.state)

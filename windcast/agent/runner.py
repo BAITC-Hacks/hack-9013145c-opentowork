@@ -36,8 +36,7 @@ def train_final(until: str = TEST_FIRST_ORIGIN) -> dict:
     bt_path = REPORTS_DIR / "backtest_predictions.parquet"
     if bt_path.exists():
         bt = pd.read_parquet(bt_path)
-        bt = bt[bt.index < until_ts]
-        fc.state = calibrate(bt)
+        fc.state = calibrate(bt, before=until_ts)
     path = fc.save()
     # Кривая мощности станции для what-if в API — без ML-стека в образе API.
     (MODELS_DIR / "power_curve.json").write_text(

@@ -47,7 +47,9 @@ def run(first_month: str = "2025-02", last_month: str = "2026-01", log=print) ->
         end = (month + 1).start_time
         t0 = time.time()
         fc = Forecaster(until=start).fit(tf)
-        fc.state = calibrate(history) if len(history) else fc.state
+        # Последние 48-часовые выпуски прошлого месяца заходят в новый:
+        # их факты ещё неизвестны в момент переобучения.
+        fc.state = calibrate(history, before=start) if len(history) else fc.state
         origins = pd.date_range(start, end - pd.Timedelta(days=1), freq="D")
         preds = []
         for origin in origins:

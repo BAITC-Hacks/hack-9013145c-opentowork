@@ -55,8 +55,10 @@ def blend(
     return out
 
 
-def calibrate(history: pd.DataFrame) -> EnsembleState:
+def calibrate(history: pd.DataFrame, before: pd.Timestamp | None = None) -> EnsembleState:
     """history — прогнозы прошлых выпусков с колонками cas_*, dir_*, actual, nwp_day."""
+    if before is not None:
+        history = history[history.index < before]
     state = EnsembleState()
     h = history.dropna(subset=["actual"])
     state.calibrated_on = len(h)
