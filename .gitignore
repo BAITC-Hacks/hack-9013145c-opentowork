@@ -52,3 +52,6 @@ uploads/
 # windcast: бинарная модель воспроизводится `python -m windcast train`
 artifacts/models/*.pkl
 artifacts/*.log
+
+# Обучается при сборке образа (python -m windcast train), 19 МБ
+artifacts/models/forecaster.pkl

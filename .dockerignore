@@ -18,3 +18,4 @@ frontend/node_modules
 !README.md
 .claude
 .mcp.json
+artifacts/models/forecaster.pkl

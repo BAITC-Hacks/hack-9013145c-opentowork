@@ -9,7 +9,8 @@ COPY pyproject.toml ./
 RUN python -c "\
 import tomllib, pathlib; \
 data = tomllib.loads(pathlib.Path('pyproject.toml').read_text()); \
-pathlib.Path('requirements.txt').write_text('\n'.join(data['project']['dependencies']))" \
+deps = data['project']['dependencies'] + data['project']['optional-dependencies']['ml']; \
+pathlib.Path('requirements.txt').write_text('\n'.join(deps))" \
  && pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # ─── runtime stage ──────────────────────────────────────────────────────────
@@ -19,13 +20,19 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app
 
-RUN useradd --create-home --uid 1000 app
+# libgomp — рантайм OpenMP для LightGBM (ML-контур прогноза ВЭС).
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --create-home --uid 1000 app
 
 COPY --from=builder /install /usr/local
 
 WORKDIR /app
 COPY --chown=app:app . .
 RUN chmod +x scripts/entrypoint.sh
+# Модель обучается при сборке из datasets/ и artifacts/weather (~1 мин): pickle не
+# хранится в git и всегда совпадает с версиями библиотек образа.
+RUN python -m windcast train && chown -R app:app artifacts/models
 
 USER app
 EXPOSE 8000

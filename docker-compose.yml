@@ -11,6 +11,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://app:app@postgres:5432/app
       REDIS_URL: redis://redis:6379/0
       S3_ENDPOINT: http://minio:9000
+      WINDCAST_LIVE: "1"            # «Пересчитать» гоняет модель, а не отдаёт сохранённый прогон
     ports: ["8000:8000"]
     depends_on:
       postgres: { condition: service_healthy }
