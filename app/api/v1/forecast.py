@@ -142,7 +142,9 @@ def _live_run(origin_iso: str, horizon: int) -> dict:
     )
     doc = forecast_run_json(run, horizon)
     doc["live"] = True
-    return doc
+    from app.wind.forecast_store import remember
+
+    return remember(doc)
 
 
 @router.post("/forecast/run")
@@ -173,6 +175,7 @@ async def metrics_full() -> dict:
 class SimulationIn(BaseModel):
     forecast_id: str = Field(max_length=64)
     wind_change_pct: float = Field(ge=-50, le=50)
+    horizon: int = Field(default=48, ge=1, le=48)
 
 
 @lru_cache(maxsize=1)
@@ -194,7 +197,8 @@ def _interp(x: float, xs: list[float], ys: list[float]) -> float:
 @router.post("/simulation")
 async def simulation(body: SimulationIn) -> dict:
     """What-if: «а если ветер будет на X% сильнее прогноза» — через кривую мощности станции."""
-    return await run_in_threadpool(simulate_run, find_by_id(body.forecast_id), body.wind_change_pct)
+    run = _trim(find_by_id(body.forecast_id), body.horizon)
+    return await run_in_threadpool(simulate_run, run, body.wind_change_pct)
 
 
 def find_by_id(forecast_id: str) -> dict:

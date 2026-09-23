@@ -163,6 +163,33 @@ def main() -> int:
     except Exception as exc:
         check("Метрики доступны", False, str(exc))
 
+    print("\n9. Прогноз ВЭС и расчётный Copilot")
+    status, run = call("GET", f"{base}/api/v1/forecast/latest?origin=2026-02-07&horizon=48")
+    points = run.get("predictions", [])
+    check("Выпуск содержит 48 согласованных квантилей", status == 200 and len(points) == 48
+          and all(0 <= p["p10"] <= p["p50"] <= p["p90"] <= 1 for p in points))
+    status, short = call("GET", f"{base}/api/v1/forecast/latest?origin=2026-02-07&horizon=24")
+    check("Горизонт 24 ч действительно ограничивает ответ", status == 200
+          and short.get("horizon") == 24 and len(short.get("predictions", [])) == 24)
+    fid = run.get("forecast_id", "")
+    status, sim = call("POST", f"{base}/api/v1/simulation", token,
+                       {"forecast_id": fid, "wind_change_pct": -15, "horizon": 24})
+    check("What-if пересчитывает тот же выпуск", status == 200
+          and len(sim.get("points", [])) == 24
+          and sim.get("scenario_energy", 0) < sim.get("base_energy", 0))
+    status, answer = call("POST", f"{base}/api/v1/ai/chat", token,
+                          {"query": "Что будет, если ветер окажется на 15% слабее?",
+                           "context": {"forecast_id": fid, "horizon": 24}})
+    check("Copilot вызвал сценарий и сослался на выбранный выпуск", status == 200
+          and "simulation.wind_change" in answer.get("meta", {}).get("tools", [])
+          and any(s.get("doc_id") == fid for s in answer.get("answer", {}).get("sources", [])))
+    history_url = f"{base}/api/v1/stations/nurly/units/T1/history"
+    status, hist = call("GET", f"{history_url}?from=2026-01-01&to=2026-01-02", token)
+    check("Январская история берётся из SCADA", status == 200
+          and isinstance(hist, list) and len(hist) > 0)
+    status, hist = call("GET", f"{history_url}?from=2026-02-07&to=2026-02-08", token)
+    check("Отсутствующий февральский факт не выдумывается", status == 200 and hist == [])
+
     print()
     if failures:
         print(f"\033[91mПРОВАЛЕНО {len(failures)}:\033[0m " + ", ".join(failures))

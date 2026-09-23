@@ -54,6 +54,7 @@ class AIRequest(BaseModel):
 
 
 class AIMeta(BaseModel):
+    tools: list[str] = Field(default_factory=list)
     source: Literal["live", "exact_cache", "semantic_cache", "degraded"] = "live"
     similarity: float | None = None
     model: str = ""

@@ -1,5 +1,6 @@
 import time
 
+from fastapi.concurrency import run_in_threadpool
 from pydantic import ValidationError
 
 from app.ai.embedder import Embedder
@@ -49,6 +50,25 @@ class AIOrchestrator:
     async def run(self, req: AIRequest) -> AIResult:
         started = time.perf_counter()
         req = self.guard.check(req)
+
+        if req.context.get("forecast_id"):
+            from app.wind.copilot import evidence
+
+            answer, docs, tools = await run_in_threadpool(evidence, req.query, req.context)
+            # Сценарии и разные выпуски нельзя смешивать по близости вопросов.
+            if settings.LLM_MODE == "mock":
+                result = AIResult(answer=answer, cacheable=False)
+                result.meta.model = "windcast-tools-v1"
+            else:
+                result = await self._generate_validated(req, docs)
+                result.cacheable = False
+            result.meta.tools = tools
+            result.meta.retrieved = len(docs)
+            result.meta.latency_ms = int((time.perf_counter() - started) * 1000)
+            AI_REQUESTS.labels(
+                source=result.meta.source, status="degraded" if result.meta.degraded else "ok"
+            ).inc()
+            return result
 
         if (hit := await self.cache.get_exact(req)) is not None:
             return self._finish_cache_hit(hit, started, level="exact_cache")

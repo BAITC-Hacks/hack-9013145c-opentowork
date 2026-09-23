@@ -8,7 +8,6 @@
 
 from datetime import UTC, datetime
 
-import pandas as pd
 from fastapi import APIRouter, Query
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select
@@ -23,13 +22,20 @@ router = APIRouter(prefix="/predictions", tags=["predictions"])
 
 async def _call(fn, *args):
     try:
-        return await run_in_threadpool(fn, *args)
+        result = await run_in_threadpool(fn, *args)
+        if isinstance(result, dict) and "forecast_id" in result:
+            from app.wind.forecast_store import remember
+
+            remember(result)
+        return result
     except (OSError, ValueError, KeyError) as exc:
         # Open-Meteo недоступен или ответил не тем форматом — не 500, а понятная причина.
         raise ServiceUnavailable(f"погодный сервис недоступен: {type(exc).__name__}") from exc
 
 
-def _origin(origin: str | None) -> pd.Timestamp:
+def _origin(origin: str | None):
+    import pandas as pd
+
     from windcast.live import now_origin
 
     if not origin or origin == "now":

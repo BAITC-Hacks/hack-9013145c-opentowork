@@ -64,3 +64,27 @@ def test_backtest_origin_has_actuals(client):
 def test_unknown_origin_is_404(client):
     r = client.get("/api/v1/forecast/latest", params={"origin": "2019-01-01"})
     assert r.status_code == 404
+
+
+def test_invalid_date_is_422(client):
+    assert client.get("/api/v1/forecast/latest", params={"origin": "../bad"}).status_code == 422
+
+
+def test_other_station_cannot_receive_nurly_model(client):
+    assert client.get("/api/v1/forecast/latest", params={
+        "origin": "2026-02-07", "station_id": "other",
+    }).status_code == 404
+
+
+def test_horizon_is_respected_without_mutating_saved_run(client, monkeypatch):
+    monkeypatch.setenv("WINDCAST_LIVE", "0")
+    short = client.post("/api/v1/forecast/run", json={
+        "forecast_origin": "2026-02-07", "horizon": 24,
+    }).json()
+    assert short["horizon"] == len(short["predictions"]) == 24
+    full = client.get("/api/v1/forecast/latest", params={"origin": "2026-02-07"}).json()
+    assert full["horizon"] == len(full["predictions"]) == 48
+
+
+def test_origin_offset_is_converted_to_utc():
+    assert forecast._normalize_origin("2026-02-07T05:00:00+05:00") == "2026-02-07T00:00:00Z"

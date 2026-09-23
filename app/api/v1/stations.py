@@ -1,5 +1,8 @@
 """Справочник станций для выбора на карте. Сейчас только ВЭС."""
 
+from datetime import UTC, datetime, timedelta
+
+import httpx
 from fastapi import APIRouter, Query
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
@@ -7,8 +10,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.deps import SessionDep, UserDep
-from app.errors import NotFound, ValidationFailed
+from app.errors import NotFound, ServiceUnavailable, ValidationFailed
 from app.models import WindFarm
+from app.wind import weather
 
 router = APIRouter(prefix="/stations", tags=["stations"])
 
@@ -141,3 +145,65 @@ async def unit_history(
         return await run_in_threadpool(_scada_history, unit_id, start, end)
     except ValueError as exc:
         raise ValidationFailed("from/to: ожидается ISO-время") from exc
+
+
+class WindHour(BaseModel):
+    time: str
+    speed_10m: float | None
+    speed_100m: float
+    dir_10m: float | None
+    dir_100m: float | None
+    gust_10m: float | None
+    temperature: float | None
+    beaufort: int
+    shear_alpha: float | None
+
+
+class WindOut(BaseModel):
+    station_id: str
+    lat: float
+    lon: float
+    source: str  # snapshot | archive | forecast
+    provider: str = "Open-Meteo"
+    hours: list[WindHour]
+
+
+def _parse_origin(origin: str) -> datetime:
+    if origin == "now":
+        return datetime.now(UTC).replace(tzinfo=None, minute=0, second=0, microsecond=0)
+    try:
+        ts = datetime.fromisoformat(origin.rstrip("Z"))
+    except ValueError as exc:
+        raise ValidationFailed("origin: ожидается ISO-время или now") from exc
+    return ts.replace(tzinfo=None, minute=0, second=0, microsecond=0)
+
+
+@router.get("/{station_id}/wind", response_model=WindOut)
+async def station_wind(
+    station_id: str,
+    session: SessionDep,
+    _: UserDep,
+    origin: str = "now",
+    horizon: int = Query(48, ge=1, le=168),
+) -> WindOut:
+    """Ветер у станции по часам после origin — так же, как точки прогноза мощности."""
+    farm = await session.get(WindFarm, station_id)
+    if farm is None or farm.lat is None or farm.lon is None:
+        raise NotFound("станция не найдена или у неё нет координат")
+    start = _parse_origin(origin) + timedelta(hours=1)
+    rows = weather.from_snapshot(station_id, start, horizon)
+    source = "snapshot"
+    if rows is None:
+        try:
+            rows, source = await run_in_threadpool(
+                weather.fetch, farm.lat, farm.lon, start, horizon
+            )
+        except (httpx.HTTPError, KeyError, ValueError) as exc:
+            raise ServiceUnavailable(f"погодный сервис недоступен: {type(exc).__name__}") from exc
+    return WindOut(
+        station_id=station_id,
+        lat=farm.lat,
+        lon=farm.lon,
+        source=source,
+        hours=[WindHour(**r) for r in rows],
+    )

@@ -123,6 +123,13 @@ class Settings(BaseSettings):
     # Сводка считается за окно, а не по всей истории таблицы.
     STATS_WINDOW_HOURS: int = 24
 
+    # Почасовой ветер по координатам станции (направление, порывы, 10/100 м).
+    # Для прошедших дат — архив прогнозов, чтобы не показывать факт как прогноз.
+    WEATHER_FORECAST_URL: str = "https://api.open-meteo.com/v1/forecast"
+    WEATHER_ARCHIVE_URL: str = "https://historical-forecast-api.open-meteo.com/v1/forecast"
+    WEATHER_TIMEOUT: float = 8.0
+    WEATHER_CACHE_SECONDS: int = 900
+
     DEMO_USER_EMAIL: str = "demo@demo.kz"
     DEMO_USER_PASSWORD: str = "demo1234"
     # НЕ ADMIN: роль ADMIN обходит проверку владельца в authorize_owner,
