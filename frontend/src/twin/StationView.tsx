@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import type { ForecastPoint, ForecastRun, Station } from "../api";
 import { ForecastChart, Sparkline } from "./charts";
-import { fmtDayTime, mw, originLabel, stationRated, STATION_ORIGINS, useStationWind } from "./data";
+import { fmtDayTime, LIVE_ORIGIN, mw, originLabel, stationRated, STATION_ORIGINS, useStationWind } from "./data";
 import type { Origin } from "./data";
 import { parseTs, powerCurve, RATED_ASSUMPTION_MW, SITE, solarPower, sunPosition } from "./demo";
 import UnitPanel from "./UnitPanel";
+import { LoadingOverlay } from "./Loading";
 import WindPanel from "./WindPanel";
 import WindMap, { LEGEND_GRADIENT, SPEED_MARKS } from "./WindMap";
 import type { Layers } from "./WindMap";
@@ -196,7 +197,16 @@ export default function StationView({
   const selectedUnit = units.find((u) => u.id === selected) ?? null;
 
   return (
-    <div className={`dash ${wind ? "wind-dashboard" : "solar-dashboard"}`}>
+    <div className={`dash loading-host ${wind ? "wind-dashboard" : "solar-dashboard"}`} aria-busy={loading}>
+      <LoadingOverlay
+        show={loading}
+        label={run ? "Пересчитываем прогноз…" : "Загружаем прогноз станции…"}
+        sub={
+          originIso === LIVE_ORIGIN || station.data !== "history"
+            ? "Запрашиваем погоду Open-Meteo и считаем мощность по часам"
+            : "Берём сохранённый прогон агента за выбранную дату"
+        }
+      />
       <div className="dashboard-toolbar">
         <div className="scene-section-title"><span className={`source-indicator ${wind ? "wind" : "solar"}`} /><b>Цифровой двойник</b><span>3D-обзор территории</span></div>
         <div className="forecast-controls">
@@ -582,7 +592,7 @@ export default function StationView({
         </div>
       </section>
 
-      {wind && <WindPanel wind={stationWind} atIso={point?.forecast_for ?? null} />}
+      {wind && <WindPanel wind={stationWind.wind} loading={stationWind.loading} atIso={point?.forecast_for ?? null} />}
     </div>
   );
 }

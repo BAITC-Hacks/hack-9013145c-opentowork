@@ -133,7 +133,7 @@ MAE ансамбля **0.1584**, RMSE **0.2353**, улучшение над сы
 | Оверлей для локального кластера | `infra/k8s-local/` |
 | Интеграционные тесты границ доступа | `tests/test_authz_integration.py` |
 | Тесты безопасности без БД | `tests/test_security_unit.py` |
-| Сканеры безопасности в CI | `.github/workflows/ci.yml` |
+| Сканеры безопасности в CI | `.github/workflows/checks.yml` (на PR и вручную) |
 | Миграции 0002 и 0003 | `migrations/versions/` |
 | Вся папка `context/` | `context/` |
 
@@ -208,6 +208,7 @@ MAE ансамбля **0.1584**, RMSE **0.2353**, улучшение над сы
 
 ## 6. Известные незакрытые риски
 
+- **Автодеплой** (23.09): деплой из `ci.yml` не заработает, пока в GitHub → Settings → Secrets не добавлен `DEPLOY_SSH_KEY`, а его публичная часть — в `/root/.ssh/authorized_keys` сервера. Если сервер переустановят, поменяется ключ хоста, закреплённый в `ci.yml`, и деплой упадёт на SSH.
 - **Сервер 89.126.192.240** (23.09): наружу открыты фронтенд :3000 и API :8000; пароль root передан в чате, лучше сменить и перейти на SSH-ключ. Демо-учётка из README там работает. Обновление: rsync проекта в `/opt/opentowork` + `docker compose up -d --build`.
 
 Найдено при оценке кода 23.09.2026 (история замечаний; статус исправлений ниже):
@@ -266,6 +267,7 @@ docker compose run --rm --no-deps -e APP_ENV=prod --entrypoint python api -c "im
 
 | Когда | Что сделано | Проверено |
 |---|---|---|
+| 23.09 | CI/CD: `ci.yml` на каждый пуш — ruff + pytest (uv вместо pip; `S3_ENDPOINT` на закрытый порт и `AWS_MAX_ATTEMPTS=1` убирают 24 с ретраев boto3 в тестах старта), на `main` после тестов — rsync на 89.126.192.240 и `docker compose up -d --build` с health-check :8000/:3000. Интеграционные тесты, сканеры и сборка образов в раннере вынесены в `checks.yml` (PR + вручную). В `backend.Dockerfile` обучение модели вынесено в стадию `model`, в которую копируются только входы обучения: правка в `app/` пересобирается за 10 с вместо ~85 с | локально pytest с CI-переменными 118 passed за 3,6 с, ruff чист, YAML разобран, `bash -n` шага деплоя; шаг деплоя прогнан против сервера (по паролю) — healthy; пересборка после правки `app/` 10 с, train CACHED; smoke на сервере 21/21. Сам workflow в GitHub Actions ещё не запускался: нужен секрет `DEPLOY_SSH_KEY` |
 | 23.09 ~16:15 | Документация актуализирована: README (переменные `SEMANTIC_CACHE_SCOPE`=`user` и `CACHE_CONTEXT_FIELDS` с `doc_kind` исправлены под код, добавлен `WINDCAST_LIVE`, раздел «Панели на крышах», лицензии windpowerlib/Three.js/Inter/OSM/PVGIS); `docs/case-mapping.md` заполнен по факту вместо пустого шаблона (дословные критерии ТЗ — перенести из оригинала) | Docker пересобран: 21/21 smoke, 111 passed, ruff чист |
 | 23.09 ~17:00 | **СЭС из реальных данных вместо виртуальной.** `scripts/fetch_solar_farms.py` (Overpass, `power=plant` + `plant:source=solar`) → `app/solar/data/kz_solar_farms.json`: 26 СЭС Казахстана с контуром, областью, мощностью OSM (12 из 26), блоками внутри контура. `app/solar/catalog.py`; `/stations` отдаёт ВЭС из БД + СЭС из каталога, `/stations/{id}` находит СЭС; `/predictions/run?kind=solar` берёт координаты станции из каталога. Фронт: список СЭС из API (демо-СЭС только при недоступном API), карта Казахстана и для СЭС, в карточках вместо демо-МВт·ч — «прогноз по реальной радиации», мощность «—» если не опубликована; солнце в сцене и панели считается по координатам станции, освещённость панелей СЭС = её прогноз P50, сценарий облачности масштабирует реальный P50 | `pytest` 111 passed (+3 `test_solar_catalog.py`), ruff чист; `tsc -b` + `npm run build` чисто; пересобран `api`: `/stations` 109 записей (26 СЭС), `/stations/pv-way-731775244` 200, `/predictions/run` для Сарани — 24 ч по Open-Meteo на координатах 49.808, 72.871. В браузере **не смотрели** (Playwright занят другой сессией); `make smoke` не прогонялся |
 | 23.09 | Стек развёрнут на сервере 89.126.192.240 (`/opt/opentowork`, rsync без .git/.venv/node_modules, `docker compose up -d --build`). Образ MinIO заменён на `quay.io/minio/minio:latest` в `docker-compose.yml` и `infra/k8s/stateful-services.yaml`: `minio/minio` удалён с Docker Hub, `docker compose up` на чистой машине падал с pull access denied. На сервере `docker-compose.override.yml` (не в репо) закрывает Postgres/Redis/MinIO на 127.0.0.1 | smoke на сервере — все проверки PASS; снаружи :3000 и :8000/health → 200, :9001 недоступен |

@@ -1,5 +1,6 @@
 import type { StationWind, WindHour } from "../api";
 import { fmtDayTime } from "./data";
+import { LoadingOverlay } from "./Loading";
 import "./windpanel.css";
 
 const RUMBS = ["С", "ССВ", "СВ", "ВСВ", "В", "ВЮВ", "ЮВ", "ЮЮВ", "Ю", "ЮЮЗ", "ЮЗ", "ЗЮЗ", "З", "ЗСЗ", "СЗ", "ССЗ"];
@@ -71,14 +72,25 @@ function Chart({ hours, cursor }: { hours: WindHour[]; cursor: number }) {
   );
 }
 
-export default function WindPanel({ wind, atIso }: { wind: StationWind | null; atIso: string | null }) {
-  if (!wind || wind.hours.length === 0) return null;
+export default function WindPanel({ wind, loading, atIso }: { wind: StationWind | null; loading: boolean; atIso: string | null }) {
+  if (!wind || wind.hours.length === 0) {
+    if (!loading) return null;
+    return (
+      <section className="card bottom wind-card loading-host wp-empty" aria-busy="true">
+        <div className="card-head">
+          <h2>Ветер у станции <span className="unit">м/с</span></h2>
+        </div>
+        <LoadingOverlay show label="Загружаем ветер у станции…" sub="Сила, направление и порывы из Open-Meteo" />
+      </section>
+    );
+  }
   const at = atIso ? Date.parse(atIso.endsWith("Z") ? atIso : `${atIso}Z`) : NaN;
   const idx = Math.max(0, wind.hours.findIndex((h) => Date.parse(h.time) === at));
   const h = wind.hours[idx];
   const peakGust = wind.hours.reduce((a, b) => ((b.gust_10m ?? 0) > (a.gust_10m ?? 0) ? b : a));
   return (
-    <section className="card bottom wind-card" aria-label="Ветер у станции">
+    <section className="card bottom wind-card loading-host" aria-label="Ветер у станции" aria-busy={loading}>
+      <LoadingOverlay show={loading} label="Обновляем ветер…" />
       <div className="card-head">
         <h2>
           Ветер у станции <span className="unit">м/с</span>

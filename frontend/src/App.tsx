@@ -8,6 +8,7 @@ import Predictions from "./twin/Predictions";
 import { canOpen, fmtDay, fmtDayTime, LIVE_ORIGIN, ORIGINS, useForecast, useRoute, useStations } from "./twin/data";
 import type { Route, StationTab } from "./twin/data";
 import { Home, KindPick, StationPick } from "./twin/Flow";
+import { PageLoader } from "./twin/Loading";
 import Placement from "./twin/Placement";
 import Rooftops from "./twin/Rooftops";
 import StationView from "./twin/StationView";
@@ -387,7 +388,7 @@ function crumbs(route: Route, stationName: string | null): { label: string; to: 
 export default function App() {
   const [authed, setAuthed] = useState(Boolean(token.get()));
   const [route, go] = useRoute();
-  const { stations } = useStations(authed);
+  const { stations, loading: stationsLoading } = useStations(authed);
   const [originIso, setOriginIso] = useState(ORIGINS[0]);
   const [horizon, setHorizon] = useState(48);
   const [nonce, setNonce] = useState(0);
@@ -480,9 +481,12 @@ export default function App() {
 
       {route.page === "home" && <Home go={go} lastStation={lastStation} stations={stations} />}
       {route.page === "kind" && <KindPick mode={route.mode} stations={stations} go={go} />}
-      {route.page === "stations" && (
-        <StationPick kind={route.kind} stations={stations} originIso={originIso} go={go} />
-      )}
+      {route.page === "stations" &&
+        (stationsLoading ? (
+          <PageLoader label="Загружаем станции…" sub="Справочник ВЭС и СЭС Казахстана с координатами" />
+        ) : (
+          <StationPick kind={route.kind} stations={stations} originIso={originIso} go={go} />
+        ))}
       {route.page === "place" && <Placement kind={route.kind} stations={stations} go={go} />}
       {route.page === "roofs" && <Rooftops go={go} />}
       {route.page === "platform" && <PlatformTab />}
@@ -495,7 +499,8 @@ export default function App() {
           }}
         />
       )}
-      {route.page === "station" && !station && (
+      {route.page === "station" && !station && stationsLoading && <PageLoader label="Открываем станцию…" />}
+      {route.page === "station" && !station && !stationsLoading && (
         <div className="flow">
           <h1 className="flow-q">Станция не найдена</h1>
           <p className="flow-sub">По этой станции нет данных. Выберите другую из списка.</p>

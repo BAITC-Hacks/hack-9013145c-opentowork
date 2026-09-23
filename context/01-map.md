@@ -132,11 +132,20 @@
 
 ---
 
+## `.github/workflows/`
+
+| Путь | Что это |
+|---|---|
+| `ci.yml` | каждый пуш: ruff + pytest; на `main` ещё и деплой на демо-сервер (секрет `DEPLOY_SSH_KEY`) |
+| `checks.yml` | PR и ручной запуск: интеграционные тесты, сканеры безопасности, сборка образов |
+
+---
+
 ## `infra/`
 
 | Путь | Что это |
 |---|---|
-| `docker/backend.Dockerfile` | образ API и воркера |
+| `docker/backend.Dockerfile` | образ API и воркера; модель обучается в отдельной стадии `model` |
 | `docker/frontend.Dockerfile` | сборка React + nginx без привилегий |
 | `docker/initdb/00-extensions.sql` | расширения PostgreSQL при первом запуске |
 | `docker/prometheus.yml` | что скрейпить |

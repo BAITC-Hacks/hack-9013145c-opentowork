@@ -43,3 +43,4 @@
 @media (max-width: 1150px) { .wind-card { grid-row: 5; } }
 @media (max-width: 850px) { .wind-card { grid-row: 6; } .wp-grid-layout { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .wind-card { grid-column: 1; grid-row: 7; } .wp-now { flex-direction: column; } }
+.wp-empty { min-height: 180px; }

@@ -18,17 +18,19 @@ async function withFallback<T>(live: () => Promise<T>, demo: () => T): Promise<[
 
 // До входа /stations отвечает 401 — запрашиваем заново, когда появился токен.
 export function useStations(authed = true) {
-  const [state, setState] = useState<{ stations: Station[]; origin: Origin }>({
+  const [state, setState] = useState<{ stations: Station[]; origin: Origin; loading: boolean }>({
     stations: DEMO_STATIONS,
     origin: "demo",
+    loading: true,
   });
   useEffect(() => {
     if (!authed) return;
+    setState((s) => ({ ...s, loading: true }));
     // ВЭС — справочник в БД, СЭС — каталог OSM; виртуальная СЭС только без API.
     withFallback(
       () => api.stations(),
       () => DEMO_STATIONS,
-    ).then(([stations, origin]) => setState({ stations, origin }));
+    ).then(([stations, origin]) => setState({ stations, origin, loading: false }));
   }, [authed]);
   return state;
 }
@@ -93,25 +95,25 @@ export function useUnitHistory(station: Station, unitId: string | null, fromIso:
   return samples;
 }
 
-/** Ветер у ВЭС из Open-Meteo. null — нет данных (СЭС, нет сети): панель просто не рисуется. */
+/** Ветер у ВЭС из Open-Meteo. wind = null — нет данных (СЭС, нет сети): панель не рисуется. */
 export function useStationWind(station: Station, originIso: string, horizon: number) {
-  const [wind, setWind] = useState<StationWind | null>(null);
+  const [state, setState] = useState<{ wind: StationWind | null; loading: boolean }>({ wind: null, loading: false });
   useEffect(() => {
     if (station.kind !== "wind" || station.lat == null) {
-      setWind(null);
+      setState({ wind: null, loading: false });
       return;
     }
     let alive = true;
-    setWind(null);
+    setState((s) => ({ ...s, loading: true }));
     api.stationWind(station.id, originIso, horizon).then(
-      (w) => alive && setWind(w),
-      () => alive && setWind(null),
+      (w) => alive && setState({ wind: w, loading: false }),
+      () => alive && setState({ wind: null, loading: false }),
     );
     return () => {
       alive = false;
     };
   }, [station, originIso, horizon]);
-  return wind;
+  return state;
 }
 
 export function useBacktest() {
