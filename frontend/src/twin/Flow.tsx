@@ -153,6 +153,17 @@ export function KindPick({ mode, stations, go }: { mode: Mode; stations: Station
           onClick={() => go(next("solar"))}
         />
       </div>
+      {mode === "place" && (
+        <div className="choices">
+          <Choice
+            title="Панели на крышах города"
+            text="Какие здания Астаны дадут больше всего энергии с учётом теней от соседних домов"
+            meta="Левый берег · данные OpenStreetMap и PVGIS"
+            icon={IconSun}
+            onClick={() => go({ page: "roofs" })}
+          />
+        </div>
+      )}
       <button className="back" onClick={() => go({ page: "home" })}>
         ← Назад
       </button>

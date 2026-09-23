@@ -103,6 +103,7 @@ export type Route =
   | { page: "stations"; kind: SourceKind }
   | { page: "station"; kind: SourceKind; stationId: string; tab: StationTab }
   | { page: "place"; kind: SourceKind }
+  | { page: "roofs" }
   | { page: "platform" };
 
 export function parseRoute(hash: string): Route {
@@ -110,6 +111,7 @@ export function parseRoute(hash: string): Route {
   const k: SourceKind | null = kind === "wind" || kind === "solar" ? kind : null;
   if (mode === "platform") return { page: "platform" };
   if (mode === "forecast" || mode === "place") {
+    if (mode === "place" && kind === "roofs") return { page: "roofs" };
     if (!k) return { page: "kind", mode };
     if (mode === "place") return { page: "place", kind: k };
     if (!stationId) return { page: "stations", kind: k };
@@ -131,6 +133,8 @@ export function routeHash(r: Route): string {
       return `#/forecast/${r.kind}`;
     case "place":
       return `#/place/${r.kind}`;
+    case "roofs":
+      return "#/place/roofs";
     case "station":
       return `#/forecast/${r.kind}/${r.stationId}${r.tab === "map" ? "" : `/${r.tab}`}`;
   }

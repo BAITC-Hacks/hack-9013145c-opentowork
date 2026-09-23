@@ -8,6 +8,7 @@ import { fmtDay, ORIGINS, useForecast, useRoute, useStations } from "./twin/data
 import type { Route, StationTab } from "./twin/data";
 import { Home, KindPick, StationPick } from "./twin/Flow";
 import Placement from "./twin/Placement";
+import Rooftops from "./twin/Rooftops";
 import StationView from "./twin/StationView";
 
 type Tab = "chat" | "knowledge" | "jobs" | "stats";
@@ -362,6 +363,11 @@ function crumbs(route: Route, stationName: string | null): { label: string; to: 
   const out: { label: string; to: Route | null }[] = [];
   if (route.page === "platform") return [{ label: "Платформа", to: null }];
   if (route.page === "home") return out;
+  if (route.page === "roofs")
+    return [
+      { label: "Новая станция", to: { page: "kind", mode: "place" } },
+      { label: "Крыши города", to: null },
+    ];
   const mode = route.page === "kind" ? route.mode : route.page === "place" ? "place" : "forecast";
   const first = mode === "place" ? "Новая станция" : "Прогноз";
   if (route.page === "kind") return [{ label: first, to: null }];
@@ -475,6 +481,7 @@ export default function App() {
         <StationPick kind={route.kind} stations={stations} originIso={originIso} go={go} />
       )}
       {route.page === "place" && <Placement kind={route.kind} stations={stations} go={go} />}
+      {route.page === "roofs" && <Rooftops go={go} />}
       {route.page === "platform" && <PlatformTab />}
       {route.page === "station" && !station && (
         <div className="flow">

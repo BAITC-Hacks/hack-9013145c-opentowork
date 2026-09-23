@@ -79,8 +79,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
     const paths = new Map(
       data.buildings.map((b) => [b.id, "M" + b.polygon.map((p) => xy(p).map((v) => v.toFixed(1)).join(",")).join("L") + "Z"]),
     );
-    const metersPerUnit = ((e - w) * k * 111_320) / W;
-    return { W, H, paths, metersPerUnit };
+    return { W, H, paths };
   }, [data]);
 
   const [view, setView] = useState<View | null>(null);
@@ -232,10 +231,10 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
         <div className="place-map card">
           <div className="roof-toolbar">
             <div className="seg" role="tablist" aria-label="Что показывать цветом">
-              <button className={metric === "energy" ? "active" : ""} onClick={() => setMetric("energy")}>
+              <button className={metric === "energy" ? "on" : ""} onClick={() => setMetric("energy")}>
                 Сколько энергии за год
               </button>
-              <button className={metric === "quality" ? "active" : ""} onClick={() => setMetric("quality")}>
+              <button className={metric === "quality" ? "on" : ""} onClick={() => setMetric("quality")}>
                 Насколько мешают тени
               </button>
             </div>
@@ -297,7 +296,7 @@ export default function Rooftops({ go }: { go: (r: Route) => void }) {
             <span>{legend[0]}</span>
             <i style={{ background: `linear-gradient(90deg, ${rampRgb(0)}, ${rampRgb(0.5)}, ${rampRgb(1)})` }} />
             <span>{legend[1]}</span>
-            <span className="dim">колесо — масштаб, перетаскивание — сдвиг, 100 м ≈ {Math.round(100 / geo.metersPerUnit)} ед.</span>
+            <span className="dim">колесо — масштаб, перетаскивание — сдвиг</span>
           </div>
         </div>
 

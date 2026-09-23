@@ -1,0 +1,44 @@
+/* Экран «Крыши под панели». Токены — из twin.css. */
+
+.roof-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 16px; }
+.roof-kpis > div { background: var(--slate); border: 1px solid var(--rime); border-radius: var(--radius); padding: 12px 14px; }
+.roof-kpis b { font-family: var(--display); font-size: 26px; font-weight: 600; }
+.roof-kpis small { font-family: var(--mono); font-size: 10.5px; color: var(--lichen); }
+
+.roof-toolbar { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.roof-toolbar .seg { flex: 0 1 420px; }
+.roof-zoom { display: flex; gap: 6px; }
+.roof-zoom button { padding: 6px 10px; min-width: 34px; }
+
+.roof-map { display: block; width: 100%; height: auto; cursor: grab; touch-action: none; user-select: none; border-radius: 2px; }
+.roof-map:active { cursor: grabbing; }
+.roof-ground { fill: var(--ink); }
+.roof { stroke: var(--ink); cursor: pointer; }
+.roof:hover { stroke: var(--frost); }
+.roof.picked { stroke: var(--glacier); }
+
+.roof-tip { position: fixed; z-index: 20; pointer-events: none; display: flex; flex-direction: column; gap: 2px; max-width: 260px;
+  background: var(--ink); border: 1px solid var(--rime); color: var(--frost); font-family: var(--mono); font-size: 10.5px; padding: 6px 8px; border-radius: 2px; }
+.roof-tip b { font-family: var(--font); font-size: 12.5px; font-weight: 600; }
+
+.roof-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.roof-card-head h2 { margin: 0 0 10px; }
+
+.roof-months { width: 100%; height: auto; margin: 12px 0 2px; }
+.roof-months .got { fill: var(--steppe); }
+.roof-months .lost { fill: var(--rime); }
+.roof-months text { fill: var(--lichen); font-family: var(--mono); font-size: 8px; }
+.roof-months-legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--lichen); }
+.roof-months-legend i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; vertical-align: -1px; }
+.roof-months-legend i.got { background: var(--steppe); }
+.roof-months-legend i.lost { background: var(--rime); }
+
+.roof-flag { color: var(--sodium); font-size: 11px; }
+.roof-notes { margin: 14px 0 8px; padding-left: 18px; font-size: 12.5px; color: var(--lichen); display: flex; flex-direction: column; gap: 6px; }
+.roof-osm { font-size: 12px; color: var(--glacier); }
+.roof-assume { margin: -4px 0 10px; font-size: 12px; color: var(--sodium); }
+
+@media (max-width: 700px) {
+  .roof-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .roof-toolbar .seg { flex-basis: 100%; }
+}
