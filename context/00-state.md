@@ -368,6 +368,18 @@ docker compose run --rm --no-deps -e APP_ENV=prod --entrypoint python api -c "im
 
 ## 8. Журнал изменений
 
+- 23.09, 17:49: README — раздел «Как это выглядит»: 8 скриншотов `docs/screenshots/`
+  (обзор, прогноз Нурлы, точность, агент+Copilot, заявка РФЦ, живой прогноз всех ВЭС,
+  крыши, AI-платформа) с описанием. Сняты Playwright с локального стенда :3000, 1440×900.
+  Код не менялся.
+
+- 23.09: `docs/deployability.md` — отдельный документ о развёртываемости: Compose,
+  автодеплой на демо-сервер, Kubernetes (раздельный HPA API/воркеров, rolling update,
+  пробы, Job миграций, оверлей), CI/CD, таблица «проверено/не проверено», путь в прод.
+  Сверено с `infra/k8s*`, `docker-compose.yml`, `.github/workflows/`; цифры взяты
+  из §2 и `context/06-kubernetes.md`. Ссылки в `docs/00-index.md` и `context/01-map.md`.
+  Код не менялся, проверки не запускались.
+
 - 23.09: README — раздел «Как считается выработка новой станции» (5 шагов расчёта
   `POST /wind/simulate` и что модель не учитывает) + пункт в оглавлении. Каждое
   утверждение сверено с `app/wind/model.py`, `weather.py`, `turbines.json`
