@@ -60,8 +60,21 @@ def _origin(origin: str | None):
 
 
 def _rated_mw(farm: WindFarm) -> float | None:
-    units = sum(t.rated_kw or 0 for t in farm.turbines) / 1000
-    return units or farm.capacity_mw
+    """Номинал станции; порядок источников совпадает с stationCapacity во фронтенде.
+
+    Станция кейса — по своим турбинам. Иначе официальный реестр: OSM бывает неполным
+    или захватывает соседнюю очередь (Аршалы: 77.5 МВт в OSM при 45 в реестре).
+    """
+    ratings = [t.rated_kw for t in farm.turbines]
+    all_known = bool(ratings) and all(ratings)
+    units = sum(r or 0 for r in ratings) / 1000
+    if farm.data == "history" and all_known:
+        return units
+    if farm.in_registry and farm.capacity_mw:
+        return farm.capacity_mw
+    if all_known:
+        return units
+    return farm.capacity_mw
 
 
 async def _farm(session, station_id: str) -> WindFarm:

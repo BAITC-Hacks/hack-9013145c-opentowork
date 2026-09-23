@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ForecastPoint, Station, Turbine, UnitSample } from "../api";
-import { fmtDayTime, mw, useUnitHistory } from "./data";
+import { fmtDayTime, mw, stationRated, unitRated, useUnitHistory } from "./data";
 import { parseTs, RATED_ASSUMPTION_MW, SITE, sunPosition, toIso, wakeFactor } from "./demo";
 
 interface Props {
@@ -33,7 +33,8 @@ function status(station: Station, p: ForecastPoint | undefined, power: number) {
 }
 
 export default function UnitPanel({ station, unit, points, cursor, originIso, onClose }: Props) {
-  const rated = unit.rated_mw ?? RATED_ASSUMPTION_MW;
+  const rated = unitRated(station, unit, RATED_ASSUMPTION_MW);
+  const stationMw = stationRated(station);
   const origin = parseTs(originIso);
   const localOrigin = new Date(origin + SITE.utcOffset * HOUR);
   const monthStart = Date.UTC(localOrigin.getUTCFullYear(), localOrigin.getUTCMonth(), 1) - SITE.utcOffset * HOUR;
@@ -131,7 +132,9 @@ export default function UnitPanel({ station, unit, points, cursor, originIso, on
       </div>
 
       <UnitChart history={last24} points={points} unitId={unit.id} cursor={cursor} />
-      {!unit.rated_mw && <p className="hint">Номинал турбины не указан в данных — принят {RATED_ASSUMPTION_MW} МВт.</p>}
+      {!unit.rated_mw && <p className="hint">Номинал турбины не указан в данных — {stationMw && station.units.length
+        ? `принят средний по станции: ${mw(stationMw)} МВт / ${station.units.length} турбин`
+        : `принят ${RATED_ASSUMPTION_MW} МВт`}.</p>}
       {station.data !== "history" && (
         <p className="hint">Показатели этой станции — расчёт модели, фактических данных нет.</p>
       )}

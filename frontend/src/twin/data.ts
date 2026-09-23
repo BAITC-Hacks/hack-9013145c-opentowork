@@ -236,10 +236,43 @@ export function mw(x: number): string {
   return x >= 10 ? x.toFixed(0) : x.toFixed(1);
 }
 
-export function stationRated(s: Station): number {
-  const units = s.units.reduce((a, u) => a + (u.rated_mw ?? 0), 0);
-  return units || s.capacity_mw || 0;
+export type CapacitySource = "units" | "registry" | "osm" | "none";
+
+/**
+ * Номинал станции и откуда он взят. Порядок тот же, что в `_rated_mw` бэкенда:
+ * 1) станция с историей SCADA — по её турбинам (их номиналы известны);
+ * 2) официальный реестр Минэнерго — OSM бывает неполным или захватывает соседнюю очередь
+ *    (Аршалы: в OSM 77.5 МВт при 45 в реестре; Шокпар: 43.2 при 100);
+ * 3) сумма турбин OSM, если номинал известен у каждой;
+ * 4) мощность станции из OSM. Иначе номинал неизвестен (0).
+ */
+export function stationCapacity(s: Station): { mw: number; source: CapacitySource; unitsMw: number } {
+  const allKnown = s.units.length > 0 && s.units.every((u) => u.rated_mw);
+  const unitsMw = s.units.reduce((a, u) => a + (u.rated_mw ?? 0), 0);
+  if (s.data === "history" && allKnown) return { mw: unitsMw, source: "units", unitsMw };
+  if (s.in_registry && s.capacity_mw) return { mw: s.capacity_mw, source: "registry", unitsMw };
+  if (allKnown) return { mw: unitsMw, source: "units", unitsMw };
+  if (s.capacity_mw) return { mw: s.capacity_mw, source: "osm", unitsMw };
+  return { mw: 0, source: "none", unitsMw };
 }
+
+export function stationRated(s: Station): number {
+  return stationCapacity(s).mw;
+}
+
+/** Номинал агрегата: свой из OSM, иначе доля номинала станции, иначе допущение. */
+export function unitRated(s: Station, u: Station["units"][number], fallback: number): number {
+  if (u.rated_mw) return u.rated_mw;
+  const capacity = stationCapacity(s).mw;
+  return capacity && s.units.length ? capacity / s.units.length : fallback;
+}
+
+export const CAPACITY_SOURCE_LABEL: Record<CapacitySource, string> = {
+  units: "по номиналам турбин",
+  registry: "по реестру Минэнерго",
+  osm: "по OpenStreetMap",
+  none: "допущение: турбины по 2.5 МВт",
+};
 
 /** Станцию можно открыть, если известно, где стоят её агрегаты. */
 export function canOpen(s: Station): boolean {

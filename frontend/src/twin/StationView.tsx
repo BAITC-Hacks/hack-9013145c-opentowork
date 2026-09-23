@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import type { ForecastPoint, ForecastRun, Station } from "../api";
 import { ForecastChart, Sparkline } from "./charts";
-import { fmtDayTime, LIVE_ORIGIN, mw, originLabel, stationRated, STATION_ORIGINS, useStationWind } from "./data";
+import { CAPACITY_SOURCE_LABEL, fmtDayTime, LIVE_ORIGIN, mw, originLabel, stationCapacity, stationRated, STATION_ORIGINS, unitRated, useStationWind } from "./data";
 import type { Origin } from "./data";
 import { parseTs, powerCurve, RATED_ASSUMPTION_MW, SITE, solarPower, sunPosition } from "./demo";
 import UnitPanel from "./UnitPanel";
@@ -97,6 +97,11 @@ export default function StationView({
   const wind = station.kind === "wind";
   const units = station.units;
   const rated = stationRated(station) || units.length * RATED_ASSUMPTION_MW;
+  const capacity = stationCapacity(station);
+  // Расхождение реестра и суммы турбин OSM больше 10% — показываем, а не прячем.
+  const capacityNote = wind && capacity.source === "registry" && capacity.unitsMw
+    && Math.abs(capacity.unitsMw - capacity.mw) / capacity.mw > 0.1
+    ? `по OSM на площадке турбин на ${mw(capacity.unitsMw)} МВт` : "";
   const points = run?.predictions ?? [];
   const [cursor, setCursor] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -184,8 +189,8 @@ export default function StationView({
   const storm = wind ? points.find((p) => p.wind_speed >= 18) : undefined;
   const perUnit = units.map((u) => ({
     unit: u,
-    now: (point?.per_turbine?.[u.id] ?? point?.p50 ?? 0) * (u.rated_mw ?? RATED_ASSUMPTION_MW),
-    day: sum(day.map((p) => p.per_turbine?.[u.id] ?? p.p50)) * (u.rated_mw ?? RATED_ASSUMPTION_MW),
+    now: (point?.per_turbine?.[u.id] ?? point?.p50 ?? 0) * unitRated(station, u, RATED_ASSUMPTION_MW),
+    day: sum(day.map((p) => p.per_turbine?.[u.id] ?? p.p50)) * unitRated(station, u, RATED_ASSUMPTION_MW),
   }));
   const bestUnit = Math.max(...perUnit.map((u) => u.day), 1e-6);
   const labels = Object.fromEntries(
@@ -370,6 +375,11 @@ export default function StationView({
                 {point ? mw(point.p50 * rated) : "—"}
                 <small>МВт из {mw(rated)}</small>
               </div>
+              {wind && (
+                <div className="kpi-sub" title={capacityNote || undefined}>
+                  номинал {CAPACITY_SOURCE_LABEL[capacity.source]}{capacityNote && ` · ${capacityNote}`}
+                </div>
+              )}
               {point && (
                 <div className="kpi-sub">
                   вероятно от <b>{mw(point.p10 * rated)}</b> до <b>{mw(point.p90 * rated)}</b> МВт
