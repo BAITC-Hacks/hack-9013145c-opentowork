@@ -109,12 +109,13 @@ async def handle_job(job_id: str, job_type: str, payload: dict) -> bool:
             )
 
             job = await session.get(Job, uuid.UUID(job_id), with_for_update=True)
-            # Задачу могли отменить, пока работала модель. Раньше статус
-            # проверялся только в начале, и отмена молча перетиралась.
-            if job.status != "PROCESSING":
+            # Задачу могли отменить, пока работала модель, или её забрал другой
+            # воркер после истечения аренды — тогда писать результат не нам.
+            if not _still_ours(job, attempts):
                 log.info("job_left_processing_skip", job_id=job_id, status=job.status)
                 await session.commit()
-                return True
+                # Задачу держит новый воркер — подтверждать сообщение будет он.
+                return job.status != "PROCESSING"
 
             job.progress = 90
             job.result = {
@@ -152,20 +153,20 @@ async def handle_job(job_id: str, job_type: str, payload: dict) -> bool:
                 "job_retry_scheduled", job_id=job_id, attempt=attempts, error=str(exc)
             )
             async with SessionLocal() as session:
-                job = await session.get(Job, uuid.UUID(job_id))
-                if job and job.status == "PROCESSING":
+                job = await session.get(Job, uuid.UUID(job_id), with_for_update=True)
+                if _still_ours(job, attempts):
                     job.status = "PENDING"
                     job.error = f"попытка {attempts}: {str(exc)[:500]}"
                     await session.commit()
             JOBS.labels(job_type, "RETRY").inc()
             return False
-        await _mark_failed(job_id, f"исчерпаны попытки ({attempts}): {exc}")
+        await _mark_failed(job_id, f"исчерпаны попытки ({attempts}): {exc}", attempts)
         JOBS.labels(job_type, "FAILED").inc()
         return True
 
     except Exception as exc:
         log.exception("job_failed", job_id=job_id, error=str(exc))
-        await _mark_failed(job_id, str(exc))
+        await _mark_failed(job_id, str(exc), attempts)
         JOBS.labels(job_type, "FAILED").inc()
         return True
 
@@ -173,11 +174,19 @@ async def handle_job(job_id: str, job_type: str, payload: dict) -> bool:
         JOB_DURATION.labels(job_type).observe(time.perf_counter() - started)
 
 
-async def _mark_failed(job_id: str, error: str) -> None:
+def _still_ours(job: Job | None, attempts: int) -> bool:
+    """Аренда наша, пока задача в PROCESSING с нашим номером попытки.
+
+    Номер попытки — fencing token: воркер, чья аренда истекла, не перетрёт
+    ни результат, ни статус того, кто забрал задачу после него."""
+    return job is not None and job.status == "PROCESSING" and job.attempts == attempts
+
+
+async def _mark_failed(job_id: str, error: str, attempts: int) -> None:
     async with SessionLocal() as session:
-        job = await session.get(Job, uuid.UUID(job_id))
-        # Отмену и уже сохранённый результат не перетираем ошибкой.
-        if job and job.status not in TERMINAL:
+        job = await session.get(Job, uuid.UUID(job_id), with_for_update=True)
+        # Отмену, чужую аренду и уже сохранённый результат не перетираем ошибкой.
+        if _still_ours(job, attempts):
             job.status = "FAILED"
             job.error = error[:2000]
             job.finished_at = datetime.now(UTC)

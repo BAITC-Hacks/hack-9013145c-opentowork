@@ -41,3 +41,14 @@ async def test_job_held_by_other_worker_is_not_acked(monkeypatch, no_model):
     monkeypatch.setattr(worker, "SessionLocal", lambda: _Session(None, "PROCESSING"))
     job_id = "00000000-0000-0000-0000-000000000001"
     assert await worker.handle_job(job_id, "t", {}) is False
+
+
+def test_stale_lease_does_not_touch_job():
+    """Воркер с истёкшей арендой (чужой номер попытки) не пишет в задачу."""
+    from types import SimpleNamespace
+
+    job = SimpleNamespace(status="PROCESSING", attempts=2)
+    assert worker._still_ours(job, 2)
+    assert not worker._still_ours(job, 1)
+    assert not worker._still_ours(SimpleNamespace(status="CANCELLED", attempts=1), 1)
+    assert not worker._still_ours(None, 1)
