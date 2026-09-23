@@ -147,6 +147,34 @@ def _curve() -> tuple[np.ndarray, np.ndarray]:
     return np.asarray(data["ws"], float), np.asarray(data["power"], float)
 
 
+def json_safe(obj):
+    """NaN/inf → None по всему документу: стандартный JSON их не допускает,
+    а `json.dumps` по умолчанию пропускает и ломает ответ уже в API."""
+    if isinstance(obj, dict):
+        return {k: json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, list | tuple):
+        return [json_safe(v) for v in obj]
+    if isinstance(obj, float) and not np.isfinite(obj):
+        return None
+    return obj
+
+
+def _has_nan(obj) -> bool:
+    if isinstance(obj, dict):
+        return any(_has_nan(v) for v in obj.values())
+    if isinstance(obj, list | tuple):
+        return any(_has_nan(v) for v in obj)
+    return isinstance(obj, float) and not np.isfinite(obj)
+
+
+def _finalize(doc: dict) -> dict:
+    # Пропуск в погоде (нет температуры у ВЭС, ветра у СЭС) не должен ронять ответ,
+    # но и не должен выглядеть полноценным прогнозом.
+    if _has_nan(doc["predictions"]):
+        doc["degraded"] = True
+    return json_safe(doc)
+
+
 def curve_run(
     lat: float, lon: float, origin: pd.Timestamp, horizon: int, unit_ids: list[str]
 ) -> dict:
@@ -216,7 +244,7 @@ def curve_run(
             "duration_ms": int((time.time() - t1) * 1000),
         },
     ]
-    return {
+    return _finalize({
         "forecast_id": f"curve-{lat:.3f}-{lon:.3f}-{origin:%Y%m%d%H}",
         "forecast_origin": origin.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "horizon": horizon,
@@ -234,7 +262,7 @@ def curve_run(
         "degraded": missing > 0,
         "live": True,
         "method": "curve",
-    }
+    })
 
 
 # ─── СЭС: облачность и радиация через физическую модель ─────────────────────
@@ -297,7 +325,7 @@ def solar_run(
                 "per_turbine": {u: round(p50, 4) for u in unit_ids},
             }
         )
-    return {
+    return _finalize({
         "forecast_id": f"pv-{lat:.3f}-{lon:.3f}-{origin:%Y%m%d%H}",
         "forecast_origin": origin.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "horizon": horizon,
@@ -324,7 +352,7 @@ def solar_run(
         "degraded": len(points) < horizon,
         "live": True,
         "method": "solar",
-    }
+    })
 
 
 # ─── Сводка по всем станциям: один запрос на все точки ───────────────────────

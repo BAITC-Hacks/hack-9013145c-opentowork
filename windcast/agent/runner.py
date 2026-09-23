@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import json
-import math
 from datetime import UTC, datetime
 
 import pandas as pd
@@ -24,6 +23,7 @@ from windcast.config import (
     TEST_LAST_ORIGIN,
 )
 from windcast.explain import EXPLAIN_DIR, global_explain
+from windcast.live import json_safe as _json_safe
 from windcast.models.ensemble import calibrate
 from windcast.pipeline import MODEL_VERSION, Forecaster, station_view
 
@@ -102,18 +102,6 @@ def _points(pred: pd.DataFrame) -> list[dict]:
             }
         )
     return pts
-
-
-def _json_safe(obj):
-    """NaN/inf → None по всему документу: стандартный JSON их не допускает,
-    а `json.dumps` по умолчанию пропускает и ломает ответ уже в API."""
-    if isinstance(obj, dict):
-        return {k: _json_safe(v) for k, v in obj.items()}
-    if isinstance(obj, list | tuple):
-        return [_json_safe(v) for v in obj]
-    if isinstance(obj, float) and not math.isfinite(obj):
-        return None
-    return obj
 
 
 def forecast_run_json(run: graph.AgentRun, horizon: int) -> dict:

@@ -160,3 +160,14 @@ def test_explain_endpoint(client):
     assert g["weather_models"] and g["power_curve"]["curves"]
     other = client.get("/api/v1/explain", params={"origin": "2026-02-07", "station_id": "x"})
     assert other.status_code == 404
+
+
+def test_physical_runs_with_missing_weather_serialize():
+    """curve_run/solar_run: пропуск в погоде → null и degraded, а не NaN в ответе."""
+    from starlette.responses import JSONResponse
+
+    from windcast.live import _finalize
+
+    doc = _finalize({"degraded": False, "predictions": [{"p50": 0.3, "temperature": float("nan")}]})
+    assert doc["degraded"] is True and doc["predictions"][0]["temperature"] is None
+    JSONResponse(doc).render(doc)

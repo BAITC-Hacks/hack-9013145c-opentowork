@@ -131,7 +131,7 @@ class RunIn(BaseModel):
     horizon: int = Field(default=48, ge=1, le=48)
 
 
-async def _limit_live(redis, user) -> None:
+async def limit_live(redis, user) -> None:
     """Живой пересчёт — это обучённая модель и запрос погоды, а не чтение JSON:
     без лимита несколько клиентов занимают весь пул потоков API."""
     await check_rate_limit(redis, f"windcast_live:{user.id}", settings.RATE_LIMIT_FORECAST_LIVE)
@@ -170,7 +170,7 @@ async def forecast_run(body: RunIn, user: UserDep, redis: RedisDep) -> dict:
         raise NotFound("Эта модель обучена только для Нурлы")
     origin_iso = _normalize_origin(body.forecast_origin)
     if os.getenv("WINDCAST_LIVE") == "1":
-        await _limit_live(redis, user)
+        await limit_live(redis, user)
         try:
             doc = await run_in_threadpool(_live_run, origin_iso, body.horizon)
             if doc is not None:
@@ -367,7 +367,7 @@ async def explain(
                     for v in versions
                 ],
             }
-    await _limit_live(redis, user)
+    await limit_live(redis, user)
     try:
         return await run_in_threadpool(_live_explain, origin_iso)
     except ImportError as exc:

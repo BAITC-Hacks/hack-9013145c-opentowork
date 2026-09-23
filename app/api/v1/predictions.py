@@ -13,7 +13,8 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.deps import SessionDep, UserDep
+from app.api.v1.forecast import limit_live
+from app.deps import RedisDep, SessionDep, UserDep
 from app.errors import NotFound, ServiceUnavailable, ValidationFailed
 from app.models import WindFarm
 from app.solar.catalog import solar_farm
@@ -95,7 +96,8 @@ async def _farm(session, station_id: str) -> WindFarm:
 @router.get("/run")
 async def prediction_run(
     session: SessionDep,
-    _: UserDep,
+    user: UserDep,
+    redis: RedisDep,
     station_id: str = Query(..., max_length=64),
     origin: str | None = Query(None, max_length=32),
     horizon: int = Query(48, ge=1, le=48),
@@ -122,6 +124,8 @@ async def prediction_run(
     farm = await _farm(session, station_id)
     ids = [t.unit_id for t in farm.turbines] or ["T1"]
     if farm.data == "history":
+        # Та же модель, что за /forecast/run, — и тот же лимит, иначе его обходят этим входом.
+        await limit_live(redis, user)
         return await _call(
             live.ml_run_cached, farm.lat, farm.lon, ts, horizon, "запуск из раздела прогнозов"
         )
