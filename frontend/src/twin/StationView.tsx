@@ -7,7 +7,7 @@ import type { Origin } from "./data";
 import { parseTs, powerCurve, RATED_ASSUMPTION_MW, SITE, solarPower, sunPosition } from "./demo";
 import UnitPanel from "./UnitPanel";
 import { LoadingOverlay } from "./Loading";
-import WindPanel from "./WindPanel";
+import WindPanel, { WindNow } from "./WindPanel";
 import WindMap, { LEGEND_GRADIENT, SPEED_MARKS } from "./WindMap";
 import type { Layers } from "./WindMap";
 
@@ -677,6 +677,7 @@ export default function StationView({
       </>}
 
       {wind && <WindPanel wind={stationWind.wind} loading={stationWind.loading} atIso={point?.forecast_for ?? null} />}
+      {wind && station.lat != null && <WindNow stationId={station.id} />}
     </div>
   );
 }

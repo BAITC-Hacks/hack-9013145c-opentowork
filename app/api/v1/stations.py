@@ -14,6 +14,7 @@ from app.errors import NotFound, ServiceUnavailable, ValidationFailed
 from app.models import WindFarm
 from app.solar.catalog import solar_farm, solar_farms
 from app.wind import station_weather as weather
+from app.wind import wind_now
 
 router = APIRouter(prefix="/stations", tags=["stations"])
 
@@ -242,3 +243,15 @@ async def station_wind(
         source=source,
         hours=[WindHour(**r) for r in rows],
     )
+
+
+@router.get("/{station_id}/wind/now")
+async def station_wind_now(station_id: str, session: SessionDep, _: UserDep) -> dict:
+    """Ветер прямо сейчас: Open-Meteo current в точке станции и METAR ближайшего аэродрома."""
+    farm = await session.get(WindFarm, station_id)
+    if farm is None or farm.lat is None or farm.lon is None:
+        raise NotFound("станция не найдена или у неё нет координат")
+    result = await run_in_threadpool(wind_now.wind_now, farm.lat, farm.lon)
+    if result["model"] is None and result["observed"] is None:
+        raise ServiceUnavailable("погодные сервисы недоступны")
+    return {"station_id": station_id, "lat": farm.lat, "lon": farm.lon, **result}

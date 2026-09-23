@@ -121,6 +121,30 @@ export interface WindHour {
   shear_alpha: number | null; // показатель профиля v ∝ h^α
 }
 
+/** Ветер прямо сейчас: расчёт модели в точке станции и измерение ближайшего аэродрома. */
+export interface StationWindNow {
+  station_id: string;
+  retrieved_at: string;
+  model: {
+    time: string;
+    wind_speed_10m: number | null;
+    wind_dir_10m: number | null;
+    wind_gusts_10m: number | null;
+    wind_speed_100m: number | null;
+    wind_dir_100m: number | null;
+  } | null;
+  observed: {
+    icao: string;
+    name: string;
+    distance_km: number;
+    time: string;
+    wind_dir_10m: number;
+    wind_speed_10m: number;
+    wind_gusts_10m: number | null;
+    raw: string | null;
+  } | null;
+}
+
 export interface StationWind {
   station_id: string;
   lat: number;
@@ -616,6 +640,9 @@ export const api = {
   // Файл отдаётся без токена (как и остальной /forecast-контур) — хватает обычной ссылки.
   bidFileUrl: (day: string, format: BidFormat) =>
     `/api/v1/bids/${encodeURIComponent(day)}/file?format=${format}`,
+
+  stationWindNow: (stationId: string) =>
+    request<StationWindNow>(`/stations/${encodeURIComponent(stationId)}/wind/now`),
 
   stationWind: (stationId: string, origin: string, horizon: number) =>
     request<StationWind>(

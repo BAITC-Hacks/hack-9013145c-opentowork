@@ -44,3 +44,10 @@
 @media (max-width: 850px) { .wind-card { grid-row: 6; } .wp-grid-layout { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .wind-card { grid-column: 1; grid-row: 7; } .wp-now { flex-direction: column; } }
 .wp-empty { min-height: 180px; }
+
+/* Ветер сейчас: модель в точке станции и измерение ближайшего аэродрома */
+.wind-now-card { grid-column: 1 / -1; grid-row: 5; }
+.wp-live { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 12px; }
+.wp-live-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.wp-live-cell b { display: flex; align-items: center; gap: 6px; font-size: 18px; }
+.wp-live-cell .dim { font-size: 12px; }

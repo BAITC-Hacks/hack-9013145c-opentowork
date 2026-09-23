@@ -1,4 +1,6 @@
-import type { StationWind, WindHour } from "../api";
+import { useEffect, useState } from "react";
+import { api } from "../api";
+import type { StationWind, StationWindNow, WindHour } from "../api";
 import { fmtDayTime } from "./data";
 import { LoadingOverlay } from "./Loading";
 import "./windpanel.css";
@@ -24,6 +26,75 @@ function Arrow({ from, size = 14 }: { from: number; size?: number }) {
     <svg width={size} height={size} viewBox="-10 -10 20 20" aria-hidden="true" style={{ transform: `rotate(${from + 180}deg)` }}>
       <path d="M0 -8 L5 3 L0 0.5 L-5 3 Z" fill="currentColor" />
     </svg>
+  );
+}
+
+const ago = (iso: string) => {
+  const min = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
+  return min < 60 ? `${min} мин назад` : `${Math.round(min / 60)} ч назад`;
+};
+
+function NowCell({ title, dir, speed, gust, note }: {
+  title: string; dir: number | null; speed: number | null; gust: number | null; note: string;
+}) {
+  return (
+    <div className="wp-live-cell">
+      <span className="kpi-label">{title}</span>
+      <b>
+        {dir != null && <Arrow from={dir} size={18} />} {dir != null ? `${rumb(dir)} · ${Math.round(dir)}°` : "—"}
+      </b>
+      <span>{speed != null ? `${speed.toFixed(1)} м/с` : "—"}{gust != null ? `, порывы ${gust.toFixed(1)}` : ""}</span>
+      <span className="dim">{note}</span>
+    </div>
+  );
+}
+
+/**
+ * Ветер в настоящий момент — независимо от выбранной даты прогноза. Нужен, чтобы
+ * сверить направление с реальностью: модель в точке станции и измерение аэродрома.
+ */
+export function WindNow({ stationId }: { stationId: string }) {
+  const [now, setNow] = useState<StationWindNow | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const load = () => api.stationWindNow(stationId).then(
+      (d) => { if (alive) { setNow(d); setFailed(false); } },
+      () => { if (alive) setFailed(true); },
+    );
+    load();
+    // Open-Meteo обновляет current раз в 15 минут, METAR — раз в 30–60.
+    const timer = window.setInterval(load, 5 * 60_000);
+    return () => { alive = false; window.clearInterval(timer); };
+  }, [stationId]);
+
+  if (failed && !now) return null;
+  const m = now?.model;
+  const o = now?.observed;
+  return (
+    <section className="card bottom wind-now-card" aria-live="polite">
+      <div className="card-head">
+        <h2>Ветер сейчас <span className="unit">реальное время</span></h2>
+        {now && <span className="dim">обновлено {ago(now.retrieved_at)}</span>}
+      </div>
+      {!now ? <p className="hint">Запрашиваем текущий ветер…</p> : (
+        <div className="wp-live">
+          {m && <NowCell title="У ротора, 100 м · модель" dir={m.wind_dir_100m} speed={m.wind_speed_100m} gust={null}
+            note={`Open-Meteo, расчёт на ${m.time.slice(11, 16)} UTC`} />}
+          {m && <NowCell title="У земли, 10 м · модель" dir={m.wind_dir_10m} speed={m.wind_speed_10m} gust={m.wind_gusts_10m}
+            note="в точке станции" />}
+          {o ? <NowCell title={`Измерено · ${o.icao}`} dir={o.wind_dir_10m} speed={o.wind_speed_10m} gust={o.wind_gusts_10m}
+            note={`${o.name}, ${Math.round(o.distance_km)} км от станции · ${ago(o.time)}`} />
+            : <div className="wp-live-cell"><span className="kpi-label">Измерено</span><span className="dim">
+              Аэродромов с METAR ближе 250 км нет</span></div>}
+        </div>
+      )}
+      <p className="hint">
+        Направление — откуда дует, стрелка — куда. Измерение аэродрома — ветер на 10 м в другой точке
+        {o && o.distance_km > 50 ? " (далеко от станции, рельеф может менять направление)" : ""}; сравнивать его стоит с
+        моделью на 10 м. Выбранная выше дата прогноза на этот блок не влияет.
+      </p>
+    </section>
   );
 }
 
