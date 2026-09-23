@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, token } from "./api";
 import type { ChatResponse, JobStatus, SearchHit, Stats } from "./api";
 import { AnswerView, MetaBadge, StatsPanel } from "./components";
+import Agent from "./twin/Agent";
+import Backtest from "./twin/Backtest";
+import Dashboard from "./twin/Dashboard";
+import { fmtDay, ORIGINS, useForecast } from "./twin/data";
+import { SITE } from "./twin/demo";
 
 type Tab = "chat" | "knowledge" | "jobs" | "stats";
 
@@ -302,16 +307,60 @@ function StatsTab() {
   );
 }
 
+function PlatformTab() {
+  const [tab, setTab] = useState<Tab>("stats");
+  return (
+    <div className="page narrow">
+      <nav className="tabs sub">
+        {TABS.map(([key, label]) => (
+          <button key={key} className={tab === key ? "active" : ""} onClick={() => setTab(key)}>
+            {label}
+          </button>
+        ))}
+      </nav>
+      {tab === "chat" && <ChatTab />}
+      {tab === "knowledge" && <KnowledgeTab />}
+      {tab === "jobs" && <JobsTab />}
+      {tab === "stats" && <StatsTab />}
+    </div>
+  );
+}
+
+type Screen = "twin" | "backtest" | "agent" | "platform";
+
+const SCREENS: [Screen, string][] = [
+  ["twin", "Карта и прогноз"],
+  ["backtest", "Бэктест"],
+  ["agent", "Агент"],
+  ["platform", "Платформа"],
+];
+
+function Logo() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden>
+      <circle cx="16" cy="12" r="2.2" fill="currentColor" />
+      <path d="M16 12 L16.8 30 L15.2 30 Z" fill="currentColor" opacity="0.7" />
+      <path d="M16 12 Q18 5 16.5 1 Q14.5 6 16 12Z" fill="currentColor" />
+      <path d="M16 12 Q9 13 5 16 Q11 17 16 12Z" fill="currentColor" />
+      <path d="M16 12 Q21 17 26 18 Q23 13 16 12Z" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function App() {
   const [authed, setAuthed] = useState(Boolean(token.get()));
-  const [tab, setTab] = useState<Tab>("chat");
+  const [screen, setScreen] = useState<Screen>("twin");
   const [who, setWho] = useState<string>("");
+  const [originIso, setOriginIso] = useState(ORIGINS[0]);
+  const [horizon, setHorizon] = useState(48);
+  const [nonce, setNonce] = useState(0);
+  const forecast = useForecast(originIso, horizon, nonce);
 
   useEffect(() => {
     if (!authed) return;
     api
       .me()
-      .then((user) => setWho(`${user.email} · ${user.role}`))
+      .then((user) => setWho(user.email))
       .catch(() => {
         // Токен мог протухнуть между сессиями — возвращаем на вход.
         token.clear();
@@ -321,25 +370,39 @@ export default function App() {
 
   if (!authed) return <div className="app"><Login onDone={() => setAuthed(true)} /></div>;
 
+  const rerun = () => setNonce((n) => n + 1);
+
   return (
-    <div className="app">
-      <header className="top">
-        <h1>HackAlem AI · OpenToWork</h1>
-        <nav className="tabs">
-          {TABS.map(([key, label]) => (
-            <button
-              key={key}
-              className={tab === key ? "active" : ""}
-              onClick={() => setTab(key)}
-            >
+    <div className="shell">
+      <header className="topbar">
+        <div className="brand">
+          <Logo />
+          <div>
+            <div className="brand-name">Renewable Twin</div>
+            <div className="brand-sub">AI Forecast &amp; Digital Twin</div>
+          </div>
+        </div>
+        <nav className="nav">
+          {SCREENS.map(([key, label]) => (
+            <button key={key} className={screen === key ? "active" : ""} onClick={() => setScreen(key)}>
               {label}
             </button>
           ))}
         </nav>
         <div className="spacer" />
-        <span className="hint">{who}</span>
+        <div className="site">
+          <div>{SITE.name}</div>
+          <div className="dim">
+            {SITE.lat.toFixed(3)}° N, {SITE.lon.toFixed(3)}° E
+          </div>
+        </div>
+        <div className="clock">
+          <span>origin {fmtDay(originIso)} 2026, 00:00</span>
+          <span className="dim">UTC+{SITE.utcOffset}</span>
+        </div>
         <button
           className="ghost"
+          title={who}
           onClick={() => {
             token.clear();
             setAuthed(false);
@@ -349,10 +412,28 @@ export default function App() {
         </button>
       </header>
 
-      {tab === "chat" && <ChatTab />}
-      {tab === "knowledge" && <KnowledgeTab />}
-      {tab === "jobs" && <JobsTab />}
-      {tab === "stats" && <StatsTab />}
+      {screen === "twin" && (
+        <Dashboard
+          run={forecast.run}
+          dataOrigin={forecast.origin}
+          loading={forecast.loading}
+          originIso={originIso}
+          onOrigin={setOriginIso}
+          horizon={horizon}
+          onHorizon={setHorizon}
+          onRerun={rerun}
+        />
+      )}
+      {screen === "backtest" && (
+        <Backtest
+          run={forecast.run}
+          originIso={originIso}
+          onOrigin={setOriginIso}
+          dataOrigin={forecast.origin}
+        />
+      )}
+      {screen === "agent" && <Agent run={forecast.run} onRerun={rerun} loading={forecast.loading} />}
+      {screen === "platform" && <PlatformTab />}
     </div>
   );
 }

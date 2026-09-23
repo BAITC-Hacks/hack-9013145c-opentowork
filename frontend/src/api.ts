@@ -71,6 +71,74 @@ export interface JobStatus {
   error: string | null;
 }
 
+// ─── Контракт прогноза ВЭС ─────────────────────────────────────────────────
+// Мощность нормализована к номиналу (0..1): установленная мощность в
+// датасете не дана, поэтому фронтенд не придумывает мегаватты.
+
+export interface Turbine {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+}
+
+export interface ForecastPoint {
+  forecast_for: string; // ISO, час, на который прогноз
+  horizon_h: number; // часов от forecast_origin
+  p10: number;
+  p50: number;
+  p90: number;
+  baseline?: number | null; // persistence или power curve
+  actual?: number | null; // только для исторического периода
+  wind_speed: number; // м/с, из погодного прогноза, выпущенного до origin
+  wind_dir: number; // градусы, откуда дует
+  temperature: number;
+  per_turbine?: Record<string, number>;
+}
+
+export interface AgentStep {
+  agent: string;
+  action: string;
+  status: "ok" | "warn" | "fail" | "running";
+  duration_ms: number;
+  detail?: string;
+}
+
+export interface ForecastRun {
+  forecast_id: string;
+  forecast_origin: string;
+  horizon: number;
+  model_version: string;
+  weather_provider: string;
+  weather_run: string; // issued_at использованного прогноза погоды
+  created_at: string;
+  predictions: ForecastPoint[];
+  agent_steps?: AgentStep[];
+  explanation?: string;
+}
+
+export interface ModelMetric {
+  model: string;
+  mae: number;
+  rmse: number;
+  nmae?: number;
+  selected?: boolean;
+}
+
+export interface BacktestSummary {
+  period: string;
+  metrics: ModelMetric[];
+  daily: { date: string; mae: Record<string, number> }[];
+  by_horizon: { horizon_h: number; mae: number }[];
+}
+
+export interface SimulationResult {
+  scenario: string;
+  base_energy: number;
+  scenario_energy: number;
+  points: { forecast_for: string; p50: number }[];
+}
+
 const TOKEN_KEY = "hackalem.token";
 
 export const token = {
@@ -147,4 +215,23 @@ export const api = {
     }),
 
   job: (id: string) => request<JobStatus>(`/jobs/${id}`),
+
+  turbines: () => request<Turbine[]>("/turbines"),
+
+  forecastAt: (origin: string) =>
+    request<ForecastRun>(`/forecast/latest?origin=${encodeURIComponent(origin)}`),
+
+  runForecast: (origin: string, horizon: number) =>
+    request<ForecastRun>("/forecast/run", {
+      method: "POST",
+      body: JSON.stringify({ forecast_origin: origin, horizon }),
+    }),
+
+  backtest: () => request<BacktestSummary>("/metrics"),
+
+  simulate: (forecastId: string, windChangePct: number) =>
+    request<SimulationResult>("/simulation", {
+      method: "POST",
+      body: JSON.stringify({ forecast_id: forecastId, wind_change_pct: windChangePct }),
+    }),
 };

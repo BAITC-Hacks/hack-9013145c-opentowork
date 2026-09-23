@@ -42,3 +42,6 @@ models/
 # Локальные скиллы Claude Code (симлинки на ~/.claude/vendor)
 .claude/
 .mcp.json
+
+.playwright-mcp/
+*.tsbuildinfo
