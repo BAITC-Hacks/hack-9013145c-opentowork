@@ -120,6 +120,8 @@ class Settings(BaseSettings):
     RATE_LIMIT_USER: int = 100
     RATE_LIMIT_AI: int = 20
     RATE_LIMIT_LOGIN: int = 10
+    # Живой пересчёт прогноза/объяснения ВЭС: модель + Open-Meteo, запусков в минуту.
+    RATE_LIMIT_FORECAST_LIVE: int = 6
 
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: Literal["json", "console"] = "json"

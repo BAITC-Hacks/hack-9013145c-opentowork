@@ -52,6 +52,8 @@ ML-модель, ищет в результате риски (резкие пе�
 
 ## Быстрый запуск
 
+Пошаговая инструкция со всеми данными, адресами и учётками — [RUN.md](RUN.md).
+
 ### Что нужно
 
 - Docker с Docker Compose v2 (Docker Desktop на macOS и Windows).
@@ -225,12 +227,13 @@ curl -X POST http://localhost:8000/api/v1/ai/chat \
 и интернет у контейнера `api`:
 
 ```bash
-# сводка по всем ВЭС и подробный прогноз станции (origin=now или ISO-время с 2024 года)
+# сводка по всем ВЭС и подробный прогноз станции (origin=now или ISO-время с 2024 года;
+# для Нурлы с ML-моделью — не раньше 2026-01-31, границы её обучения, иначе 422)
 curl -H "Authorization: Bearer $TOKEN" "http://localhost:8000/api/v1/predictions/overview"
 curl -H "Authorization: Bearer $TOKEN" "http://localhost:8000/api/v1/predictions/run?station_id=nurly&origin=now"
 
 # почему прогноз такой (тестовый период — из артефактов, другой момент — считается на лету)
-curl "http://localhost:8000/api/v1/explain?origin=2026-02-07"
+curl -H "Authorization: Bearer $TOKEN" "http://localhost:8000/api/v1/explain?origin=2026-02-07"
 
 # выработка новой турбины: модели — GET /api/v1/wind/turbine-models
 curl -X POST http://localhost:8000/api/v1/wind/simulate \

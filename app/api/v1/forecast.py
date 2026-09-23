@@ -17,6 +17,9 @@ from fastapi import APIRouter, Query
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
+from app.cache.ratelimit import check_rate_limit
+from app.config import settings
+from app.deps import RedisDep, UserDep
 from app.errors import NotFound, ServiceUnavailable, ValidationFailed
 from windcast.config import FORECASTS_DIR, MODELS_DIR, REPORTS_DIR, TURBINES
 
@@ -128,11 +131,20 @@ class RunIn(BaseModel):
     horizon: int = Field(default=48, ge=1, le=48)
 
 
-def _live_run(origin_iso: str, horizon: int) -> dict:
+async def _limit_live(redis, user) -> None:
+    """Живой пересчёт — это обучённая модель и запрос погоды, а не чтение JSON:
+    без лимита несколько клиентов занимают весь пул потоков API."""
+    await check_rate_limit(redis, f"windcast_live:{user.id}", settings.RATE_LIMIT_FORECAST_LIVE)
+
+
+def _live_run(origin_iso: str, horizon: int) -> dict | None:
+    """None — момент раньше границы обучения финальной модели: отвечать нужно
+    сохранённым walk-forward-прогоном, а не моделью, видевшей будущее."""
     import pandas as pd
 
     from windcast.agent import graph
     from windcast.agent.runner import _load_or_train, forecast_run_json
+    from windcast.pipeline import LookAheadError
 
     try:
         run = graph.run(
@@ -141,6 +153,8 @@ def _live_run(origin_iso: str, horizon: int) -> dict:
             horizon,
             reason="ручной запуск из интерфейса",
         )
+    except LookAheadError:
+        return None
     except graph.AgentFailure as e:
         raise ServiceUnavailable(str(e), {"forecast_origin": origin_iso}) from e
     doc = forecast_run_json(run, horizon)
@@ -151,13 +165,16 @@ def _live_run(origin_iso: str, horizon: int) -> dict:
 
 
 @router.post("/forecast/run")
-async def forecast_run(body: RunIn) -> dict:
+async def forecast_run(body: RunIn, user: UserDep, redis: RedisDep) -> dict:
     if body.station_id != "nurly":
         raise NotFound("Эта модель обучена только для Нурлы")
     origin_iso = _normalize_origin(body.forecast_origin)
     if os.getenv("WINDCAST_LIVE") == "1":
+        await _limit_live(redis, user)
         try:
-            return await run_in_threadpool(_live_run, origin_iso, body.horizon)
+            doc = await run_in_threadpool(_live_run, origin_iso, body.horizon)
+            if doc is not None:
+                return doc
         except ImportError:
             pass  # ML-стек не установлен — отдаём сохранённый прогон агента
     run = _trim(_find_run(origin_iso), body.horizon)
@@ -228,6 +245,10 @@ def simulate_run(run: dict, wind_change_pct: float) -> dict:
     k = 1 + wind_change_pct / 100
     pts = []
     for p in run["predictions"]:
+        if p.get("wind_speed") is None:
+            # Час без погоды закрыт климатологией — ветер сдвигать не от чего.
+            pts.append({"forecast_for": p["forecast_for"], "p50": p["p50"]})
+            continue
         # Сдвигаем прогноз на разницу кривой, чтобы сохранить поправки модели сверх кривой.
         delta = _interp(p["wind_speed"] * k, xs, ys) - _interp(p["wind_speed"], xs, ys)
         pts.append(
@@ -302,16 +323,24 @@ def _live_explain(origin_iso: str) -> dict:
     from windcast import live
     from windcast.config import SITE_LAT, SITE_LON
     from windcast.explain import explain_origin
+    from windcast.pipeline import LookAheadError
 
     origin = pd.Timestamp(origin_iso.rstrip("Z"))
+    fc = live.forecaster()
+    try:
+        fc.ensure_origin_after_training(origin)
+    except LookAheadError as exc:
+        raise ValidationFailed(str(exc), {"origin": origin_iso}) from exc
     archive = live.fetch_window(SITE_LAT, SITE_LON, origin, 48)
-    doc = explain_origin(live.forecaster(), origin, 48, archive)
+    doc = explain_origin(fc, origin, 48, archive)
     doc["live"] = True
     return doc
 
 
 @router.get("/explain")
 async def explain(
+    user: UserDep,
+    redis: RedisDep,
     origin: str = Query(..., max_length=32),
     station_id: str = Query("nurly", max_length=64),
 ) -> dict:
@@ -338,6 +367,7 @@ async def explain(
                     for v in versions
                 ],
             }
+    await _limit_live(redis, user)
     try:
         return await run_in_threadpool(_live_explain, origin_iso)
     except ImportError as exc:

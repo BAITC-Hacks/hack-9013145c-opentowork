@@ -38,6 +38,12 @@ async def _call(fn, *args):
         if isinstance(exc, AgentFailure):
             raise ServiceUnavailable(str(exc)) from exc
         raise
+    except Exception as exc:
+        from windcast.pipeline import LookAheadError
+
+        if isinstance(exc, LookAheadError):
+            raise ValidationFailed(str(exc)) from exc
+        raise
 
 
 def _origin(origin: str | None):

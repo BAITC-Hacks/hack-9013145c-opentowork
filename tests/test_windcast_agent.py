@@ -113,6 +113,9 @@ class _FakeState:
 class _FakeFc:
     state = _FakeState()
 
+    def ensure_origin_after_training(self, origin):
+        return None
+
 
 def _full_pred(origin, hours=48):
     p = _pred(origin=str(origin), hours=hours)
@@ -172,3 +175,38 @@ def test_unusable_fallback_raises_instead_of_publishing(monkeypatch):
     graph, _ = _wire_agent(monkeypatch, True, lambda o: _full_pred(ORIGIN, hours=40))
     with pytest.raises(graph.AgentFailure):
         graph.run(_FakeFc(), ORIGIN, 48)
+
+
+def test_degraded_run_without_weather_serializes_to_strict_json():
+    """Без погоды агент уходит в климатологию; ответ API должен собираться, а не падать на NaN."""
+    from starlette.responses import JSONResponse
+
+    from windcast.agent.runner import _json_safe, _points
+
+    pred = _pred()
+    pred["mean"] = 0.5
+    pred["persistence"] = np.nan
+    pred["icing_risk"] = np.nan
+    for col in ("raw_nwp_curve", "wind_corrected", "wind_nwp", "wind_nwp_spread"):
+        pred[col] = np.nan
+    pred["wind_dir"] = np.nan
+    pred["temperature"] = np.nan
+    pts = _points(pred)
+    assert pts[0]["wind_speed"] is None and pts[0]["baseline"] is None
+    assert pts[0]["p50"] == 0.5
+    doc = _json_safe({"predictions": pts, "facts": {"qa": {"spread": float("nan")}}})
+    assert doc["facts"]["qa"]["spread"] is None
+    JSONResponse(doc).render(doc)  # allow_nan=False — как в настоящем ответе
+
+
+def test_origin_before_training_cutoff_is_rejected():
+    from windcast.agent import graph
+    from windcast.pipeline import Forecaster, LookAheadError
+
+    fc = Forecaster(until=pd.Timestamp("2026-01-31"))
+    fc.ensure_origin_after_training(pd.Timestamp("2026-01-31"))
+    with pytest.raises(LookAheadError):
+        fc.ensure_origin_after_training(pd.Timestamp("2025-12-15"))
+    # Агент отказывает до запроса погоды и прогона моделей.
+    with pytest.raises(LookAheadError):
+        graph.run(fc, pd.Timestamp("2025-12-15"), 48)

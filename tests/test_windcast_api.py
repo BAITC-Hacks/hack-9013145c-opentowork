@@ -1,10 +1,13 @@
 """Эндпоинты прогноза отдают артефакты агента в контракте фронтенда. Без БД и ML-стека."""
 
+from types import SimpleNamespace
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.v1 import forecast
+from app.deps import current_user, get_redis
 from app.errors import AppError
 from windcast.config import FORECASTS_DIR, REPORTS_DIR
 
@@ -20,7 +23,47 @@ def client():
         return JSONResponse(status_code=exc.http_status, content={"code": exc.code})
 
     app.include_router(forecast.router, prefix="/api/v1")
+    app.dependency_overrides[current_user] = lambda: SimpleNamespace(id="test-user")
+    app.dependency_overrides[get_redis] = lambda: None
     return TestClient(app)
+
+
+def test_heavy_endpoints_require_auth(client):
+    anon = TestClient(client.app)
+    saved = dict(client.app.dependency_overrides)
+    client.app.dependency_overrides.pop(current_user)
+    try:
+        run = anon.post("/api/v1/forecast/run", json={"forecast_origin": "2026-02-07"})
+        explain = anon.get("/api/v1/explain", params={"origin": "2026-02-07"})
+    finally:
+        client.app.dependency_overrides.update(saved)
+    assert run.status_code == 401
+    assert explain.status_code == 401
+
+
+def test_live_run_is_rate_limited(client, monkeypatch):
+    from app.errors import RateLimited
+
+    async def _deny(*_args, **_kwargs):
+        raise RateLimited("limit")
+
+    monkeypatch.setenv("WINDCAST_LIVE", "1")
+    monkeypatch.setattr(forecast, "check_rate_limit", _deny)
+    r = client.post("/api/v1/forecast/run", json={"forecast_origin": "2026-02-07"})
+    assert r.status_code == 429
+
+
+def test_live_run_before_training_cutoff_falls_back_to_saved(client, monkeypatch):
+    """Финальная модель обучена до начала теста — старые даты берутся из walk-forward."""
+
+    async def _allow(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setenv("WINDCAST_LIVE", "1")
+    monkeypatch.setattr(forecast, "check_rate_limit", _allow)
+    monkeypatch.setattr(forecast, "_live_run", lambda *_: None)
+    body = client.post("/api/v1/forecast/run", json={"forecast_origin": "2026-02-07"}).json()
+    assert body["live"] is False and body["predictions"]
 
 
 def test_turbines(client):

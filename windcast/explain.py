@@ -96,6 +96,7 @@ def explain_origin(
     """Почасовое объяснение прогноза из момента origin (уровень станции = среднее турбин).
     archive — та же погода, на которой считался прогноз (живой прогноз передаёт свою)."""
     origin = pd.Timestamp(origin)
+    fc.ensure_origin_after_training(origin)
     archive = load_archive() if archive is None else archive
     x = inference_frame(origin, horizon, archive)
     pred = fc.predict(origin, horizon, archive)

@@ -41,6 +41,10 @@ def scada_rows(until: pd.Timestamp) -> pd.DataFrame:
     )
 
 
+class LookAheadError(Exception):
+    """Момент прогноза раньше границы обучения: модель видела его будущее."""
+
+
 @dataclass
 class Forecaster:
     until: pd.Timestamp
@@ -68,6 +72,16 @@ class Forecaster:
         self.n_train = int(train["obs_power"].notna().sum())
         self.fit_seconds = time.time() - t0
         return self
+
+    def ensure_origin_after_training(self, origin: pd.Timestamp) -> None:
+        """Прогноз из момента раньше `until` считался бы моделью, обученной на его будущем.
+        Проверяется момент выпуска, а не `predict`: агент при откате погоды законно
+        берёт признаки из более раннего выпуска."""
+        if pd.Timestamp(origin) < self.until:
+            raise LookAheadError(
+                f"модель обучена на данных до {self.until:%Y-%m-%d %H:%M} UTC; "
+                "прогноз из более раннего момента подглядывал бы в будущее"
+            )
 
     def predict(
         self, origin: pd.Timestamp, horizon: int = 48, archive: pd.DataFrame | None = None

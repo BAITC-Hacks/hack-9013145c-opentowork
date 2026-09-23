@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+import math
 from datetime import UTC, datetime
 
 import pandas as pd
@@ -67,6 +68,12 @@ def _load_or_train() -> Forecaster:
     return Forecaster.load()
 
 
+def _num(value, digits: int) -> float | None:
+    # Без погоды агент уходит в климатологию, а погодные поля остаются NaN.
+    # NaN не сериализуется в JSON — отдаём null, и деградированный прогноз доходит до клиента.
+    return None if pd.isna(value) else round(float(value), digits)
+
+
 def _points(pred: pd.DataFrame) -> list[dict]:
     st = station_view(pred)
     pts = []
@@ -75,24 +82,20 @@ def _points(pred: pd.DataFrame) -> list[dict]:
             {
                 "forecast_for": t.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "horizon_h": int(row["horizon_h"]),
-                "p10": round(float(row["q10"]), 4),
-                "p50": round(float(row["q50"]), 4),
-                "p90": round(float(row["q90"]), 4),
-                "p05": round(float(row["q05"]), 4),
-                "p95": round(float(row["q95"]), 4),
-                "mean": round(float(row["mean"]), 4),
-                "baseline": round(float(row["raw_nwp_curve"]), 4),
-                "persistence": None
-                if pd.isna(row["persistence"])
-                else round(float(row["persistence"]), 4),
-                "actual": None
-                if pd.isna(row.get("actual", float("nan")))
-                else round(float(row["actual"]), 4),
-                "wind_speed": round(float(row["wind_corrected"]), 2),
-                "wind_speed_nwp": round(float(row["wind_nwp"]), 2),
-                "wind_spread": round(float(row["wind_nwp_spread"]), 2),
-                "wind_dir": round(float(row["wind_dir"]), 0),
-                "temperature": round(float(row["temperature"]), 1),
+                "p10": _num(row["q10"], 4),
+                "p50": _num(row["q50"], 4),
+                "p90": _num(row["q90"], 4),
+                "p05": _num(row["q05"], 4),
+                "p95": _num(row["q95"], 4),
+                "mean": _num(row["mean"], 4),
+                "baseline": _num(row["raw_nwp_curve"], 4),
+                "persistence": _num(row["persistence"], 4),
+                "actual": _num(row.get("actual", float("nan")), 4),
+                "wind_speed": _num(row["wind_corrected"], 2),
+                "wind_speed_nwp": _num(row["wind_nwp"], 2),
+                "wind_spread": _num(row["wind_nwp_spread"], 2),
+                "wind_dir": _num(row["wind_dir"], 0),
+                "temperature": _num(row["temperature"], 1),
                 "icing_risk": bool(row["icing_risk"] > 0),
                 "nwp_day": int(row["nwp_day"]),
                 "per_turbine": row["per_turbine"],
@@ -101,9 +104,21 @@ def _points(pred: pd.DataFrame) -> list[dict]:
     return pts
 
 
+def _json_safe(obj):
+    """NaN/inf → None по всему документу: стандартный JSON их не допускает,
+    а `json.dumps` по умолчанию пропускает и ломает ответ уже в API."""
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, list | tuple):
+        return [_json_safe(v) for v in obj]
+    if isinstance(obj, float) and not math.isfinite(obj):
+        return None
+    return obj
+
+
 def forecast_run_json(run: graph.AgentRun, horizon: int) -> dict:
     """Формат ForecastRun из frontend/src/api.ts (+ служебные поля агента)."""
-    return {
+    return _json_safe({
         "forecast_id": run.run_id,
         "forecast_origin": run.origin.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "horizon": horizon,
@@ -118,7 +133,7 @@ def forecast_run_json(run: graph.AgentRun, horizon: int) -> dict:
         "published": run.published,
         "degraded": run.degraded,
         "facts": json.loads(json.dumps(run.facts, default=str)),
-    }
+    })
 
 
 def run_agent_day(

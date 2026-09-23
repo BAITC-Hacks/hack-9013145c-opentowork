@@ -81,6 +81,7 @@ def run(
     archive: pd.DataFrame | None = None,
 ) -> AgentRun:
     r = AgentRun(origin=pd.Timestamp(origin), horizon=horizon)
+    fc.ensure_origin_after_training(r.origin)
 
     t0 = time.time()
     runs = tools.list_available_runs(r.origin)
